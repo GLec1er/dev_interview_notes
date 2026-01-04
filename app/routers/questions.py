@@ -1,8 +1,10 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status
 
+from app.core.authorizer import Permission, ResourceType, check_permission
 from app.db.database import SessionDep
+from app.db.models.auth import UserRole
 from app.schemas.question import QuestionFilterParams, QuestionSortParams
 from app.services.question import QuestionService
 from app.services.answer import AnswerService
@@ -37,6 +39,7 @@ router = APIRouter(
     response_model=QuestionResponse, 
     description="Создание нового вопроса",
 )
+@check_permission(required_role=UserRole.ADMIN)
 async def create_question(
     data: QuestionCreate,
     session: SessionDep,
@@ -76,6 +79,11 @@ async def create_question(
     response_model=QuestionListResponse,
     description="Получение списка вопросов с фильтрацией, сортировкой и пагинацией",
 )
+@check_permission(
+    required_role=UserRole.USER,
+    required_permission=Permission.READ,
+    resource_type=ResourceType.QUESTION,
+)
 async def get_questions(
     session: SessionDep,
     filters: QuestionFilterParams = Depends(),
@@ -107,6 +115,11 @@ async def get_questions(
     "/{question_id}", 
     response_model=QuestionResponse,
     description="Получение вопроса по ID",
+)
+@check_permission(
+    required_role=UserRole.USER,
+    required_permission=Permission.READ,
+    resource_type=ResourceType.QUESTION,
 )
 async def get_question(
     question_id: UUID,
@@ -151,6 +164,7 @@ async def get_question(
     response_model=QuestionResponse,
     description="Обновление вопроса по ID",
 )
+@check_permission(required_role=UserRole.ADMIN)
 async def update_question(
     question_id: UUID,
     data: QuestionUpdate,
@@ -204,6 +218,7 @@ async def update_question(
     status_code=status.HTTP_204_NO_CONTENT,
     description="Удаление вопроса по ID",
 )
+@check_permission(required_role=UserRole.ADMIN)
 async def delete_question(
     question_id: UUID,
     session: SessionDep,
@@ -245,6 +260,7 @@ async def delete_question(
     status_code=status.HTTP_201_CREATED,
     description="Создание нового ответа на вопрос",
 )
+@check_permission(required_role=UserRole.ADMIN)
 async def create_answer(
     question_id: UUID,
     data: AnswerCreate,
@@ -288,6 +304,11 @@ async def create_answer(
     "/{question_id}/answers/", 
     response_model=list[AnswerResponse],
     description="Получение всех ответов на вопрос",
+)
+@check_permission(
+    required_role=UserRole.USER,
+    required_permission=Permission.READ,
+    resource_type=ResourceType.ANSWER,
 )
 async def get_answers(
     session: SessionDep,
@@ -338,6 +359,11 @@ async def get_answers(
     "/{question_id}/answers/{answer_id}", 
     response_model=AnswerResponse,
     description="Получение ответа по ID",
+)
+@check_permission(
+    required_role=UserRole.USER,
+    required_permission=Permission.READ,
+    resource_type=ResourceType.ANSWER,
 )
 async def get_answer(
     question_id: UUID,
@@ -392,6 +418,7 @@ async def get_answer(
     response_model=AnswerResponse,
     description="Обновление ответа по ID",
 )
+@check_permission(required_role=UserRole.ADMIN)
 async def update_answer(
     question_id: UUID,
     answer_id: UUID,
@@ -452,6 +479,7 @@ async def update_answer(
     status_code=status.HTTP_204_NO_CONTENT,
     description="Удаление ответа по ID",
 )
+@check_permission(required_role=UserRole.ADMIN)
 async def delete_answer(
     question_id: UUID,
     answer_id: UUID,

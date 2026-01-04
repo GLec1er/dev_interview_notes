@@ -1,21 +1,25 @@
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, Response, status
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, HTTPException, Request, Response, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
-from app.core.auth import SecurityUtils
+from app.core.auth import security
+from app.core.authorizer import (
+    Permission, 
+    ResourceType, 
+    check_permission,
+)
 from app.db.database import SessionDep
+from app.db.models.auth import UserRole
 from app.repositories.user import UserRepository
 from app.schemas.user import (
+    UserBase,
     UserCreate, 
-    UserPublic, 
-    Token,
-    LoginRequest,
-    RefreshTokenRequest,
+    UserLogin,
+    UserMe,
 )
 from app.core.loggers import log
 from app.core.configs.init import settings
-from app.services.auth import CurrentActiveUser
+from app.services.auth import set_cookies, CurrentActiveUser
 from app.services.user import AuthService
 
 
@@ -31,6 +35,9 @@ limiter = Limiter(key_func=get_remote_address)
 @router.post(
     "/register",
     status_code=status.HTTP_201_CREATED,
+    response_model=UserBase,
+    summary="Регистрация нового пользователя",
+    description="Создает новый аккаунт пользователя с валидацией данных",
 )
 @limiter.limit("5/minute")  # 5 попыток в минуту
 async def register(
@@ -38,56 +45,21 @@ async def register(
     session: SessionDep,
     request: Request,
 ):
-    """Регистрация нового пользователя."""
+    """
+    Регистрация нового пользователя.
+    """
     try:
         service = AuthService.from_session(session)
-        result = await service.register(user_data)
-
-        user = result["user"]
-        user_response = {
-            "id": str(user.id),
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "email": user.email,
-        }
-
-        response = JSONResponse(
-            content={
-                "user": user_response,
-            },
-            status_code=status.HTTP_201_CREATED,
-        )
-        
-        # Устанавливаем secure cookies для токенов
-        response.set_cookie(
-            key="access_token",
-            value=result["tokens"].access_token,
-            httponly=True,
-            secure=True,  # Только HTTPS
-            samesite="strict",
-            max_age=settings.auth.access_token_expire_minutes * 60,
-            path="/",
-        )
-        
-        response.set_cookie(
-            key="refresh_token",
-            value=result["tokens"].refresh_token,
-            httponly=True,
-            secure=True,
-            samesite="strict",
-            max_age=settings.auth.refresh_token_expire_days * 24 * 60 * 60,
-            path="/api/auth/refresh",
-        )
-
-        return response
+        return await service.register(user_data)
         
     except ValueError as e:
+        log.warning(f"⚠️ Ошибка валидации при регистрации: {str(e)[:100]}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
     except Exception as e:
-        log.error(f"❌ Ошибка регистрации: {e}")
+        log.error(f"❌ Неожиданная ошибка регистрации: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Registration failed",
@@ -97,82 +69,40 @@ async def register(
 @router.post(
     "/login",
     status_code=status.HTTP_200_OK,
+    response_model=UserBase,
+    summary="Аутентификация пользователя",
+    description="Проверяет учетные данные и выдает токены доступа",
 )
 @limiter.limit("10/minute")  # 10 попыток в минуту
 async def login(
-    login_data: LoginRequest,
+    login_data: UserLogin,
     session: SessionDep,
     request: Request,
     response: Response,
 ):
-    """Аутентификация пользователя с защитой от brute-force."""
+    """
+    Аутентификация пользователя
+    """
     try:
         service = AuthService.from_session(session)
-        result = await service.login(
-            login_data
-        )
-        
-        # Подготавливаем данные пользователя для ответа
-        user = result["user"]
-        user_response = {
-            "id": str(user.id),
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "email": user.email,
-            "is_active": user.is_active,
-            "is_admin": user.is_admin,
-            "email_verified": getattr(user, 'email_verified', False),
-            "role": str(getattr(user, 'role', 'user')),
-        }
+        result = await service.login(login_data)
         
         # Устанавливаем токены в HTTP-only cookies
-        tokens = result["tokens"]
-        
-        # Access token cookie (короткоживущий)
-        response.set_cookie(
-            key="access_token",
-            value=tokens.access_token,
-            httponly=True,
-            secure=settings.app.environment == "production",
-            samesite="strict",
-            max_age=settings.auth.access_token_expire_minutes * 60,
-            path="/",
+        await set_cookies(
+            response=response,
+            access_token=result["tokens"].access_token,
+            refresh_token=result["tokens"].refresh_token,
         )
         
-        # Refresh token cookie (долгоживущий)
-        response.set_cookie(
-            key="refresh_token",
-            value=tokens.refresh_token,
-            httponly=True,
-            secure=settings.app.environment == "production",
-            samesite="strict",
-            max_age=settings.auth.refresh_token_expire_days * 24 * 60 * 60,
-            path=f"{settings.app.api_prefix}/auth/refresh",  # Только для endpoint обновления
-        )
-        
-        # Возвращаем пользователя в теле ответа
-        return {
-            "user": user_response,
-            "message": "Login successful",
-            "token_type": tokens.token_type,
-            "expires_in": tokens.expires_in,
-        }
+        return result["user"]
         
     except ValueError as e:
-        # Всегда возвращаем одну и ту же ошибку для безопасности
-        error_message = str(e)
-        if "credentials" in error_message.lower():
-            error_detail = "Invalid email/username or password"
-        else:
-            error_detail = error_message
-            
+        log.warning(f"⚠️ Неудачная попытка входа: {str(e)[:50]}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=error_detail,
+            detail=str(e),
             headers={"WWW-Authenticate": "Bearer"},
         )
-    except HTTPException:
-        raise
     except Exception as e:
         log.error(f"❌ Неожиданная ошибка при входе: {e}")
         raise HTTPException(
@@ -181,37 +111,42 @@ async def login(
         )
 
 
-@router.post("/refresh")
+@router.post(
+    "/refresh",
+    status_code=status.HTTP_200_OK,
+    response_model=str,
+    summary="Обновление access токена",
+    description="Выдает новый access токен на основе refresh токена",
+)
+@limiter.limit("20/minute")  # 20 попыток в минуту
 async def refresh_token(
     request: Request,
     session: SessionDep,
     response: Response,
 ):
-    """Обновление access токена с помощью refresh токена."""
+    """
+    Обновление access токена с помощью refresh токена.
+    """
     try:
-        # Получаем refresh token из куки или тела запроса
-        refresh_token = request.cookies.get("refresh_token")
+        # Получаем refresh token из куки
+        refresh_token_value = request.cookies.get("refresh_token")
         
-        if not refresh_token:
-            # Пробуем получить из тела запроса
-            try:
-                body = await request.json()
-                refresh_token = body.get("refresh_token")
-            except:
-                pass
-        
-        if not refresh_token:
+        if not refresh_token_value:
+            log.warning("⚠️ Попытка обновления токена без refresh токена")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Refresh token is required",
             )
         
         # Верифицируем refresh token
-        security = SecurityUtils()
-        payload = security.verify_token(refresh_token, is_refresh=True)
+        payload = security.verify_token(
+            refresh_token_value, 
+            is_refresh=True,
+        )
         user_id = payload.get("sub")
         
         if not user_id:
+            log.warning("⚠️ Невалидный refresh токен (отсутствует user_id)")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid refresh token",
@@ -222,12 +157,14 @@ async def refresh_token(
         user = await user_repo.get_by(id=user_id)
         
         if not user:
+            log.warning(f"⚠️ Пользователь не найден при обновлении токена: {user_id}")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found",
             )
         
         if not user.is_active:
+            log.warning(f"⚠️ Попытка обновления токена неактивным пользователем: {user.email}")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="User is inactive",
@@ -239,21 +176,15 @@ async def refresh_token(
         )
         
         # Обновляем куку с access token
-        response.set_cookie(
-            key="access_token",
-            value=access_token,
-            httponly=True,
-            secure=settings.app.environment == "production",
-            samesite="strict",
-            max_age=settings.auth.access_token_expire_minutes * 60,
-            path="/",
+        await set_cookies(
+            response=response,
+            access_token=access_token,
+            refresh_token=None
         )
         
-        return {
-            "access_token": access_token,
-            "token_type": "bearer",
-            "expires_in": settings.auth.access_token_expire_minutes * 60,
-        }
+        log.info(f"✅ Токен обновлен для пользователя: {user.email}")
+        
+        return access_token
         
     except HTTPException:
         raise
@@ -265,13 +196,30 @@ async def refresh_token(
         )
     
 
-@router.post("/logout")
+@router.post(
+    "/logout",
+    status_code=status.HTTP_200_OK,
+    response_model=dict,
+    summary="Выход из системы",
+    description="Очищает все токены аутентификации",
+)
+@check_permission(
+    required_role=UserRole.USER,
+    required_permission=Permission.UPDATE,
+    resource_type=ResourceType.USER,
+)
 async def logout(
+    current_user: CurrentActiveUser,
     response: Response,
 ):
-    """Выход из системы - очистка всех токенов."""
+    """
+    Выход из системы - очистка всех токенов.
+    """
     # Очищаем все куки аутентификации
-    cookies_to_clear = ["access_token", "refresh_token", "token_type"]
+    cookies_to_clear = [
+        "access_token", 
+        "refresh_token", 
+    ]
     
     for cookie_name in cookies_to_clear:
         response.delete_cookie(
@@ -279,18 +227,30 @@ async def logout(
             path="/",
         )
     
+    log.info(f"✅ Пользователь вышел из системы: {current_user.email}")
+    
     return {
         "message": "Successfully logged out",
-        "redirect_to": "/login",  # Для фронтенда
+        "redirect_to": "/login",
     }
 
 
 @router.get(
     "/me",
-    response_model=UserPublic,
+    status_code=status.HTTP_200_OK,
+    response_model=UserMe,
+    summary="Получить текущего пользователя",
+    description="Возвращает информацию о текущем аутентифицированном пользователе",
 )
-async def get_current_user_info(
+@check_permission(
+    required_role=UserRole.USER,
+    required_permission=Permission.READ,
+    resource_type=ResourceType.USER,
+)
+async def get_current_user(
     current_user: CurrentActiveUser,
 ):
-    """Получить информацию о текущем пользователе."""
+    """
+    Получить информацию о текущем пользователе.
+    """
     return current_user

@@ -1,12 +1,42 @@
-# app/api/dependencies.py
 from typing import Optional, Annotated
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials
+from fastapi import Depends, HTTPException, Response, status
 
 from app.db.database import SessionDep
 from app.db.models.auth import User
-from app.core.auth import oauth2_scheme, security, http_bearer
+from app.core.auth import oauth2_scheme, security
 from app.repositories.user import UserRepository
+from app.core.configs.init import settings
+
+
+async def set_cookies(
+    response: Response,
+    access_token: str | None = None,
+    refresh_token: str | None = None,
+):
+    """
+    Установить HTTP-only куки для access и refresh токенов.
+    """
+    if access_token:
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            secure=settings.app.environment == "production",
+            samesite="strict",
+            max_age=settings.auth.access_token_expire_minutes * 60,
+            path="/",
+        )
+
+    if refresh_token:  
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            secure=settings.app.environment == "production",
+            samesite="strict",
+            max_age=settings.auth.refresh_token_expire_days * 24 * 60 * 60,
+            path=f"/",
+        ) 
 
 
 async def get_current_user(
@@ -61,42 +91,5 @@ async def get_current_active_user(
     return current_user
 
 
-# Типы для аннотаций
 CurrentUser = Annotated[User, Depends(get_current_user)]
 CurrentActiveUser = Annotated[User, Depends(get_current_active_user)]
-
-
-# Ролевые зависимости
-class RoleChecker:
-    """Проверка ролей пользователя."""
-    
-    def __init__(self, allowed_roles: list[str]):
-        self.allowed_roles = allowed_roles
-    
-    def __call__(self, user: CurrentActiveUser):
-        if not user.is_superuser and user.role not in self.allowed_roles:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Permission denied",
-            )
-        return user
-
-
-# Примеры ролей
-allow_user = RoleChecker(["user"])
-allow_moderator = RoleChecker(["moderator", "admin"])
-allow_admin = RoleChecker(["admin"])
-allow_super_admin = RoleChecker(["super_admin"])
-
-
-# Для работы с API ключами
-async def get_api_key(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(http_bearer),
-) -> Optional[str]:
-    """Получить API ключ из заголовка."""
-    if not credentials:
-        return None
-    
-    # Проверяем API ключ в базе данных или кэше
-    # Здесь можно добавить проверку ключа
-    return credentials.credentials

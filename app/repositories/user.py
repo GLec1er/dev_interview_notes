@@ -1,7 +1,8 @@
-from typing import Optional, List
+from typing import Optional
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, func
+from sqlalchemy import update, func, or_
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
 from app.core.auth import SecurityUtils
@@ -9,6 +10,7 @@ from app.db.models.auth import User
 from app.schemas.user import UserCreate, UserUpdate
 from app.repositories.base import BaseRepository
 from app.core.loggers import log
+from app.core.configs.init import settings
 
 
 class UserRepository(
@@ -42,13 +44,7 @@ class UserRepository(
                 "password": db_data["password"],
             }
             
-            user = User(**user_dict)
-            self.session.add(user)
-            await self.session.commit()
-            await self.session.refresh(user)
-            
-            log.info(f"✅ Пользователь создан: {user.email}")
-            return user
+            return await super().create(UserCreate(**user_dict))
             
         except IntegrityError as e:
             log.error(f"❌ Ошибка уникальности при создании пользователя: {e}")
@@ -58,40 +54,122 @@ class UserRepository(
             log.error(f"❌ Ошибка БД при создании пользователя: {e}")
             await self.session.rollback()
             raise
-    
-    async def get_by_email(self, email: str) -> Optional[User]:
-        """Получить пользователя по email."""
+
+    async def increment_failed_login_attempts(self, user_id: UUID) -> tuple[int, Optional[datetime]]:
+        """
+        Атомарно увеличивает failed_login_attempts и возвращает:
+        - текущее значение попыток
+        - locked_until (если превышен лимит → блокировка)
+        """
         try:
-            return await self.get_by(email=email)
-        except SQLAlchemyError as e:
-            log.error(f"❌ Ошибка при получении пользователя по email: {e}")
-            raise
-    
-    async def get_by_username(self, username: str) -> Optional[User]:
-        """Получить пользователя по username."""
-        try:
-            return await self.get_by(username=username)
-        except SQLAlchemyError as e:
-            log.error(f"❌ Ошибка при получении пользователя по username: {e}")
-            raise
-    
-    async def get_by_email_or_username(
-        self, 
-        identifier: str
-    ) -> Optional[User]:
-        """Получить пользователя по email или username."""
-        try:
-            # Сначала ищем по email
-            user = await self.get_by_email(identifier)
-            if user:
-                return user
+            current_time = datetime.now(timezone.utc)
             
-            # Если не нашли по email, ищем по username
-            return await self.get_by_username(identifier)
+            # ПЕРВЫЙ UPDATE: увеличиваем счетчик
+            stmt = (
+                update(User)
+                .where(User.id == user_id)
+                .where(
+                    or_(
+                        User.locked_until.is_(None),
+                        User.locked_until <= current_time
+                    )
+                )
+                .values(
+                    failed_login_attempts=User.failed_login_attempts + 1,
+                    updated_at=func.now()
+                )
+                .returning(User.failed_login_attempts, User.locked_until)
+            )
+            result = await self.session.execute(stmt)
+            await self.session.flush()  # ← Важно: сохраняем изменения
+            await self.session.commit()
             
+            row = result.fetchone()
+
+            if not row:
+                # Пользователь уже заблокирован
+                user = await self.get(user_id)
+                if user:
+                    return user.failed_login_attempts, user.locked_until
+                raise ValueError("User not found")
+
+            attempts, locked_until = row
+
+            # ВТОРОЙ UPDATE: блокируем если нужно
+            if attempts >= settings.auth.max_failed_attempts:
+                lock_time = datetime.now(timezone.utc) + timedelta(minutes=settings.auth.lock_duration_minutes)
+                lock_stmt = (
+                    update(User)
+                    .where(User.id == user_id)
+                    .where(User.failed_login_attempts >= settings.auth.max_failed_attempts)
+                    .values(
+                        locked_until=lock_time,
+                        updated_at=func.now()
+                    )
+                    .returning(User.locked_until)
+                )
+                lock_result = await self.session.execute(lock_stmt)
+                await self.session.flush()  # ← Важно: сохраняем изменения
+                await self.session.commit()
+
+                lock_row = lock_result.fetchone()
+                if lock_row:
+                    locked_until = lock_row[0]
+
+            return attempts, locked_until
+
         except SQLAlchemyError as e:
-            log.error(f"❌ Ошибка при поиске пользователя: {e}")
+            await self.session.rollback()
+            log.error(f"❌ Ошибка при увеличении попыток входа: {e}")
             raise
+
+    async def reset_failed_login_attempts(self, user_id: UUID) -> None:
+        """Сбросить счётчик и снять блокировку (если есть)."""
+        try:
+            stmt = (
+                update(User)
+                .where(User.id == user_id)
+                .values(
+                    failed_login_attempts=0,
+                    locked_until=None,
+                    updated_at=func.now()
+                )
+            )
+            await self.session.execute(stmt)
+            await self.session.flush()
+            await self.session.commit()
+            log.debug(f"🔄 Счётчик попыток сброшен для пользователя: {user_id}")
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            log.error(f"❌ Ошибка при сбросе попыток: {e}")
+            raise
+
+    async def unlock_user_if_expired(self, user_id: UUID) -> bool:
+        """
+        Разблокировать пользователя, если блокировка истекла.
+        Возвращает True, если разблокировка произошла.
+        """
+        try:
+            current_time = datetime.now(timezone.utc)
+            stmt = (
+                update(User)
+                .where(User.id == user_id)
+                .where(User.locked_until.isnot(None))
+                .where(User.locked_until <= current_time)
+                .values(
+                    locked_until=None,
+                    failed_login_attempts=0,
+                    updated_at=func.now()
+                )
+            )
+            result = await self.session.execute(stmt)
+            rows_updated = result.rowcount
+            if rows_updated:
+                log.info(f"🔓 Автоматическая разблокировка: {user_id}")
+            return rows_updated > 0
+        except SQLAlchemyError as e:
+            log.error(f"❌ Ошибка при разблокировке: {e}")
+            return False
     
     async def update_last_login(self, user_id: UUID) -> None:
         """Обновить время последнего входа."""
@@ -103,165 +181,9 @@ class UserRepository(
             )
             await self.session.execute(stmt)
             await self.session.flush()
+            await self.session.commit()
             log.debug(f"🔄 Время входа обновлено для пользователя: {user_id}")
             
         except SQLAlchemyError as e:
             log.error(f"❌ Ошибка при обновлении времени входа: {e}")
-            raise
-    
-    async def update_password(
-        self, 
-        user_id: UUID, 
-        new_password: str
-    ) -> User:
-        """Обновить пароль пользователя."""
-        try:
-            hashed_password = self.security.get_password_hash(new_password)
-            
-            stmt = (
-                update(User)
-                .where(User.id == user_id)
-                .values(hashed_password=hashed_password)
-                .returning(User)
-            )
-            
-            result = await self.session.execute(stmt)
-            user = result.scalar_one()
-            await self.session.flush()
-            
-            log.info(f"✅ Пароль обновлен для пользователя: {user.email}")
-            return user
-            
-        except SQLAlchemyError as e:
-            log.error(f"❌ Ошибка при обновлении пароля: {e}")
-            raise
-    
-    async def deactivate_user(self, user_id: UUID) -> User:
-        """Деактивировать пользователя."""
-        try:
-            stmt = (
-                update(User)
-                .where(User.id == user_id)
-                .values(is_active=False)
-                .returning(User)
-            )
-            
-            result = await self.session.execute(stmt)
-            user = result.scalar_one()
-            await self.session.flush()
-            
-            log.info(f"⚠️ Пользователь деактивирован: {user.email}")
-            return user
-            
-        except SQLAlchemyError as e:
-            log.error(f"❌ Ошибка при деактивации пользователя: {e}")
-            raise
-    
-    async def activate_user(self, user_id: UUID) -> User:
-        """Активировать пользователя."""
-        try:
-            stmt = (
-                update(User)
-                .where(User.id == user_id)
-                .values(is_active=True)
-                .returning(User)
-            )
-            
-            result = await self.session.execute(stmt)
-            user = result.scalar_one()
-            await self.session.flush()
-            
-            log.info(f"✅ Пользователь активирован: {user.email}")
-            return user
-            
-        except SQLAlchemyError as e:
-            log.error(f"❌ Ошибка при активации пользователя: {e}")
-            raise
-    
-    async def verify_user(self, user_id: UUID) -> User:
-        """Подтвердить email пользователя."""
-        try:
-            stmt = (
-                update(User)
-                .where(User.id == user_id)
-                .values(is_verified=True)
-                .returning(User)
-            )
-            
-            result = await self.session.execute(stmt)
-            user = result.scalar_one()
-            await self.session.flush()
-            
-            log.info(f"✅ Email подтвержден: {user.email}")
-            return user
-            
-        except SQLAlchemyError as e:
-            log.error(f"❌ Ошибка при подтверждении email: {e}")
-            raise
-    
-    async def get_active_users(
-        self, 
-        skip: int = 0, 
-        limit: int = 100
-    ) -> List[User]:
-        """Получить список активных пользователей."""
-        try:
-            return await self.get_multi(
-                skip=skip,
-                limit=limit,
-                is_active=True,
-            )
-        except SQLAlchemyError as e:
-            log.error(f"❌ Ошибка при получении активных пользователей: {e}")
-            raise
-    
-    async def search_users(
-        self, 
-        search_term: str,
-        skip: int = 0,
-        limit: int = 100,
-    ) -> List[User]:
-        """Поиск пользователей по email или username."""
-        try:
-            query = (
-                select(User)
-                .where(
-                    (User.email.ilike(f"%{search_term}%")) |
-                    (User.username.ilike(f"%{search_term}%")) |
-                    (User.full_name.ilike(f"%{search_term}%"))
-                )
-                .offset(skip)
-                .limit(limit)
-            )
-            
-            result = await self.session.execute(query)
-            return result.scalars().all()
-            
-        except SQLAlchemyError as e:
-            log.error(f"❌ Ошибка при поиске пользователей: {e}")
-            raise
-    
-    async def count_by_status(
-        self, 
-        is_active: Optional[bool] = None,
-        is_verified: Optional[bool] = None,
-    ) -> int:
-        """Посчитать пользователей по статусу."""
-        try:
-            query = select(func.count()).select_from(User)
-            
-            filters = []
-            if is_active is not None:
-                filters.append(User.is_active == is_active)
-            if is_verified is not None:
-                filters.append(User.is_verified == is_verified)
-            
-            if filters:
-                query = query.where(*filters)
-            
-            result = await self.session.execute(query)
-            return result.scalar_one()
-            
-        except SQLAlchemyError as e:
-            log.error(f"❌ Ошибка при подсчете пользователей: {e}")
             raise

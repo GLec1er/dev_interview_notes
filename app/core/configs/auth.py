@@ -28,6 +28,16 @@ class AuthSettings(BaseSettings):
         default=SecretStr("refreshsecretkey1234567890"),
         description="Секретный ключ для refresh JWT",
     )
+
+    # Settings for LOGIN
+    max_failed_attempts: int = Field(
+        default=5,
+        description="Лимит попыток",
+    )
+    lock_duration_minutes: int = Field(
+        default=15,
+        description="Длительность блокировки в минутах"
+    )
     
     class Config:
         env_file = ".env"

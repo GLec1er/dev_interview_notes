@@ -49,28 +49,28 @@ class User(Base):
         index=True, 
         nullable=False
     )
-    email_verified: Mapped[bool] = mapped_column(
-        Boolean,
-        default=False,
-        nullable=True,
-    )
 
     ############# Security #############
     password: Mapped[str] = mapped_column(
         Text, 
         nullable=False,
     )
+    email_verified: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=True,
+    )
+    last_login: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), 
+        nullable=True, 
+        default=None,
+    )
     failed_login_attempts: Mapped[int] = mapped_column(
         Integer, 
         default=0,
     )
     locked_until: Mapped[datetime | None] = mapped_column(
-        DateTime, 
-        nullable=True, 
-        default=None,
-    )
-    last_login: Mapped[datetime | None] = mapped_column(
-        DateTime, 
+        DateTime(timezone=True), 
         nullable=True, 
         default=None,
     )
@@ -110,5 +110,4 @@ class User(Base):
         nullable=False,
     )
     
-    def __repr__(self):
-        return f"<User {self.email}>"
+

@@ -1,15 +1,18 @@
-# app/schemas/user.py
-from datetime import datetime
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
-from typing import Optional
+from datetime import datetime, timezone
+from pydantic import BaseModel, EmailStr, Field, field_validator
+from typing import ClassVar, Optional
 from uuid import UUID
 
 from app.core.configs.init import settings
+from app.db.models.auth import UserRole
 
 
-# ==================== Main Schemas ====================
+# ==================== Main Schema ====================
 class UserBase(BaseModel):
-    """Базовая схема пользователя."""
+    """
+    Базовая схема пользователя
+    Ипользуется для общих полей пользователя (for response models).
+    """
     first_name: str = Field(
         ..., 
         min_length=2, 
@@ -28,6 +31,7 @@ class UserBase(BaseModel):
     )
 
 
+# ==================== Register Schema ====================
 class UserCreate(UserBase):
     """Схема для создания пользователя."""
     password: str = Field(
@@ -36,45 +40,102 @@ class UserCreate(UserBase):
         max_length=128,
         description="Пароль пользователя"
     )
+
+    disposable_domains: ClassVar[set[str]] = {
+        'tempmail.com', '10minutemail.com', 'guerrillamail.com',
+        'mailinator.com', 'yopmail.com', 'dispostable.com',
+        'trashmail.com', 'sharklasers.com'
+    }
     
     @field_validator('password')
     @classmethod
     def validate_password(cls, v: str) -> str:
-        if len(v) < 8:
-            raise ValueError('Пароль должен содержать минимум 8 символов')
-        if not any(char.isdigit() for char in v):
-            raise ValueError('Пароль должен содержать хотя бы одну цифру')
-        if not any(char.isupper() for char in v):
+        if not any(c.islower() for c in v):
+            raise ValueError('Пароль должен содержать хотя бы одну строчную букву')
+        if not any(c.isupper() for c in v):
             raise ValueError('Пароль должен содержать хотя бы одну заглавную букву')
+        if not any(c.isdigit() for c in v):
+            raise ValueError('Пароль должен содержать хотя бы одну цифру')
+        if not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in v):
+            raise ValueError('Пароль должен содержать хотя бы один специальный символ')
         return v
     
     @field_validator('email')
     @classmethod
     def validate_email_domain(cls, v: str) -> str:
-        # Проверка disposable email
-        disposable_domains = [
-            'tempmail.com', '10minutemail.com', 'guerrillamail.com'
-        ]
-        domain = v.split('@')[-1].lower()
-        if domain in disposable_domains:
-            raise ValueError('Использование временных email запрещено')
-        return v
-    
+        local_part, domain = v.rsplit('@', 1)
+        domain = domain.lower()
 
-class UserInDB(UserBase):
+        if domain in cls.disposable_domains:
+            raise ValueError('Использование временных email запрещено')
+
+        return v
+
+
+# ==================== Login Schema ====================
+class UserLogin(BaseModel):
+    email: EmailStr = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        description="Email пользователя"
+    )
+    password: str = Field(
+        ...,
+        min_length=1,
+        max_length=128,
+        description="Пароль пользователя"
+    )
+
+
+class UserInternal(BaseModel):
     id: UUID
+    email: EmailStr
+    password: str
+    first_name: str
+    last_name: str
     is_active: bool
-    is_admin: bool
-    email_verified: bool = False
-    
+    failed_login_attempts: int
+    locked_until: Optional[datetime]
+    last_login: Optional[datetime]
+
+    @field_validator('locked_until', 'last_login', mode='before')
+    @classmethod
+    def ensure_timezone(cls, v: Optional[datetime]) -> Optional[datetime]:
+        if v is None:
+            return None
+        # Если datetime naive (без часового пояса) - добавляем UTC
+        if v.tzinfo is None:
+            return v.replace(tzinfo=timezone.utc)
+        return v
+
     class Config:
         from_attributes = True
 
 
-class UserPublic(UserInDB):
-    pass
-
 # ================ User Schemas ====================
+class UserMe(UserBase):
+    role: UserRole = Field(
+        ..., 
+        description="Роль пользователя",
+    )
+    email_verified: bool = Field(
+        ..., 
+        description="Подтвержден ли email",
+    )
+    is_active: bool = Field(
+        ..., 
+        description="Активен ли пользователь",
+    )
+    is_admin: bool = Field(
+        ..., 
+        description="Является ли администратором",
+    )
+    last_login: Optional[datetime] = Field(None, description="Последний вход")
+    
+    class Config:
+        from_attributes = True
+
 
 class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
@@ -89,29 +150,3 @@ class Token(BaseModel):
     refresh_token: str
     token_type: str = "bearer"
     expires_in: int = settings.auth.access_token_expire_minutes * 60
-
-
-class TokenPayload(BaseModel):
-    sub: str  # user_id
-    exp: int
-    type: str  # "access" или "refresh"
-    scopes: list[str] = []
-
-
-class LoginRequest(BaseModel):
-    email: str = Field(
-        ...,
-        min_length=1,
-        max_length=100,
-        description="email"
-    )
-    password: str = Field(
-        ...,
-        min_length=1,
-        max_length=128,
-        description="Пароль пользователя"
-    )
-
-
-class RefreshTokenRequest(BaseModel):
-    refresh_token: str

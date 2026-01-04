@@ -1,12 +1,13 @@
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
+from uuid import UUID
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer, HTTPBearer
 from fastapi import HTTPException, status
 
 from app.core.configs.init import settings
-from app.core.loggers import log
+from app.schemas.user import Token
 
 # Конфигурация
 pwd_context = CryptContext(
@@ -96,7 +97,10 @@ class SecurityUtils:
         return encoded_jwt
     
     @staticmethod
-    def verify_token(token: str, is_refresh: bool = False) -> Dict[str, Any]:
+    def verify_token(
+        token: str, 
+        is_refresh: bool = False,
+    ) -> Dict[str, Any]:
         """Верифицировать токен."""
         try:
             secret_key = (
@@ -107,7 +111,7 @@ class SecurityUtils:
             
             payload = jwt.decode(
                 token, 
-                secret_key, 
+                secret_key.get_secret_value(), 
                 algorithms=[settings.auth.algorithm,]
             )
             
@@ -132,7 +136,24 @@ class SecurityUtils:
                 detail="Could not validate credentials",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-
+        
+    def create_tokens(
+        self,
+        user_id: UUID,
+    ) -> Token:
+        """Создать пару токенов."""
+        access_token = self.create_access_token(
+            data={"sub": str(user_id)},
+        )
+        refresh_token = self.create_refresh_token(
+            str(user_id),
+        )
+        
+        return Token(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            expires_in= settings.auth.access_token_expire_minutes * 60,
+        )
 
 
 security = SecurityUtils()
