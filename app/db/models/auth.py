@@ -49,6 +49,10 @@ class User(Base):
         index=True, 
         nullable=False
     )
+    avatar_url: Mapped[Optional[str]] = mapped_column(
+        String(500), 
+        nullable=True,
+    )
 
     ############# Security #############
     password: Mapped[str] = mapped_column(
@@ -89,12 +93,6 @@ class User(Base):
     is_admin: Mapped[bool] = mapped_column(
         Boolean, 
         default=False,
-    )
-    
-    ############# Additional Fields #############
-    avatar_url: Mapped[Optional[str]] = mapped_column(
-        String(500), 
-        nullable=True,
     )
     
     ############# Time metadata #############

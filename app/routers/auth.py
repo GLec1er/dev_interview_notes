@@ -16,6 +16,7 @@ from app.schemas.user import (
     UserCreate, 
     UserLogin,
     UserMe,
+    UserUpdate,
 )
 from app.core.loggers import log
 from app.core.configs.init import settings
@@ -254,3 +255,59 @@ async def get_current_user(
     Получить информацию о текущем пользователе.
     """
     return current_user
+
+
+@router.put(
+    "/me",
+    status_code=status.HTTP_200_OK,
+    response_model=UserBase,
+    summary="Обновить профиль пользователя",
+    description="Обновление доступных полей профиля текущего пользователя",
+)
+@check_permission(
+    required_role=UserRole.USER,
+    required_permission=Permission.UPDATE,
+    resource_type=ResourceType.USER,
+)
+async def update_profile(
+    update_data: UserUpdate,
+    current_user: CurrentActiveUser,
+    session: SessionDep,
+):
+    """
+    Обновление профиля пользователя.
+    """
+    try:
+        update_dict = update_data.model_dump(exclude_unset=True,)
+        
+        if not update_dict:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No fields provided for update",
+            )
+        
+        user_repo = UserRepository(session)
+        updated_user = await user_repo.update(
+            current_user, 
+            update_dict,
+        )
+        await session.commit()
+        log.info(f"✅ Профиль пользователя обновлен: {current_user.email}")
+        
+        return updated_user
+        
+    except HTTPException:
+        raise
+    except ValueError as e:
+        log.warning(f"⚠️ Ошибка валидации при обновлении профиля: {str(e)[:100]}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+    except Exception as e:
+        log.error(f"❌ Ошибка обновления профиля: {e}")
+        await session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Profile update failed",
+        )

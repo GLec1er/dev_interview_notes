@@ -29,6 +29,11 @@ class UserBase(BaseModel):
         ...,
         description="Email пользователя"
     )
+    avatar_url: Optional[str] = Field(
+        None,
+        max_length=500,
+        description="URL аватарки пользователя"
+    )
 
 
 # ==================== Register Schema ====================
@@ -138,10 +143,24 @@ class UserMe(UserBase):
 
 
 class UserUpdate(BaseModel):
-    email: Optional[EmailStr] = None
-    username: Optional[str] = Field(None, min_length=3, max_length=50)
-    full_name: Optional[str] = None
-    avatar_url: Optional[str] = None
+    """Схема для обновления профиля пользователя"""
+    first_name: Optional[str] = Field(
+        None,
+        min_length=2,
+        max_length=100,
+        description="Имя пользователя"
+    )
+    last_name: Optional[str] = Field(
+        None,
+        min_length=2,
+        max_length=100,
+        description="Фамилия пользователя"
+    )
+    avatar_url: Optional[str] = Field(
+        None,
+        max_length=500,
+        description="URL аватарки пользователя"
+    )
 
 
 # ==================== Auth Schemas ====================
