@@ -11,8 +11,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.db.models.question import Question
 from app.core.loggers import log
 from app.repositories.base import BaseRepository
+from app.repositories.category import CategoryRepository
 from app.schemas.base import PaginationParams
-from app.schemas.question import QuestionCreate,QuestionUpdate, QuestionFilterParams, QuestionSortParams
+from app.schemas.question import QuestionCreate, QuestionResponse,QuestionUpdate, QuestionFilterParams, QuestionSortParams
 
 
 class QuestionRepository(
@@ -53,7 +54,9 @@ class QuestionRepository(
     ) -> tuple[List[Question], int]:
         """Получить отфильтрованный список вопросов."""
         try:
-            query = select(self.model)
+            query = select(self.model).options(
+                selectinload(Question.categories)
+            )
             
             # Применяем фильтры
             if filters:
@@ -100,7 +103,10 @@ class QuestionRepository(
             stmt = (
                 select(Question)
                 .where(Question.id == question_id)
-                .options(selectinload(Question.answers))
+                .options(
+                    selectinload(Question.answers),
+                    selectinload(Question.categories),
+                )
             )
             result = await self.session.execute(stmt)
             question = result.scalar_one_or_none()
@@ -131,7 +137,10 @@ class QuestionRepository(
             stmt = (
                 select(Question)
                 .where(Question.slug == slug)
-                .options(selectinload(Question.answers))
+                .options(
+                    selectinload(Question.answers),
+                    selectinload(Question.categories),
+                )
             )
             result = await self.session.execute(stmt)
             question = result.scalar_one_or_none()

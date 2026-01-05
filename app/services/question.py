@@ -6,6 +6,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.question import Question
+from app.repositories.category import CategoryRepository
 from app.repositories.question import QuestionRepository
 from app.schemas.base import PaginationParams
 from app.schemas.question import QuestionCreate, QuestionUpdate
@@ -186,3 +187,145 @@ class QuestionService:
         except Exception as e:
             log.error(f"❌ Ошибка при удалении вопроса: {str(e)}")
             raise
+
+    async def add_category_to_question(
+        self,
+        question_id: UUID,
+        category_id: UUID,
+    ) -> QuestionResponse:
+        """Добавить категорию к вопросу.
+        
+        Args:
+            question_id: UUID вопроса
+            category_id: UUID категории
+            
+        Returns:
+            QuestionResponse с обновленным вопросом
+            
+        Raises:
+            HTTPException: Если вопрос или категория не найдены
+        """
+        try:
+            # Проверяем существование вопроса
+            question = await self.repository.get_by_id(question_id)
+            if not question:
+                raise ValueError(f"Вопрос с ID {question_id} не найден")
+            
+            # Используем CategoryRepository для добавления категории
+            category_repo = CategoryRepository(self.repository.session)
+            
+            # Проверяем существование категории
+            category = await category_repo.get_by_id(category_id)
+            if not category:
+                raise ValueError(f"Категория с ID {category_id} не найдена")
+            
+            # Добавляем категорию
+            await category_repo.add_category_to_question(question_id, category_id)
+            
+            # Обновляем сессию и получаем обновленный вопрос
+            await self.repository.session.refresh(question)
+            
+            log.info(f"✅ Категория {category_id} добавлена к вопросу {question_id}")
+            return QuestionResponse.model_validate(question)
+        except ValueError as e:
+            log.warning(f"⚠️ Ошибка при добавлении категории: {str(e)}")
+            raise
+        except Exception as e:
+            log.error(f"❌ Ошибка при добавлении категории к вопросу: {str(e)}")
+            raise
+
+    async def remove_category_from_question(
+        self,
+        question_id: UUID,
+        category_id: UUID,
+    ) -> QuestionResponse:
+        """Удалить категорию из вопроса.
+        
+        Args:
+            question_id: UUID вопроса
+            category_id: UUID категории
+            
+        Returns:
+            QuestionResponse с обновленным вопросом
+            
+        Raises:
+            HTTPException: Если вопрос или категория не найдены
+        """
+        try:
+            # Проверяем существование вопроса
+            question = await self.repository.get_by_id(question_id)
+            if not question:
+                raise ValueError(f"Вопрос с ID {question_id} не найден")
+            
+            # Используем CategoryRepository для удаления категории
+            category_repo = CategoryRepository(self.repository.session)
+            
+            # Удаляем категорию
+            removed = await category_repo.remove_category_from_question(
+                question_id, category_id
+            )
+            
+            if not removed:
+                raise ValueError(
+                    f"Категория {category_id} не привязана к вопросу {question_id}"
+                )
+            
+            # Обновляем сессию и получаем обновленный вопрос
+            await self.repository.session.refresh(question)
+            
+            log.info(f"✅ Категория {category_id} удалена из вопроса {question_id}")
+            return QuestionResponse.model_validate(question)
+        except ValueError as e:
+            log.warning(f"⚠️ Ошибка при удалении категории: {str(e)}")
+            raise
+        except Exception as e:
+            log.error(f"❌ Ошибка при удалении категории из вопроса: {str(e)}")
+            raise
+
+    async def set_question_categories(
+        self,
+        question_id: UUID,
+        category_ids: List[UUID],
+    ) -> QuestionResponse:
+        """Установить категории для вопроса (заменить существующие).
+        
+        Args:
+            question_id: UUID вопроса
+            category_ids: Список ID категорий
+            
+        Returns:
+            QuestionResponse с обновленным вопросом
+            
+        Raises:
+            HTTPException: Если вопрос не найден
+        """
+        try:
+            # Проверяем существование вопроса
+            question = await self.repository.get_by_id(question_id)
+            if not question:
+                raise ValueError(f"Вопрос с ID {question_id} не найден")
+            
+            # Используем CategoryRepository для установки категорий
+            category_repo = CategoryRepository(self.repository.session)
+            
+            # Проверяем существование всех категорий
+            for category_id in category_ids:
+                category = await category_repo.get_by_id(category_id)
+                if not category:
+                    raise ValueError(f"Категория с ID {category_id} не найдена")
+            
+            # Устанавливаем категории
+            await category_repo.set_question_categories(question_id, category_ids)
+            
+            # Обновляем сессию и получаем обновленный вопрос
+            await self.repository.session.refresh(question)
+            
+            log.info(f"✅ Установлены {len(category_ids)} категорий для вопроса {question_id}")
+            return QuestionResponse.model_validate(question)
+        except ValueError as e:
+            log.warning(f"⚠️ Ошибка при установке категорий: {str(e)}")
+            raise
+        except Exception as e:
+            log.error(f"❌ Ошибка при установке категорий для вопроса: {str(e)}")
+            raise
+

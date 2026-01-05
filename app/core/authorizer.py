@@ -27,6 +27,7 @@ class ResourceType(str, Enum):
     QUESTION = "question"
     ANSWER = "answer"
     ADMIN_PANEL = "admin_panel"
+    CATEGORY = "category"
 
 
 class Authorizer:

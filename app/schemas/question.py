@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 from app.db.models.question import DifficultyQuestionLevel, Question
 from app.schemas.base import SortMixin
 from app.schemas.answer import AnswerResponse
+from app.schemas.category import CategoryResponse
 
 
 # ==================== Main Schemas ====================
@@ -34,6 +35,9 @@ class QuestionCreate(BaseModel):
         False, 
         description="Опубликован ли вопрос",
     )
+    categories: List[CategoryResponse] = Field(
+        default_factory=list,
+    )
 
     class Config:
         from_attributes = True
@@ -46,6 +50,9 @@ class QuestionResponse(BaseModel):
     content: List[Dict[str, Any]]
     difficulty: DifficultyQuestionLevel
     is_published: bool
+    categories: List[CategoryResponse] = Field(
+        default_factory=list,
+    )
 
     class Config:
         from_attributes = True
