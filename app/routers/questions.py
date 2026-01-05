@@ -6,6 +6,7 @@ from app.core.authorizer import Permission, ResourceType, check_permission
 from app.db.database import SessionDep
 from app.db.models.auth import UserRole
 from app.schemas.question import QuestionFilterParams, QuestionSortParams
+from app.services.auth import CurrentActiveUser
 from app.services.question import QuestionService
 from app.services.answer import AnswerService
 from app.schemas.base import PaginationParams
@@ -41,6 +42,7 @@ router = APIRouter(
 )
 @check_permission(required_role=UserRole.ADMIN)
 async def create_question(
+    current_user: CurrentActiveUser,
     data: QuestionCreate,
     session: SessionDep,
 ):
@@ -85,6 +87,7 @@ async def create_question(
     resource_type=ResourceType.QUESTION,
 )
 async def get_questions(
+    current_user: CurrentActiveUser,
     session: SessionDep,
     filters: QuestionFilterParams = Depends(),
     sort: QuestionSortParams = Depends(),
@@ -122,6 +125,7 @@ async def get_questions(
     resource_type=ResourceType.QUESTION,
 )
 async def get_question(
+    current_user: CurrentActiveUser,
     question_id: UUID,
     session: SessionDep,
 ):
@@ -166,6 +170,7 @@ async def get_question(
 )
 @check_permission(required_role=UserRole.ADMIN)
 async def update_question(
+    current_user: CurrentActiveUser,
     question_id: UUID,
     data: QuestionUpdate,
     session: SessionDep,
@@ -220,6 +225,7 @@ async def update_question(
 )
 @check_permission(required_role=UserRole.ADMIN)
 async def delete_question(
+    current_user: CurrentActiveUser,
     question_id: UUID,
     session: SessionDep,
 ) -> None:
@@ -262,6 +268,7 @@ async def delete_question(
 )
 @check_permission(required_role=UserRole.ADMIN)
 async def create_answer(
+    current_user: CurrentActiveUser,
     question_id: UUID,
     data: AnswerCreate,
     session: SessionDep,
@@ -311,6 +318,7 @@ async def create_answer(
     resource_type=ResourceType.ANSWER,
 )
 async def get_answers(
+    current_user: CurrentActiveUser,
     session: SessionDep,
     question_id: UUID,
     filters: AnswerFilterParams = Depends(),
@@ -366,6 +374,7 @@ async def get_answers(
     resource_type=ResourceType.ANSWER,
 )
 async def get_answer(
+    current_user: CurrentActiveUser,
     question_id: UUID,
     answer_id: UUID,
     session: SessionDep,
@@ -420,6 +429,7 @@ async def get_answer(
 )
 @check_permission(required_role=UserRole.ADMIN)
 async def update_answer(
+    current_user: CurrentActiveUser,
     question_id: UUID,
     answer_id: UUID,
     data: AnswerUpdate,
@@ -481,6 +491,7 @@ async def update_answer(
 )
 @check_permission(required_role=UserRole.ADMIN)
 async def delete_answer(
+    current_user: CurrentActiveUser,
     question_id: UUID,
     answer_id: UUID,
     session: SessionDep,

@@ -5,7 +5,7 @@
 
 from enum import Enum
 from functools import wraps
-from typing import Callable, Optional
+from typing import Optional
 from fastapi import Depends, HTTPException, status
 from app.db.models.auth import User, UserRole
 from app.core.loggers import log
@@ -98,7 +98,7 @@ class Authorizer:
         Raises:
             HTTPException: Если raise_exception=True и доступ запрещен
         """
-        has_access = user.role == required_role or user.is_admin
+        has_access = user.role == required_role
         
         if not has_access and raise_exception:
             log.warning(
@@ -134,10 +134,6 @@ class Authorizer:
         Raises:
             HTTPException: Если raise_exception=True и доступ запрещен
         """
-        # Админы имеют все разрешения
-        if user.is_admin:
-            return True
-        
         # Получаем разрешения для роли пользователя
         role_perms = Authorizer.ROLE_PERMISSIONS.get(user.role, {})
         resource_perms = role_perms.get(resource_type, [])
