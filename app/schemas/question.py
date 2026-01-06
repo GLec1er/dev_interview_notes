@@ -1,4 +1,5 @@
 from typing import List, Optional, Dict, Any
+from uuid import UUID
 from pydantic import BaseModel, Field
 
 from app.db.models.question import DifficultyQuestionLevel, Question
@@ -45,6 +46,7 @@ class QuestionCreate(BaseModel):
 
 class QuestionResponse(BaseModel):
     """Схема для ответа с вопросом."""
+    id: UUID
     title: str
     slug: str
     content: List[Dict[str, Any]]
