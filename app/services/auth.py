@@ -22,7 +22,7 @@ async def set_cookies(
             value=access_token,
             httponly=True,
             secure=settings.app.environment == "production",
-            samesite="strict",
+            samesite="lax",  # Changed from "strict" to "lax" for better compatibility
             max_age=settings.auth.access_token_expire_minutes * 60,
             path="/",
         )
@@ -33,10 +33,10 @@ async def set_cookies(
             value=refresh_token,
             httponly=True,
             secure=settings.app.environment == "production",
-            samesite="strict",
+            samesite="lax",  # Changed from "strict" to "lax" for better compatibility
             max_age=settings.auth.refresh_token_expire_days * 24 * 60 * 60,
-            path=f"/",
-        ) 
+            path="/",
+        )
 
 
 async def get_current_user(

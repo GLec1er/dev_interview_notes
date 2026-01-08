@@ -34,6 +34,11 @@ class ApiClient {
       async (error: AxiosError) => {
         const originalRequest = error.config as any;
 
+        // Don't retry refresh endpoint itself to avoid infinite loops
+        if (originalRequest.url?.includes('/auth/refresh') || originalRequest.url?.includes('/auth/me')) {
+          return Promise.reject(error);
+        }
+
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
 
@@ -52,7 +57,9 @@ class ApiClient {
             originalRequest.headers.Authorization = `Bearer ${newToken}`;
             return this.client(originalRequest);
           } catch (refreshError) {
-            // Refresh failed, redirect to login
+            // Refresh failed, clear cookies and redirect to login
+            Cookies.remove('access_token');
+            Cookies.remove('refresh_token');
             window.location.href = '/login';
             return Promise.reject(refreshError);
           }

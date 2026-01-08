@@ -28,8 +28,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       try {
         const currentUser = await authService.getCurrentUser();
         setUser(currentUser);
-      } catch {
-        setUser(null);
+      } catch (error: any) {
+        // Only set user to null if it's a 401 error
+        // For other errors (like network issues), keep the user state as is
+        if (error.response?.status === 401) {
+          setUser(null);
+        }
       } finally {
         setIsLoading(false);
       }

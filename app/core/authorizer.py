@@ -76,6 +76,9 @@ class Authorizer:
                 Permission.READ,
                 Permission.UPDATE,
             ],
+            ResourceType.CATEGORY: [
+                Permission.READ,
+            ],
         },
     }
     

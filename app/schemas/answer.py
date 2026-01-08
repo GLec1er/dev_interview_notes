@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Dict, Any, List, Optional
 from uuid import UUID
 
@@ -9,7 +10,10 @@ from app.schemas.base import SortMixin
 
 class AnswerCreate(BaseModel):
     """Схема для создания ответа."""
-    content: List[Dict[str, Any]] = Field(..., description="Блоки контента ответа")
+    content: List[Dict[str, Any]] = Field(
+        ..., 
+        description="Блоки контента ответа",
+    )
 
     class Config:
         from_attributes = True
@@ -28,6 +32,7 @@ class AnswerResponse(BaseModel):
     id: UUID
     question_id: UUID
     content: List[Dict[str, Any]]
+    updated_at: datetime
 
     class Config:
         from_attributes = True

@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field, field_validator
 
 class CategoryBase(BaseModel):
     """Базовая схема категории."""
+    id: UUID
     name: str = Field(
         ..., 
         min_length=1, 

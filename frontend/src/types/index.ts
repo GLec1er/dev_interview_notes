@@ -140,7 +140,7 @@ export interface ApiError {
 }
 
 export interface PaginationParams {
-  skip?: number;
+  page_number?: number;
   limit?: number;
 }
 

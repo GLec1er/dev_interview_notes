@@ -29,26 +29,3 @@ def validate_content_structure(
                 raise ValueError("Код-блок должен содержать поле 'code'")
 
     return contents
-
-
-# [
-#   {
-#     "type": "text",
-#     "content": "Это обычный текстовый блок.",
-#   },
-#   {
-#     "type": "code",
-#     "code": "print('Hello, world!')"
-#     // Обратите внимание: поле 'language' отсутствует — будет добавлено как "text"
-#   },
-#   {
-#     "type": "code",
-#     "language": "python",
-#     "code": "def greet():\n    return \"Привет!\""
-#   },
-#   {
-#     "type": "image",
-#     "url": "https://example.com/image.png",
-#     "alt": "Описание изображения"
-#   }
-# ]

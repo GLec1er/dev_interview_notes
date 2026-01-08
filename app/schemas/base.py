@@ -15,8 +15,16 @@ class SortDirection(str, Enum):
 
 
 class PaginationParams(BaseModel):
-    limit: int = Field(10000, gt=0, description="Количество записей на странице")
-    page_number: int = Field(1, gt=0, description="Номер страницы")
+    limit: int = Field(
+        default=100, 
+        gt=0, 
+        description="Количество записей на странице",
+    )
+    page_number: int = Field(
+        default=1, 
+        gt=0, 
+        description="Номер страницы",
+    )
     
     @field_validator('limit')
     def validate_limit(cls, v):

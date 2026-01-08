@@ -226,6 +226,7 @@ async def logout(
         response.delete_cookie(
             key=cookie_name,
             path="/",
+            domain=None,  # Allow deletion across all domains
         )
     
     log.info(f"✅ Пользователь вышел из системы: {current_user.email}")

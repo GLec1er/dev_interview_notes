@@ -3,12 +3,12 @@ import type { Category, CategoryCreate, CategoryUpdate, CategoryListResponse } f
 
 export const categoryService = {
   async getCategories(
-    skip: number = 0,
+    pageNumber: number = 1,
     limit: number = 10,
     includeInactive: boolean = false
   ): Promise<CategoryListResponse> {
     const params = new URLSearchParams();
-    params.append('skip', skip.toString());
+    params.append('page_number', pageNumber.toString());
     params.append('limit', limit.toString());
     params.append('include_inactive', includeInactive.toString());
 

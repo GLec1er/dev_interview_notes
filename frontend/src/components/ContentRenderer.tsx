@@ -1,68 +1,283 @@
+// ContentRenderer.tsx - исправленная версия
 import React from 'react';
-import { Box, Typography, Paper, Alert } from '@mui/material';
+import { Box, Typography, Paper, Alert, alpha } from '@mui/material';
 import { CodeBlock } from './CodeBlock';
 import type { ContentBlock } from '../types';
+
+const NEUTRAL_COLORS = {
+  primary: '#2D3748',
+  secondary: '#4A5568',
+  accent: '#3182CE',
+  background: '#F7FAFC',
+  surface: '#FFFFFF',
+  textPrimary: '#1A202C',
+  textSecondary: '#718096',
+  border: '#E2E8F0',
+  success: '#38A169',
+  warning: '#DD6B20',
+  error: '#E53E3E',
+  info: '#3182CE',
+};
 
 interface ContentRendererProps {
   blocks: ContentBlock[];
 }
 
-export const ContentRenderer: React.FC<ContentRendererProps> = ({ blocks }) => {
+export const ContentRenderer: React.FC<ContentRendererProps> = ({ blocks }) => {  
+  if (!blocks || !Array.isArray(blocks) || blocks.length === 0) {
+    return <Typography variant="body1">Нет контента для отображения</Typography>;
+  }
+
+  const extractData = (block: ContentBlock) => {
+    // Если есть вложенность data.data, извлекаем внутренний data
+    if (block.data && block.data.data) {
+      return block.data.data;
+    }
+    return block.data || {};
+  };
+
   return (
     <Box>
       {blocks.map((block, index) => {
-        const data = block.data || {};
+        
+        if (!block || typeof block !== 'object') {
+          return null;
+        }
+        
+        const data = extractData(block); // Используем функцию извлечения данных
+        const text = data.text || data.content || '';
         
         switch (block.type) {
           case 'heading':
+            const level = data.level || 1;
+            const variant = `h${Math.min(6, level + 1)}` as const;
             return (
-              <Typography key={index} variant="h5" sx={{ mt: 3, mb: 2, fontWeight: 'bold', color: '#00d4ff' }}>
-                {data.text}
+              <Typography 
+                key={index} 
+                variant={variant}
+                sx={{ 
+                  mt: level === 1 ? 4 : 3,
+                  mb: 2,
+                  fontWeight: 700,
+                  color: NEUTRAL_COLORS.textPrimary,
+                  lineHeight: 1.3,
+                  fontSize: '1.7rem',
+                }}
+              >
+                {text}
               </Typography>
             );
 
           case 'paragraph':
+          case 'text':
             return (
-              <Typography key={index} variant="body1" sx={{ mb: 2, lineHeight: 1.8, color: '#e0e0e0' }}>
-                {data.text}
+              <Typography 
+                key={index} 
+                variant="body1" 
+                sx={{ 
+                  mb: 2.5, 
+                  lineHeight: 1.8,
+                  color: NEUTRAL_COLORS.textPrimary,
+                  fontSize: '1.1rem',
+                }}
+              >
+                {text}
               </Typography>
             );
 
           case 'code':
             return (
-              <CodeBlock
-                key={index}
-                code={data.text || ''}
-                language={data.language}
-              />
+              <Box key={index} sx={{ mb: 3 }}>
+                <CodeBlock
+                  code={data.code || data.text || ''}
+                  language={data.language || 'text'}
+                />
+              </Box>
             );
 
           case 'info':
             return (
-              <Alert key={index} severity="info" sx={{ mb: 2, backgroundColor: 'rgba(0, 212, 255, 0.1)', color: '#00d4ff', border: '1px solid rgba(0, 212, 255, 0.3)' }}>
-                {data.text || data.content}
+              <Alert 
+                key={index} 
+                severity="info"
+                sx={{ 
+                  mb: 3,
+                  borderRadius: 2,
+                  border: `1px solid ${alpha(NEUTRAL_COLORS.info, 0.3)}`,
+                  backgroundColor: alpha(NEUTRAL_COLORS.info, 0.05),
+                  color: NEUTRAL_COLORS.textPrimary,
+                  '& .MuiAlert-icon': {
+                    color: NEUTRAL_COLORS.info,
+                  },
+                  alignItems: 'flex-start',
+                  py: 2,
+                }}
+              >
+                <Box sx={{ lineHeight: 1.7, fontSize: '1.05rem' }}>
+                  {text}
+                </Box>
               </Alert>
             );
 
           case 'warning':
             return (
-              <Alert key={index} severity="warning" sx={{ mb: 2, backgroundColor: 'rgba(255, 170, 0, 0.1)', color: '#ffaa00', border: '1px solid rgba(255, 170, 0, 0.3)' }}>
-                {data.text || data.content}
+              <Alert 
+                key={index} 
+                severity="warning"
+                sx={{ 
+                  mb: 3,
+                  borderRadius: 2,
+                  border: `1px solid ${alpha(NEUTRAL_COLORS.warning, 0.3)}`,
+                  backgroundColor: alpha(NEUTRAL_COLORS.warning, 0.05),
+                  color: NEUTRAL_COLORS.textPrimary,
+                  '& .MuiAlert-icon': {
+                    color: NEUTRAL_COLORS.warning,
+                  },
+                  alignItems: 'flex-start',
+                  py: 2,
+                }}
+              >
+                <Box sx={{ lineHeight: 1.7, fontSize: '1.05rem' }}>
+                  {text}
+                </Box>
               </Alert>
             );
 
           case 'image':
             return (
-              <Paper key={index} sx={{ mb: 2, overflow: 'hidden', border: '1px solid rgba(0, 212, 255, 0.2)' }}>
+              <Paper 
+                key={index} 
+                sx={{ 
+                  mb: 3, 
+                  p: 2,
+                  overflow: 'hidden',
+                  borderRadius: 2,
+                  border: `1px solid ${NEUTRAL_COLORS.border}`,
+                  backgroundColor: NEUTRAL_COLORS.background,
+                  textAlign: 'center',
+                }}
+              >
                 <img
                   src={data.url}
                   alt={data.alt || 'Image'}
-                  style={{ maxWidth: '100%', height: 'auto', display: 'block' }}
+                  style={{ 
+                    maxWidth: '100%', 
+                    height: 'auto', 
+                    display: 'block',
+                    borderRadius: '8px',
+                    margin: '0 auto',
+                    backgroundColor: NEUTRAL_COLORS.background,
+                  }}
+                  onError={(e) => {
+                    console.error('Image failed to load:', data.url);
+                    e.currentTarget.style.display = 'none';
+                  }}
                 />
+                {data.caption && (
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      display: 'block',
+                      mt: 2,
+                      textAlign: 'center',
+                      color: NEUTRAL_COLORS.textSecondary,
+                      fontStyle: 'italic',
+                      fontSize: '0.9rem',
+                    }}
+                  >
+                    {data.caption}
+                  </Typography>
+                )}
               </Paper>
             );
 
+          case 'list':
+            const items = data.items || [];
+            const ListComponent = data.style === 'ordered' ? 'ol' : 'ul';
+            return (
+              <Box 
+                key={index} 
+                component={ListComponent}
+                sx={{ 
+                  mb: 2.5,
+                  pl: 3,
+                  color: NEUTRAL_COLORS.textPrimary,
+                  '& li': {
+                    mb: 1,
+                    lineHeight: 1.7,
+                    fontSize: '1.1rem',
+                  },
+                }}
+              >
+                {items.map((item: string, itemIndex: number) => (
+                  <Typography 
+                    key={itemIndex} 
+                    component="li"
+                    sx={{ 
+                      mb: 1,
+                    }}
+                  >
+                    {item}
+                  </Typography>
+                ))}
+              </Box>
+            );
+
+          case 'quote':
+            return (
+              <Paper 
+                key={index}
+                sx={{ 
+                  mb: 3,
+                  p: 3,
+                  borderRadius: 2,
+                  borderLeft: `4px solid ${NEUTRAL_COLORS.accent}`,
+                  backgroundColor: alpha(NEUTRAL_COLORS.background, 0.7),
+                  fontStyle: 'italic',
+                }}
+              >
+                <Typography 
+                  variant="body1" 
+                  sx={{ 
+                    color: NEUTRAL_COLORS.textPrimary,
+                    lineHeight: 1.8,
+                    fontSize: '1.1rem',
+                    mb: data.caption ? 2 : 0,
+                  }}
+                >
+                  {text}
+                </Typography>
+                {data.caption && (
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      display: 'block',
+                      color: NEUTRAL_COLORS.textSecondary,
+                      fontWeight: 600,
+                      fontSize: '0.9rem',
+                    }}
+                  >
+                    — {data.caption}
+                  </Typography>
+                )}
+              </Paper>
+            );
+
+          case 'delimiter':
+            return (
+              <Box 
+                key={index}
+                sx={{ 
+                  my: 4,
+                  height: '1px',
+                  backgroundColor: NEUTRAL_COLORS.border,
+                  width: '100%',
+                }}
+              />
+            );
+
           default:
+            console.warn(`Unknown block type: ${block.type}`, block);
             return null;
         }
       })}

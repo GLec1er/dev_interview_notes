@@ -3,18 +3,18 @@ import type { Question, QuestionCreate, QuestionUpdate, QuestionListResponse } f
 
 export const questionService = {
   async getQuestions(
-    skip: number = 0,
+    pageNumber: number = 1,
     limit: number = 10,
     isPublished?: boolean,
     difficulty?: string,
     sortBy: string = 'created_at',
-    order: string = 'desc'
+    sortDir: string = 'desc',
   ): Promise<QuestionListResponse> {
     const params = new URLSearchParams();
-    params.append('skip', skip.toString());
+    params.append('page_number', pageNumber.toString());
     params.append('limit', limit.toString());
     params.append('sort_by', sortBy);
-    params.append('order', order);
+    params.append('sort_dir', sortDir);
     
     if (isPublished !== undefined) {
       params.append('is_published', isPublished.toString());
