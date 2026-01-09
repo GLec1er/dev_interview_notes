@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.question import Answer
 from app.repositories.answer import AnswerRepository
 from app.repositories.question import QuestionRepository
-from app.schemas.answer import AnswerCreate, AnswerFilterParams, AnswerSortParams, AnswerUpdate, AnswerResponse
+from app.schemas.answer import AnswerCreate, AnswerFilterParams, AnswerSortParams, AnswerUpdate, AnswerResponse, AnswerUpdateResponse
 from app.core.loggers import log
 from app.schemas.base import PaginationParams
 
@@ -171,7 +171,7 @@ class AnswerService:
         self,
         answer_id: UUID,
         data: AnswerUpdate,
-    ) -> Optional[AnswerResponse]:
+    ) -> Optional[AnswerUpdateResponse]:
         """Обновление ответа.
         
         Args:
@@ -179,7 +179,7 @@ class AnswerService:
             data: Данные для обновления
             
         Returns:
-            AnswerResponse с обновленным ответом или None
+            AnswerUpdateResponse с обновленным ответом или None
         """
         try:
             # Проверка существования ответа
@@ -195,7 +195,7 @@ class AnswerService:
             
             if updated_answer:
                 log.info(f"✅ Ответ успешно обновлен: {answer_id}")
-                return AnswerResponse.model_validate(updated_answer)
+                return AnswerUpdateResponse.model_validate(updated_answer)
             
             return None
         except Exception as e:

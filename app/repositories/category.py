@@ -1,14 +1,13 @@
 """Репозиторий для работы с категориями."""
 
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from uuid import UUID
 
 from sqlalchemy import func, select, delete, and_, or_
-from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.db.models.question import Category, QuestionCategory
+from app.db.models.question import Category, Question
 from app.core.loggers import log
 from app.repositories.base import BaseRepository
 from app.schemas.base import PaginationParams
@@ -139,8 +138,8 @@ class CategoryRepository(BaseRepository[Category, CategoryCreate, CategoryUpdate
             Количество вопросов
         """
         try:
-            stmt = select(func.count()).select_from(QuestionCategory).where(
-                QuestionCategory.category_id == category_id
+            stmt = select(func.count()).select_from(Question).where(
+                Question.category_id == category_id
             )
             result = await self.session.execute(stmt)
             return result.scalar_one()
@@ -191,8 +190,8 @@ class CategoryRepository(BaseRepository[Category, CategoryCreate, CategoryUpdate
         """
         try:
             # Удаляем связи с вопросами
-            delete_links_stmt = delete(QuestionCategory).where(
-                QuestionCategory.category_id == category_id
+            delete_links_stmt = delete(Question).where(
+                Question.category_id == category_id
             )
             await self.session.execute(delete_links_stmt)
             
@@ -210,7 +209,10 @@ class CategoryRepository(BaseRepository[Category, CategoryCreate, CategoryUpdate
             log.error(f"❌ Ошибка при удалении категории: {str(e)}")
             raise
 
-    async def get_categories_for_question(self, question_id: UUID) -> List[Category]:
+    async def get_categories_for_question(
+        self, 
+        question_id: UUID,
+    ) -> List[Category]:
         """Получить категории для вопроса.
         
         Args:
@@ -222,8 +224,8 @@ class CategoryRepository(BaseRepository[Category, CategoryCreate, CategoryUpdate
         try:
             stmt = (
                 select(Category)
-                .join(QuestionCategory, Category.id == QuestionCategory.category_id)
-                .where(QuestionCategory.question_id == question_id)
+                .join(Question, Category.id == Question.category_id)
+                .where(Question.id == question_id)
             )
             result = await self.session.execute(stmt)
             return result.scalars().all()
@@ -247,10 +249,10 @@ class CategoryRepository(BaseRepository[Category, CategoryCreate, CategoryUpdate
         """
         try:
             # Проверяем, существует ли уже связь
-            check_stmt = select(QuestionCategory).where(
+            check_stmt = select(Question).where(
                 and_(
-                    QuestionCategory.question_id == question_id,
-                    QuestionCategory.category_id == category_id,
+                    Question.id == question_id,
+                    Question.category_id == category_id,
                 )
             )
             result = await self.session.execute(check_stmt)
@@ -261,8 +263,8 @@ class CategoryRepository(BaseRepository[Category, CategoryCreate, CategoryUpdate
                 return False
             
             # Создаем новую связь
-            link = QuestionCategory(
-                question_id=question_id,
+            link = Question(
+                id=question_id,
                 category_id=category_id,
             )
             self.session.add(link)
@@ -289,10 +291,10 @@ class CategoryRepository(BaseRepository[Category, CategoryCreate, CategoryUpdate
             True если связь удалена, False если не найдена
         """
         try:
-            stmt = delete(QuestionCategory).where(
+            stmt = delete(Question).where(
                 and_(
-                    QuestionCategory.question_id == question_id,
-                    QuestionCategory.category_id == category_id,
+                    Question.id == question_id,
+                    Question.category_id == category_id,
                 )
             )
             result = await self.session.execute(stmt)
@@ -323,15 +325,15 @@ class CategoryRepository(BaseRepository[Category, CategoryCreate, CategoryUpdate
         """
         try:
             # Удаляем все существующие связи
-            delete_stmt = delete(QuestionCategory).where(
-                QuestionCategory.question_id == question_id
+            delete_stmt = delete(Question).where(
+                Question.id == question_id
             )
             await self.session.execute(delete_stmt)
             
             # Добавляем новые связи
             for category_id in category_ids:
-                link = QuestionCategory(
-                    question_id=question_id,
+                link = Question(
+                    id=question_id,
                     category_id=category_id,
                 )
                 self.session.add(link)

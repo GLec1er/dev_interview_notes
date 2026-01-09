@@ -2,25 +2,47 @@ import api from './api';
 import type { Answer, AnswerCreate, AnswerUpdate, ContentBlock, RawContentBlock } from '../types';
 
 /**
- * Converts raw API response format to ContentBlock format
- * API returns: { type: "info", content: "text" }
- * We need: { type: "info", data: { content: "text" } }
+ * Determines if content is already in normalized format
  */
-function normalizeAnswerContent(rawContent: RawContentBlock[]): ContentBlock[] {
-  return rawContent.map((block) => {
-    const data: any = {};
-    
-    // Copy all properties except 'type' to data object
-    Object.keys(block).forEach((key) => {
-      if (key !== 'type') {
-        data[key] = (block as any)[key];
-      }
-    });
-    
-    return {
+function isAlreadyNormalized(content: any[]): boolean {
+  if (!Array.isArray(content) || content.length === 0) return false;
+  const firstBlock = content[0];
+  return firstBlock && 'data' in firstBlock && firstBlock.data !== undefined;
+}
+
+/**
+ * Converts raw API response format to ContentBlock format if needed
+ */
+function normalizeAnswerContent(rawContent: any[]): ContentBlock[] {
+  if (!rawContent || !Array.isArray(rawContent)) {
+    return [];
+  }
+  
+  // Если данные уже нормализованы, возвращаем как есть
+  if (isAlreadyNormalized(rawContent)) {
+    return rawContent as ContentBlock[];
+  }
+  
+  // Иначе конвертируем старый формат в новый
+  return rawContent.map((block: RawContentBlock) => {
+    const normalizedBlock: ContentBlock = {
       type: block.type,
-      data,
+      data: {}
     };
+    
+    // Для каждого типа блока собираем данные в data
+    if (block.type === 'code') {
+      if (block.language) normalizedBlock.data!.language = block.language;
+      if (block.content) normalizedBlock.data!.code = block.content;
+    } else if (['heading', 'paragraph', 'info', 'warning'].includes(block.type)) {
+      if (block.text) normalizedBlock.data!.text = block.text;
+      else if (block.content) normalizedBlock.data!.text = block.content;
+    } else if (block.type === 'image') {
+      if (block.url) normalizedBlock.data!.url = block.url;
+      if (block.alt) normalizedBlock.data!.alt = block.alt;
+    }
+    
+    return normalizedBlock;
   });
 }
 
@@ -44,7 +66,7 @@ export const answerService = {
       return [];
     }
     
-    // Normalize the content structure
+    // Normalize the content structure only if needed
     return response.data.map((answer: any) => ({
       ...answer,
       content: Array.isArray(answer.content) 
@@ -55,6 +77,12 @@ export const answerService = {
 
   async getAnswer(questionId: string, answerId: string): Promise<Answer> {
     const response = await api.get(`/questions/${questionId}/answers/${answerId}`);
+    
+    // Нормализуем контент из ответа только если нужно
+    if (response.data.content && Array.isArray(response.data.content)) {
+      response.data.content = normalizeAnswerContent(response.data.content);
+    }
+    
     return response.data;
   },
 

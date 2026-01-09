@@ -5,22 +5,26 @@ export const questionService = {
   async getQuestions(
     pageNumber: number = 1,
     limit: number = 10,
-    isPublished?: boolean,
+    is_published?: boolean,
     difficulty?: string,
+    category_id?: string,
     sortBy: string = 'created_at',
-    sortDir: string = 'desc',
+    sortDir: string = 'desc'
   ): Promise<QuestionListResponse> {
     const params = new URLSearchParams();
     params.append('page_number', pageNumber.toString());
     params.append('limit', limit.toString());
     params.append('sort_by', sortBy);
     params.append('sort_dir', sortDir);
-    
-    if (isPublished !== undefined) {
-      params.append('is_published', isPublished.toString());
+
+    if (is_published !== undefined) {
+      params.append('is_published', is_published.toString());
     }
     if (difficulty) {
       params.append('difficulty', difficulty);
+    }
+    if (category_id) {
+      params.append('category_id', category_id);
     }
 
     const response = await api.get(`/questions/?${params.toString()}`);

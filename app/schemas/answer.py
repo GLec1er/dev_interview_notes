@@ -14,6 +14,10 @@ class AnswerCreate(BaseModel):
         ..., 
         description="Блоки контента ответа",
     )
+    is_published: bool = Field(
+        False, 
+        description="Опубликован ли ответ",
+    )
 
     class Config:
         from_attributes = True
@@ -22,6 +26,20 @@ class AnswerCreate(BaseModel):
 class AnswerUpdate(BaseModel):
     """Схема для обновления ответа."""
     content: Optional[List[Dict[str, Any]]] = None
+    is_published: bool = Field(
+        False, 
+        description="Опубликован ли ответ",
+    )
+
+    class Config:
+        from_attributes = True
+
+
+class AnswerUpdateResponse(BaseModel):
+    """Схема для ответа с ответом."""
+    id: UUID
+    question_id: UUID
+    content: List[Dict[str, Any]]
 
     class Config:
         from_attributes = True
@@ -33,6 +51,10 @@ class AnswerResponse(BaseModel):
     question_id: UUID
     content: List[Dict[str, Any]]
     updated_at: datetime
+    is_published: bool = Field(
+        False, 
+        description="Опубликован ли ответ",
+    )
 
     class Config:
         from_attributes = True

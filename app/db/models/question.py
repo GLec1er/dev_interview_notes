@@ -95,6 +95,14 @@ class Question(Base):
         index=True,
     )
 
+    category_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("categories.id", ondelete="SET NULL"),
+        nullable=False,
+        index=True,
+        comment='ID категории вопроса'
+    )
+
     ############# Time metadata #############
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True),
@@ -112,10 +120,11 @@ class Question(Base):
     answers: Mapped[List["Answer"]] = relationship(
         "Answer", back_populates="question", cascade="all, delete-orphan"
     )
-    categories: Mapped[List["Category"]] = relationship(
-        "Category",
-        secondary="question_categories",
+    
+    category: Mapped["Category"] = relationship(
+        "Category", 
         back_populates="questions",
+        lazy="joined"  # Опционально: загружать категорию вместе с вопросом
     )
 
     ############# Validations #############
@@ -144,6 +153,12 @@ class Question(Base):
             'is_published',
             'created_at'
         ),
+        Index(
+            'idx_questions_category',
+            'category_id',
+            'is_published',
+            'created_at'
+        ),
     )
 
 
@@ -169,6 +184,11 @@ class Answer(Base):
         nullable=False,
         default=list,
         comment='Блоки контента в структурированном формате'
+    )
+    is_published: Mapped[bool] = mapped_column(
+        Boolean, 
+        default=False, 
+        index=True,
     )
 
     ############# Time metadata #############
@@ -232,45 +252,46 @@ class Category(Base):
         comment='Активна ли категория',
     )
 
-    # Relationships
     questions: Mapped[List[Question]] = relationship(
         "Question",
-        secondary="question_categories",
-        back_populates="categories",
+        back_populates="category",
+        cascade="none, delete-orphan",  # Опционально: удалять вопросы при удалении категории
+        lazy="dynamic"
     )
 
 
-class QuestionCategory(Base):
-    """Модель связи между вопросами и категориями."""
+# ПРИГОДИТСЯ ПОТОМ ДЛЯ ПОДКАТЕГОРИЙ
+# class QuestionCategory(Base):
+#     """Модель связи между вопросами и категориями."""
 
-    __tablename__ = "question_categories"
+#     __tablename__ = "question_categories"
 
-    ############# Main fields #############
-    question_id: Mapped[uuid4] = mapped_column(
-        UUID,
-        ForeignKey("questions.id", ondelete="CASCADE"),
-        primary_key=True,
-        index=True,
-    )
-    category_id: Mapped[uuid4] = mapped_column(
-        UUID,
-        ForeignKey("categories.id", ondelete="CASCADE"),
-        primary_key=True,
-        index=True,
-    )
+#     ############# Main fields #############
+#     question_id: Mapped[uuid4] = mapped_column(
+#         UUID,
+#         ForeignKey("questions.id", ondelete="CASCADE"),
+#         primary_key=True,
+#         index=True,
+#     )
+#     category_id: Mapped[uuid4] = mapped_column(
+#         UUID,
+#         ForeignKey("categories.id", ondelete="CASCADE"),
+#         primary_key=True,
+#         index=True,
+#     )
 
-    ############## Time metadata #############
-    created_at: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True),
-        server_default=func.now(),
-        nullable=False
-    )
+#     ############## Time metadata #############
+#     created_at: Mapped[datetime] = mapped_column(
+#         TIMESTAMP(timezone=True),
+#         server_default=func.now(),
+#         nullable=False
+#     )
 
-    __table_args__ = (
-        # Индекс для быстрого поиска вопросов по категории
-        Index(
-            'idx_category_questions',
-            'category_id',
-            'created_at'
-        ),
-    )
+#     __table_args__ = (
+#         # Индекс для быстрого поиска вопросов по категории
+#         Index(
+#             'idx_category_questions',
+#             'category_id',
+#             'created_at'
+#         ),
+#     )

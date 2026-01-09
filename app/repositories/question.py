@@ -8,7 +8,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.db.models.question import Question
+from app.db.models.question import Category, Question
 from app.core.loggers import log
 from app.repositories.base import BaseRepository
 from app.repositories.category import CategoryRepository
@@ -54,9 +54,7 @@ class QuestionRepository(
     ) -> tuple[List[Question], int]:
         """Получить отфильтрованный список вопросов."""
         try:
-            query = select(self.model).options(
-                selectinload(Question.categories)
-            )
+            query = select(self.model)
             
             # Применяем фильтры
             if filters:
@@ -105,7 +103,6 @@ class QuestionRepository(
                 .where(Question.id == question_id)
                 .options(
                     selectinload(Question.answers),
-                    selectinload(Question.categories),
                 )
             )
             result = await self.session.execute(stmt)
@@ -139,7 +136,6 @@ class QuestionRepository(
                 .where(Question.slug == slug)
                 .options(
                     selectinload(Question.answers),
-                    selectinload(Question.categories),
                 )
             )
             result = await self.session.execute(stmt)

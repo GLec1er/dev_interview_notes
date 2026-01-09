@@ -26,6 +26,7 @@ from app.schemas.answer import (
     AnswerSortParams,
     AnswerUpdate,
     AnswerResponse,
+    AnswerUpdateResponse,
 )
 from app.core.loggers import log
 from app.core.configs.init import settings
@@ -428,7 +429,7 @@ async def get_answer(
 
 @router.put(
     "/{question_id}/answers/{answer_id}", 
-    response_model=AnswerResponse,
+    response_model=AnswerUpdateResponse,
     description="Обновление ответа по ID",
 )
 @check_permission(required_role=UserRole.ADMIN)
@@ -438,7 +439,7 @@ async def update_answer(
     answer_id: UUID,
     data: AnswerUpdate,
     session: SessionDep,
-) -> AnswerResponse:
+):
     """Обновить ответ.
     
     Args:
@@ -448,7 +449,7 @@ async def update_answer(
         session: Сессия БД
         
     Returns:
-        AnswerResponse с обновленным ответом
+        AnswerUpdateResponse с обновленным ответом
         
     Raises:
         HTTPException: Если ответ не найден или не принадлежит вопросу

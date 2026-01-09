@@ -22,6 +22,8 @@ import {
   IconButton,
   Paper,
   alpha,
+  Switch,
+  Tooltip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -30,6 +32,8 @@ import {
   Category as CategoryIcon,
   CheckCircle as ActiveIcon,
   RemoveCircle as InactiveIcon,
+  ToggleOn as ToggleOnIcon,
+  ToggleOff as ToggleOffIcon,
 } from '@mui/icons-material';
 import { categoryService } from '../../services/categoryService';
 import type { Category } from '../../types';
@@ -120,13 +124,15 @@ export const AdminCategories: React.FC = () => {
     name: '',
     slug: '',
     description: '',
+    is_active: true,
   });
   const [error, setError] = useState<string | null>(null);
+  const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
 
   const loadCategories = useCallback(async () => {
     try {
       setIsLoading(true);
-      const data = await categoryService.getCategories(1, ITEMS_PER_PAGE);
+      const data = await categoryService.getCategories(1, ITEMS_PER_PAGE, true);
       setCategories(data.items);
       setError(null);
     } catch (err) {
@@ -148,6 +154,7 @@ export const AdminCategories: React.FC = () => {
         name: category.name,
         slug: category.slug,
         description: category.description || '',
+        is_active: category.is_active,
       });
     } else {
       setEditingCategory(null);
@@ -155,6 +162,7 @@ export const AdminCategories: React.FC = () => {
         name: '',
         slug: '',
         description: '',
+        is_active: true,
       });
     }
     setOpenDialog(true);
@@ -174,12 +182,14 @@ export const AdminCategories: React.FC = () => {
           name: formData.name,
           slug: formData.slug,
           description: formData.description,
+          is_active: formData.is_active,
         });
       } else {
         await categoryService.createCategory({
           name: formData.name,
           slug: formData.slug,
           description: formData.description,
+          is_active: formData.is_active,
         });
       }
       handleCloseDialog();
@@ -198,6 +208,37 @@ export const AdminCategories: React.FC = () => {
       } catch (err: any) {
         setError(err.response?.data?.detail || 'Failed to delete category');
       }
+    }
+  };
+
+  const handleToggleActive = async (category: Category) => {
+    try {
+      setUpdatingIds(prev => new Set(prev).add(category.id));
+      setError(null);
+
+      await categoryService.updateCategory(category.id, {
+        name: category.name,
+        slug: category.slug,
+        description: category.description || '',
+        is_active: !category.is_active,
+      });
+
+      // Обновляем локальное состояние
+      setCategories(prev =>
+        prev.map(cat =>
+          cat.id === category.id
+            ? { ...cat, is_active: !cat.is_active }
+            : cat
+        )
+      );
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to update category status');
+    } finally {
+      setUpdatingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(category.id);
+        return newSet;
+      });
     }
   };
 
@@ -313,6 +354,14 @@ export const AdminCategories: React.FC = () => {
                 }}>
                   Status
                 </TableCell>
+                <TableCell align="center" sx={{ 
+                  fontWeight: 600, 
+                  color: NEUTRAL_COLORS.textPrimary,
+                  borderBottom: `2px solid ${NEUTRAL_COLORS.border}`,
+                  py: 2
+                }}>
+                  Active
+                </TableCell>
                 <TableCell align="right" sx={{ 
                   fontWeight: 600, 
                   color: NEUTRAL_COLORS.textPrimary,
@@ -391,6 +440,45 @@ export const AdminCategories: React.FC = () => {
                           : alpha(NEUTRAL_COLORS.secondary, 0.3)}`,
                       }}
                     />
+                  </TableCell>
+                  <TableCell align="center" sx={{ py: 2 }}>
+                    <Tooltip 
+                      title={`Click to ${category.is_active ? 'deactivate' : 'activate'}`}
+                      placement="top"
+                    >
+                      <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
+                        {updatingIds.has(category.id) ? (
+                          <CircularProgress 
+                            size={24} 
+                            sx={{ 
+                              color: NEUTRAL_COLORS.accent,
+                              mx: 1
+                            }} 
+                          />
+                        ) : (
+                          <Switch
+                            checked={category.is_active}
+                            onChange={() => handleToggleActive(category)}
+                            color="success"
+                            size="medium"
+                            sx={{
+                              '& .MuiSwitch-switchBase': {
+                                color: NEUTRAL_COLORS.error,
+                                '&.Mui-checked': {
+                                  color: NEUTRAL_COLORS.success,
+                                },
+                                '&.Mui-checked + .MuiSwitch-track': {
+                                  backgroundColor: NEUTRAL_COLORS.success,
+                                },
+                              },
+                              '& .MuiSwitch-track': {
+                                backgroundColor: NEUTRAL_COLORS.error,
+                              },
+                            }}
+                          />
+                        )}
+                      </Box>
+                    </Tooltip>
                   </TableCell>
                   <TableCell align="right" sx={{ py: 2 }}>
                     <Stack direction="row" spacing={1} justifyContent="flex-end">
@@ -529,6 +617,21 @@ export const AdminCategories: React.FC = () => {
                 }
               }}
             />
+            <Stack 
+              direction="row" 
+              spacing={1} 
+              alignItems="center"
+              sx={{ mt: 1 }}
+            >
+              <Switch
+                checked={formData.is_active}
+                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                color="success"
+              />
+              <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+                Category is {formData.is_active ? 'active' : 'inactive'}
+              </Typography>
+            </Stack>
           </Stack>
         </DialogContent>
         <DialogActions sx={{ 

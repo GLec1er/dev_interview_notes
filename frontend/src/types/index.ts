@@ -35,27 +35,32 @@ export interface Question {
   id: string;
   title: string;
   slug: string;
-  content: ContentBlock[];
+  content: any[];
   difficulty: 'easy' | 'medium' | 'hard';
   is_published: boolean;
-  created_at?: string;
-  updated_at?: string;
+  created_at: string;
+  updated_at: string;
+  category_id?: string; // ID категории
+  category_name?: string; // Название категории из API
+  category?: Category;
 }
 
 export interface QuestionCreate {
   title: string;
   slug: string;
-  content: ContentBlock[];
+  content: any[];
   difficulty: 'easy' | 'medium' | 'hard';
-  is_published?: boolean;
+  is_published: boolean;
+  category_id: string;
 }
 
 export interface QuestionUpdate {
   title?: string;
   slug?: string;
-  content?: ContentBlock[];
+  content?: any[];
   difficulty?: 'easy' | 'medium' | 'hard';
   is_published?: boolean;
+  category_id?: string;
 }
 
 export interface QuestionListResponse {
@@ -115,7 +120,7 @@ export interface ContentBlock {
   type: ContentType;
   data?: {
     text?: string;
-    content?: string;
+    code?: string;
     language?: ProgrammingLanguage;
     url?: string;
     alt?: string;

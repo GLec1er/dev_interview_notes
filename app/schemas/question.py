@@ -36,9 +36,7 @@ class QuestionCreate(BaseModel):
         False, 
         description="Опубликован ли вопрос",
     )
-    categories: List[CategoryResponse] = Field(
-        default_factory=list,
-    )
+    category_id: UUID
 
     class Config:
         from_attributes = True
@@ -52,9 +50,7 @@ class QuestionResponse(BaseModel):
     content: List[Dict[str, Any]]
     difficulty: DifficultyQuestionLevel
     is_published: bool
-    categories: List[CategoryResponse] = Field(
-        default_factory=list,
-    )
+    category_id: UUID
 
     class Config:
         from_attributes = True
@@ -72,6 +68,7 @@ class QuestionUpdate(BaseModel):
     content: Optional[List[Dict[str, Any]]] = None
     difficulty: Optional[DifficultyQuestionLevel] = None
     is_published: Optional[bool] = None
+    category_id: UUID
 
     class Config:
         from_attributes = True
@@ -89,6 +86,7 @@ class QuestionFilterParams(BaseModel):
     """Параметры фильтрации вопросов."""
     is_published: Optional[bool] = None
     difficulty: Optional[DifficultyQuestionLevel] = None
+    category_id: Optional[UUID] = None
     
     def get_filters(self) -> Dict[str, Any]:
         """Получить словарь фильтров для SQLAlchemy."""
@@ -100,6 +98,9 @@ class QuestionFilterParams(BaseModel):
         if self.difficulty is not None:
             filters["difficulty"] = self.difficulty.value
         
+        if self.category_id is not None:
+            filters["category_id"] = self.category_id
+
         return filters
     
 
