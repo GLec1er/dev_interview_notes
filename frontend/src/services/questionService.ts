@@ -7,9 +7,10 @@ export const questionService = {
     limit: number = 10,
     is_published?: boolean,
     difficulty?: string,
-    category_id?: string,
     sortBy: string = 'created_at',
-    sortDir: string = 'desc'
+    sortDir: string = 'desc',
+    category_id?: string,
+    exclude_inactive_categories?: boolean,
   ): Promise<QuestionListResponse> {
     const params = new URLSearchParams();
     params.append('page_number', pageNumber.toString());
@@ -25,6 +26,9 @@ export const questionService = {
     }
     if (category_id) {
       params.append('category_id', category_id);
+    }
+    if (exclude_inactive_categories !== undefined) {
+      params.append('exclude_inactive_categories', exclude_inactive_categories.toString());
     }
 
     const response = await api.get(`/questions/?${params.toString()}`);

@@ -17,6 +17,10 @@ import {
   IconButton,
   Divider,
   Fade,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -34,9 +38,11 @@ import {
   BarChart as BarChartIcon,
   Timeline as TimelineIcon,
   ArrowBack as ArrowBackIcon,
+  Category as CategoryIcon,
 } from '@mui/icons-material';
 import { questionService } from '../services/questionService';
-import type { Question } from '../types';
+import { categoryService } from '../services/categoryService';
+import type { Question, Category } from '../types';
 
 // Нейтральная цветовая палитра
 const NEUTRAL_COLORS = {
@@ -517,9 +523,10 @@ interface QuestionCardProps {
   question: Question;
   onClick: () => void;
   index: number;
+  categories: Category[];
 }
 
-const QuestionCard: React.FC<QuestionCardProps> = ({ question, onClick, index }) => {
+const QuestionCard: React.FC<QuestionCardProps> = ({ question, onClick, index, categories }) => {
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'easy':
@@ -532,6 +539,26 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, onClick, index })
         return NEUTRAL_COLORS.secondary;
     }
   };
+
+  // Получаем название категории вопроса
+  const getCategoryName = (question: Question) => {
+    // Сначала проверяем полный объект категории
+    if (question.category?.name) {
+      return question.category.name;
+    }
+    
+    // Затем ищем в локальном списке категорий по ID
+    if (question.category_id) {
+      const category = categories.find(cat => cat.id === question.category_id);
+      if (category) {
+        return category.name;
+      }
+    }
+    
+    return null;
+  };
+
+  const categoryName = getCategoryName(question);
 
   return (
     <Paper
@@ -643,31 +670,24 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, onClick, index })
                 }}
               />
 
-              {/* Статус */}
-              {question.is_published ? (
+              {/* Категория */}
+              {categoryName && (
                 <Chip
-                  label="Published"
+                  icon={<CategoryIcon />}
+                  label={categoryName}
                   size="small"
                   sx={{
                     fontWeight: 600,
-                    backgroundColor: alpha(NEUTRAL_COLORS.success, 0.1),
-                    color: NEUTRAL_COLORS.success,
-                    border: `2px solid ${alpha(NEUTRAL_COLORS.success, 0.2)}`,
+                    backgroundColor: alpha(NEUTRAL_COLORS.info, 0.1),
+                    color: NEUTRAL_COLORS.info,
+                    border: `2px solid ${alpha(NEUTRAL_COLORS.info, 0.2)}`,
                     fontSize: '0.75rem',
                     height: 28,
-                  }}
-                />
-              ) : (
-                <Chip
-                  label="Draft"
-                  size="small"
-                  sx={{
-                    fontWeight: 600,
-                    backgroundColor: alpha(NEUTRAL_COLORS.secondary, 0.1),
-                    color: NEUTRAL_COLORS.secondary,
-                    border: `2px solid ${alpha(NEUTRAL_COLORS.secondary, 0.2)}`,
-                    fontSize: '0.75rem',
-                    height: 28,
+                    '& .MuiChip-icon': {
+                      fontSize: '0.875rem',
+                      color: NEUTRAL_COLORS.info,
+                      ml: 0.5,
+                    },
                   }}
                 />
               )}
@@ -735,18 +755,34 @@ export const QuestionsPage: React.FC = () => {
   const navigate = useNavigate();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [filteredQuestions, setFilteredQuestions] = useState<Question[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [difficulty, setDifficulty] = useState<string>('');
-  const [isPublished, setIsPublished] = useState<string>('');
+  const [categoryId, setCategoryId] = useState<string>('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [totalCounts, setTotalCounts] = useState({
     easy: 0,
     medium: 0,
     hard: 0,
   });
+
+  // Загрузка категорий
+  const loadCategories = useCallback(async () => {
+    try {
+      setIsLoadingCategories(true);
+      const data = await categoryService.getCategories(1, 100, true);
+      const activeCategories = data.items.filter((cat: Category) => cat.is_active);
+      setCategories(activeCategories);
+    } catch (err) {
+      console.error('Failed to load categories:', err);
+    } finally {
+      setIsLoadingCategories(false);
+    }
+  }, []);
 
   // Дебаунс для поиска
   useEffect(() => {
@@ -763,13 +799,21 @@ export const QuestionsPage: React.FC = () => {
       const actualSearch = debouncedSearch.trim();
       const pageNumber = page;
 
+      // Всегда показываем только опубликованные вопросы
+      const is_published = true;
+
       let data;
       if (actualSearch) {
+        // При поиске загружаем все вопросы и фильтруем локально
         data = await questionService.getQuestions(
-          0,
+          1,
           1000,
-          isPublished === '' ? undefined : isPublished === 'true',
-          difficulty || undefined
+          is_published,
+          difficulty || undefined,
+          'updated_at',
+          'desc',
+          categoryId || undefined,
+          true,
         );
         const filtered = data.items.filter((q) =>
           q.title.toLowerCase().includes(actualSearch.toLowerCase())
@@ -783,20 +827,30 @@ export const QuestionsPage: React.FC = () => {
           hard: filtered.filter((q) => q.difficulty === 'hard').length,
         });
       } else {
+        // Без поиска используем пагинацию
         data = await questionService.getQuestions(
           pageNumber,
           ITEMS_PER_PAGE,
-          isPublished === '' ? undefined : isPublished === 'true',
-          difficulty || undefined
+          is_published,
+          difficulty || undefined,
+          'updated_at',
+          'desc',
+          categoryId || undefined,
+          true,
         );
         setQuestions(data.items);
         setTotal(data.total);
 
+        // Загружаем статистику
         const statsData = await questionService.getQuestions(
           1,
           1000,
-          isPublished === '' ? undefined : isPublished === 'true',
-          difficulty || undefined
+          is_published,
+          difficulty || undefined,
+          'updated_at',
+          'desc',
+          categoryId || undefined,
+          true,
         );
         setTotalCounts({
           easy: statsData.items.filter((q) => q.difficulty === 'easy').length,
@@ -809,7 +863,11 @@ export const QuestionsPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [page, difficulty, isPublished, debouncedSearch]);
+  }, [page, difficulty, categoryId, debouncedSearch]);
+
+  useEffect(() => {
+    loadCategories();
+  }, [loadCategories]);
 
   useEffect(() => {
     loadQuestions();
@@ -829,18 +887,24 @@ export const QuestionsPage: React.FC = () => {
     setSearch('');
     setDebouncedSearch('');
     setDifficulty('');
-    setIsPublished('');
+    setCategoryId('');
     setPage(1);
   }, []);
 
   const handleStatFilterSelect = (filter: string) => {
     if (filter === '') {
-      // Если кликнули на "Всего вопросов" - сбрасываем фильтр по сложности
       setDifficulty('');
     } else {
       setDifficulty(filter);
     }
     setPage(1);
+  };
+
+  // Получаем название выбранной категории для отображения
+  const getSelectedCategoryName = () => {
+    if (!categoryId) return null;
+    const category = categories.find(c => c.id === categoryId);
+    return category?.name || null;
   };
 
   const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
@@ -858,420 +922,431 @@ export const QuestionsPage: React.FC = () => {
     >
       <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3 } }}>
         {/* Hero Section */}
-      <Box sx={{ mb: 6, textAlign: 'center', position: 'relative' }}>
-        {/* Кнопка назад в главное меню */}
-        <Button
-          variant="outlined"
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/')}
-          sx={{
-            position: 'absolute',
-            left: 0,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            borderRadius: 3,
-            borderWidth: 2,
-            borderColor: alpha(NEUTRAL_COLORS.accent, 0.3),
-            color: NEUTRAL_COLORS.accent,
-            fontWeight: 600,
-            px: 3,
-            py: 1.5,
-            display: { xs: 'none', sm: 'flex' },
-            alignItems: 'center',
-            gap: 1,
-            '&:hover': {
-              borderColor: NEUTRAL_COLORS.accent,
-              backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
-              transform: 'translateY(-50%) translateX(-4px)',
-              boxShadow: `0 8px 24px ${alpha(NEUTRAL_COLORS.accent, 0.1)}`,
-            },
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          }}
-        >
-          В главное меню
-        </Button>
-
-        {/* Мобильная кнопка назад */}
-        <IconButton
-          onClick={() => navigate('/')}
-          sx={{
-            position: 'absolute',
-            left: 0,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            display: { xs: 'flex', sm: 'none' },
-            color: NEUTRAL_COLORS.accent,
-            backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
-            '&:hover': {
-              backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.2),
-            },
-          }}
-        >
-          <ArrowBackIcon />
-        </IconButton>
-
-        {/* Основная иконка с интерактивными элементами */}
-        <Box
-          sx={{
-            position: 'relative',
-            display: 'inline-block',
-            cursor: 'pointer',
-            mb: 3,
-            '&:hover .icon-wrapper': {
-              transform: 'rotate(10deg) scale(1.05)',
-            },
-            '&:hover .question-count': {
-              opacity: 1,
-              transform: 'translateY(0)',
-            },
-          }}
-        >
-          <Box
-            className="icon-wrapper"
-            sx={{
-              display: 'inline-flex',
-              p: 3,
-              borderRadius: '24px',
-              backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
-              color: NEUTRAL_COLORS.accent,
-              boxShadow: `0 8px 32px ${alpha(NEUTRAL_COLORS.accent, 0.2)}`,
-              transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-              position: 'relative',
-              overflow: 'hidden',
-              '&:before': {
-                content: '""',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: `conic-gradient(from 0deg, ${alpha(NEUTRAL_COLORS.accent, 0.3)} 0%, transparent 30%)`,
-                opacity: 0,
-                transition: 'opacity 0.3s',
-              },
-              '&:hover:before': {
-                opacity: 1,
-              },
-            }}
-            onClick={() => {
-              // Анимация при клике
-              handleResetFilters();
-              setPage(1);
-            }}
-          >
-            <QuestionIcon sx={{ fontSize: 56 }} />
-          </Box>
-
-          {/* Плавающий счетчик вопросов */}
-          <Box
-            className="question-count"
+        <Box sx={{ mb: 6, textAlign: 'center', position: 'relative' }}>
+          {/* Кнопка назад в главное меню */}
+          <Button
+            variant="outlined"
+            startIcon={<ArrowBackIcon />}
+            onClick={() => navigate('/')}
             sx={{
               position: 'absolute',
-              top: -8,
-              right: -8,
-              width: 48,
-              height: 48,
-              borderRadius: '50%',
-              backgroundColor: NEUTRAL_COLORS.success,
-              color: NEUTRAL_COLORS.surface,
-              display: 'flex',
+              left: 0,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              borderRadius: 3,
+              borderWidth: 2,
+              borderColor: alpha(NEUTRAL_COLORS.accent, 0.3),
+              color: NEUTRAL_COLORS.accent,
+              fontWeight: 600,
+              px: 3,
+              py: 1.5,
+              display: { xs: 'none', sm: 'flex' },
               alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 800,
-              fontSize: '1.125rem',
-              boxShadow: `0 4px 16px ${alpha(NEUTRAL_COLORS.success, 0.4)}`,
-              opacity: 0.8,
-              transform: 'translateY(10px)',
+              gap: 1,
+              '&:hover': {
+                borderColor: NEUTRAL_COLORS.accent,
+                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+                transform: 'translateY(-50%) translateX(-4px)',
+                boxShadow: `0 8px 24px ${alpha(NEUTRAL_COLORS.accent, 0.1)}`,
+              },
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
-            {total}
-          </Box>
+            В главное меню
+          </Button>
 
-          {/* Индикатор сложности */}
-          <Box
+          {/* Мобильная кнопка назад */}
+          <IconButton
+            onClick={() => navigate('/')}
             sx={{
               position: 'absolute',
-              bottom: -8,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              display: 'flex',
-              gap: 0.5,
-            }}
-          >
-            <Box
-              sx={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                backgroundColor: totalCounts.easy > 0 ? NEUTRAL_COLORS.success : alpha(NEUTRAL_COLORS.success, 0.3),
-                transition: 'all 0.3s',
-              }}
-            />
-            <Box
-              sx={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                backgroundColor: totalCounts.medium > 0 ? NEUTRAL_COLORS.warning : alpha(NEUTRAL_COLORS.warning, 0.3),
-                transition: 'all 0.3s',
-              }}
-            />
-            <Box
-              sx={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                backgroundColor: totalCounts.hard > 0 ? NEUTRAL_COLORS.error : alpha(NEUTRAL_COLORS.error, 0.3),
-                transition: 'all 0.3s',
-              }}
-            />
-          </Box>
-        </Box>
-
-        {/* Заголовок с интерактивной статистикой */}
-        <Box
-          sx={{
-            position: 'relative',
-            display: 'inline-block',
-            mb: 2,
-            cursor: 'pointer',
-            '&:hover .progress-bar': {
-              width: '100%',
-            },
-          }}
-          onClick={() => {
-            // Показать модалку со статистикой или прокрутить к статистике
-            const statsElement = document.getElementById('statistics-section');
-            if (statsElement) {
-              statsElement.scrollIntoView({ behavior: 'smooth' });
-            }
-          }}
-        >
-          <Typography
-            variant="h1"
-            sx={{
-              fontWeight: 900,
-              color: NEUTRAL_COLORS.textPrimary,
-              letterSpacing: '-0.025em',
-              mb: 3,
-              fontSize: { xs: '2.5rem', sm: '3rem', md: '3.5rem' },
-              background: `linear-gradient(135deg, ${NEUTRAL_COLORS.textPrimary} 0%, ${NEUTRAL_COLORS.accent} 100%)`,
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              position: 'relative',
-              display: 'inline-block',
-              mr: 2,
-              ml: 5
-            }}
-          >
-            InterviewBox
-            {/* Подчеркивание-прогресс бар */}
-            <Box
-              className="progress-bar"
-              sx={{
-                position: 'absolute',
-                bottom: -10,
-                left: 0,
-                width: '60%',
-                height: 4,
-                borderRadius: 2,
-                background: `linear-gradient(90deg, ${NEUTRAL_COLORS.accent} 0%, ${NEUTRAL_COLORS.success} 100%)`,
-                transition: 'width 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
-              }}
-            />
-          </Typography>
-
-          {/* Статистика изучения */}
-          <Paper
-            elevation={0}
-            sx={{
-              position: 'absolute',
-              right: { xs: 0, sm: -200 },
+              left: 0,
               top: '50%',
               transform: 'translateY(-50%)',
-              p: 2,
-              borderRadius: 3,
-              border: `2px solid ${alpha(NEUTRAL_COLORS.accent, 0.2)}`,
-              backgroundColor: alpha(NEUTRAL_COLORS.surface, 0.9),
-              backdropFilter: 'blur(10px)',
-              display: { xs: 'none', lg: 'block' },
-              minWidth: 180,
+              display: { xs: 'flex', sm: 'none' },
+              color: NEUTRAL_COLORS.accent,
+              backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
+              '&:hover': {
+                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.2),
+              },
             }}
           >
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <CircularProgress
-                variant="determinate"
-                value={total > 0 ? (totalCounts.easy / total) * 100 : 0}
-                size={40}
-                thickness={4}
-                sx={{
-                  color: NEUTRAL_COLORS.success,
-                  '& .MuiCircularProgress-circle': {
-                    strokeLinecap: 'round',
-                  },
-                }}
-              />
-              <Box>
-                <Typography variant="caption" sx={{ color: NEUTRAL_COLORS.textSecondary, fontWeight: 600 }}>
-                  Mastery Progress
-                </Typography>
-                <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textPrimary, fontWeight: 700 }}>
-                  {total > 0 ? Math.round((totalCounts.easy / total) * 100) : 0}% Complete
-                </Typography>
-              </Box>
-            </Stack>
-          </Paper>
-        </Box>
+            <ArrowBackIcon />
+          </IconButton>
 
-        {/* Описание с кнопками быстрого доступа */}
-        <Box sx={{ position: 'relative', maxWidth: '600px', mx: 'auto' }}>
-          <Typography
-            variant="h6"
+          {/* Основная иконка с интерактивными элементами */}
+          <Box
             sx={{
-              color: NEUTRAL_COLORS.textSecondary,
-              fontWeight: 400,
-              lineHeight: 1.6,
-              fontSize: { xs: '1rem', sm: '1.125rem' },
+              position: 'relative',
+              display: 'inline-block',
+              cursor: 'pointer',
               mb: 3,
+              '&:hover .icon-wrapper': {
+                transform: 'rotate(10deg) scale(1.05)',
+              },
+              '&:hover .question-count': {
+                opacity: 1,
+                transform: 'translateY(0)',
+              },
             }}
           >
-            Совершенствуйте свои навыки прохождения собеседований с помощью нашей коллекции
-          </Typography>
-
-          {/* Быстрые действия */}
-          <Stack direction="row" spacing={2} justifyContent="center" flexWrap="wrap" gap={1}>
-            <Button
-              variant="contained"
-              startIcon={<BoltIcon />}
-              onClick={() => setDifficulty('easy')}
+            <Box
+              className="icon-wrapper"
               sx={{
+                display: 'inline-flex',
+                p: 3,
+                borderRadius: '24px',
+                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
+                color: NEUTRAL_COLORS.accent,
+                boxShadow: `0 8px 32px ${alpha(NEUTRAL_COLORS.accent, 0.2)}`,
+                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                overflow: 'hidden',
+                '&:before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  background: `conic-gradient(from 0deg, ${alpha(NEUTRAL_COLORS.accent, 0.3)} 0%, transparent 30%)`,
+                  opacity: 0,
+                  transition: 'opacity 0.3s',
+                },
+                '&:hover:before': {
+                  opacity: 1,
+                },
+              }}
+              onClick={() => {
+                handleResetFilters();
+                setPage(1);
+              }}
+            >
+              <QuestionIcon sx={{ fontSize: 56 }} />
+            </Box>
+
+            {/* Плавающий счетчик вопросов */}
+            <Box
+              className="question-count"
+              sx={{
+                position: 'absolute',
+                top: -8,
+                right: -8,
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
                 backgroundColor: NEUTRAL_COLORS.success,
                 color: NEUTRAL_COLORS.surface,
-                borderRadius: 2,
-                px: 3,
-                py: 1,
-                fontWeight: 700,
-                fontSize: '0.875rem',
-                '&:hover': {
-                  backgroundColor: alpha(NEUTRAL_COLORS.success, 0.9),
-                  transform: 'translateY(-2px)',
-                },
-                transition: 'all 0.2s',
-              }}
-              //  {totalCounts.easy}
-            >
-              Начни с легких вопросов
-            </Button>
-            
-            <Button
-              variant="outlined"
-              startIcon={<SearchIcon />}
-              onClick={() => {
-                const searchInput = document.querySelector('input[placeholder="Поиск вопросов..."]');
-                if (searchInput) {
-                  (searchInput as HTMLElement).focus();
-                }
-              }}
-              sx={{
-                borderColor: NEUTRAL_COLORS.accent,
-                color: NEUTRAL_COLORS.accent,
-                borderRadius: 2,
-                px: 3,
-                py: 1,
-                fontWeight: 700,
-                fontSize: '0.875rem',
-                '&:hover': {
-                  borderColor: NEUTRAL_COLORS.accent,
-                  backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
-                  transform: 'translateY(-2px)',
-                },
-                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 800,
+                fontSize: '1.125rem',
+                boxShadow: `0 4px 16px ${alpha(NEUTRAL_COLORS.success, 0.4)}`,
+                opacity: 0.8,
+                transform: 'translateY(10px)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
             >
-              Найди то, что нужно
-            </Button>
-            
-            <Button
-              variant="text"
-              startIcon={<FilterIcon />}
-              onClick={handleResetFilters}
-              sx={{
-                color: NEUTRAL_COLORS.textSecondary,
-                borderRadius: 2,
-                px: 3,
-                py: 1,
-                fontWeight: 700,
-                fontSize: '0.875rem',
-                '&:hover': {
-                  color: NEUTRAL_COLORS.accent,
-                  backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
-                },
-                transition: 'all 0.2s',
-              }}
-            >
-              Сбросить фильтры
-            </Button>
-          </Stack>
+              {total}
+            </Box>
 
-          {/* Индикатор активности фильтров */}
-          {(difficulty || isPublished || debouncedSearch) && (
-            <Fade in>
-              <Paper
-                elevation={0}
+            {/* Индикатор сложности */}
+            <Box
+              sx={{
+                position: 'absolute',
+                bottom: -8,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                display: 'flex',
+                gap: 0.5,
+              }}
+            >
+              <Box
                 sx={{
-                  mt: 3,
-                  p: 2,
-                  borderRadius: 2,
-                  border: `1px dashed ${alpha(NEUTRAL_COLORS.accent, 0.3)}`,
-                  backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.05),
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 1,
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  backgroundColor: totalCounts.easy > 0 ? NEUTRAL_COLORS.success : alpha(NEUTRAL_COLORS.success, 0.3),
+                  transition: 'all 0.3s',
                 }}
-              >
-                <FilterIcon fontSize="small" sx={{ color: NEUTRAL_COLORS.accent }} />
-                <Typography variant="caption" sx={{ color: NEUTRAL_COLORS.accent, fontWeight: 600 }}>
-                  Active filters applied
-                </Typography>
-                <Chip
-                  label="View"
-                  size="small"
-                  onClick={() => {
-                    const filtersElement = document.querySelector('.filters-column');
-                    if (filtersElement) {
-                      filtersElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                  }}
+              />
+              <Box
+                sx={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  backgroundColor: totalCounts.medium > 0 ? NEUTRAL_COLORS.warning : alpha(NEUTRAL_COLORS.warning, 0.3),
+                  transition: 'all 0.3s',
+                }}
+              />
+              <Box
+                sx={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  backgroundColor: totalCounts.hard > 0 ? NEUTRAL_COLORS.error : alpha(NEUTRAL_COLORS.error, 0.3),
+                  transition: 'all 0.3s',
+                }}
+              />
+            </Box>
+          </Box>
+
+          {/* Заголовок с интерактивной статистикой */}
+          <Box
+            sx={{
+              position: 'relative',
+              display: 'inline-block',
+              mb: 2,
+              cursor: 'pointer',
+              '&:hover .progress-bar': {
+                width: '100%',
+              },
+            }}
+            onClick={() => {
+              const statsElement = document.getElementById('statistics-section');
+              if (statsElement) {
+                statsElement.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+          >
+            <Typography
+              variant="h1"
+              sx={{
+                fontWeight: 900,
+                color: NEUTRAL_COLORS.textPrimary,
+                letterSpacing: '-0.025em',
+                mb: 3,
+                fontSize: { xs: '2.5rem', sm: '3rem', md: '3.5rem' },
+                background: `linear-gradient(135deg, ${NEUTRAL_COLORS.textPrimary} 0%, ${NEUTRAL_COLORS.accent} 100%)`,
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                position: 'relative',
+                display: 'inline-block',
+                mr: 2,
+                ml: 5
+              }}
+            >
+              InterviewBox
+              {/* Подчеркивание-прогресс бар */}
+              <Box
+                className="progress-bar"
+                sx={{
+                  position: 'absolute',
+                  bottom: -10,
+                  left: 0,
+                  width: '60%',
+                  height: 4,
+                  borderRadius: 2,
+                  background: `linear-gradient(90deg, ${NEUTRAL_COLORS.accent} 0%, ${NEUTRAL_COLORS.success} 100%)`,
+                  transition: 'width 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+              />
+            </Typography>
+
+            {/* Статистика изучения */}
+            <Paper
+              elevation={0}
+              sx={{
+                position: 'absolute',
+                right: { xs: 0, sm: -200 },
+                top: '50%',
+                transform: 'translateY(-50%)',
+                p: 2,
+                borderRadius: 3,
+                border: `2px solid ${alpha(NEUTRAL_COLORS.accent, 0.2)}`,
+                backgroundColor: alpha(NEUTRAL_COLORS.surface, 0.9),
+                backdropFilter: 'blur(10px)',
+                display: { xs: 'none', lg: 'block' },
+                minWidth: 180,
+              }}
+            >
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <CircularProgress
+                  variant="determinate"
+                  value={total > 0 ? (totalCounts.easy / total) * 100 : 0}
+                  size={40}
+                  thickness={4}
                   sx={{
-                    height: 20,
-                    fontSize: '0.7rem',
-                    fontWeight: 700,
-                    backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
-                    color: NEUTRAL_COLORS.accent,
+                    color: NEUTRAL_COLORS.success,
+                    '& .MuiCircularProgress-circle': {
+                      strokeLinecap: 'round',
+                    },
                   }}
                 />
-              </Paper>
-            </Fade>
-          )}
+                <Box>
+                  <Typography variant="caption" sx={{ color: NEUTRAL_COLORS.textSecondary, fontWeight: 600 }}>
+                    Mastery Progress
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textPrimary, fontWeight: 700 }}>
+                    {total > 0 ? Math.round((totalCounts.easy / total) * 100) : 0}% Complete
+                  </Typography>
+                </Box>
+              </Stack>
+            </Paper>
+          </Box>
+
+          {/* Описание с кнопками быстрого доступа */}
+          <Box sx={{ position: 'relative', maxWidth: '600px', mx: 'auto' }}>
+            <Typography
+              variant="h6"
+              sx={{
+                color: NEUTRAL_COLORS.textSecondary,
+                fontWeight: 400,
+                lineHeight: 1.6,
+                fontSize: { xs: '1rem', sm: '1.125rem' },
+                mb: 3,
+              }}
+            >
+              Совершенствуйте свои навыки прохождения собеседований с помощью нашей коллекции
+            </Typography>
+
+            {/* Быстрые действия */}
+<Stack direction="row" alignItems="center" justifyContent="center" flexWrap="wrap" gap={1}>
+  <Button
+    variant="contained"
+    startIcon={<BoltIcon />}
+    onClick={() => {
+      setDifficulty('easy');
+      setPage(1);
+    }}
+    sx={{
+      backgroundColor: NEUTRAL_COLORS.success,
+      color: NEUTRAL_COLORS.surface,
+      borderRadius: 2,
+      px: 3,
+      py: 1,
+      fontWeight: 700,
+      fontSize: '0.875rem',
+      '&:hover': {
+        backgroundColor: alpha(NEUTRAL_COLORS.success, 0.9),
+        transform: 'translateY(-2px)',
+      },
+      transition: 'all 0.2s',
+    }}
+  >
+    Начни с легких вопросов
+  </Button>
+  
+  {/* Простой разделитель */}
+  <Typography
+    variant="body2"
+    sx={{
+      px: 2,
+      fontWeight: 800,
+      color: NEUTRAL_COLORS.accent,
+      textTransform: 'uppercase',
+      letterSpacing: '1px',
+      position: 'relative',
+      '&:before, &:after': {
+        content: '""',
+        position: 'absolute',
+        top: '50%',
+        width: 12,
+        height: 2,
+        backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.3),
+        borderRadius: 1,
+      },
+      '&:before': {
+        left: 4,
+      },
+      '&:after': {
+        right: 4,
+      },
+    }}
+  >
+    или
+  </Typography>
+  
+  <Button
+    variant="outlined"
+    startIcon={<SearchIcon />}
+    onClick={() => {
+      const searchInput = document.querySelector('input[placeholder="Поиск вопросов..."]');
+      if (searchInput) {
+        (searchInput as HTMLElement).focus();
+      }
+    }}
+    sx={{
+      borderColor: NEUTRAL_COLORS.accent,
+      color: NEUTRAL_COLORS.accent,
+      borderRadius: 2,
+      px: 3,
+      py: 1,
+      fontWeight: 700,
+      fontSize: '0.875rem',
+      '&:hover': {
+        borderColor: NEUTRAL_COLORS.accent,
+        backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+        transform: 'translateY(-2px)',
+      },
+      transition: 'all 0.2s',
+    }}
+  >
+    Найди то, что нужно
+  </Button>
+</Stack>
+
+            {/* Индикатор активности фильтров */}
+            {(difficulty || categoryId || debouncedSearch) && (
+              <Fade in>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    mt: 3,
+                    p: 2,
+                    borderRadius: 2,
+                    border: `1px dashed ${alpha(NEUTRAL_COLORS.accent, 0.3)}`,
+                    backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.05),
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 1,
+                  }}
+                >
+                  <FilterIcon fontSize="small" sx={{ color: NEUTRAL_COLORS.accent }} />
+                  <Typography variant="caption" sx={{ color: NEUTRAL_COLORS.accent, fontWeight: 600 }}>
+                    Есть активные фильтры
+                  </Typography>
+                  <Chip
+                    label="Смотреть"
+                    size="small"
+                    onClick={() => {
+                      const filtersElement = document.querySelector('.filters-column');
+                      if (filtersElement) {
+                        filtersElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    }}
+                    sx={{
+                      height: 20,
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
+                      color: NEUTRAL_COLORS.accent,
+                    }}
+                  />
+                </Paper>
+              </Fade>
+            )}
+          </Box>
         </Box>
-      </Box>
 
         {/* Улучшенная статистика */}
-        <StatisticsSection
-          total={total}
-          easy={totalCounts.easy}
-          medium={totalCounts.medium}
-          hard={totalCounts.hard}
-          onFilterSelect={handleStatFilterSelect}
-          activeFilter={difficulty}
-        />
+        <div id="statistics-section">
+          <StatisticsSection
+            total={total}
+            easy={totalCounts.easy}
+            medium={totalCounts.medium}
+            hard={totalCounts.hard}
+            onFilterSelect={handleStatFilterSelect}
+            activeFilter={difficulty}
+          />
+        </div>
 
         {/* Основной контент - новая структура */}
         <Box sx={{ display: 'flex', gap: 3 }}>
           {/* Левая колонка - фильтры (фиксированная ширина) */}
-          <Box sx={{ width: 320, flexShrink: 0 }}>
+          <Box className="filters-column" sx={{ width: 320, flexShrink: 0 }}>
             <Paper
               elevation={0}
               sx={{
@@ -1302,16 +1377,6 @@ export const QuestionsPage: React.FC = () => {
               <Stack spacing={3}>
                 {/* Поиск */}
                 <Box>
-                  {/* <Typography
-                    variant="subtitle1"
-                    sx={{
-                      fontWeight: 700,
-                      color: NEUTRAL_COLORS.textPrimary,
-                      mb: 2,
-                    }}
-                  >
-                    Поиск
-                  </Typography> */}
                   <TextField
                     fullWidth
                     placeholder="Поиск вопросов..."
@@ -1359,6 +1424,133 @@ export const QuestionsPage: React.FC = () => {
 
                 <Divider sx={{ borderColor: alpha(NEUTRAL_COLORS.border, 0.5) }} />
 
+              {/* Категория */}
+              <Box>
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    fontWeight: 700,
+                    color: NEUTRAL_COLORS.textPrimary,
+                    mb: 2,
+                  }}
+                >
+                  Выберите категорию
+                </Typography>
+                <FormControl fullWidth size="medium">
+                  <Select
+                    value={categoryId}
+                    onChange={(e) => {
+                      setCategoryId(e.target.value);
+                      setPage(1);
+                    }}
+                    displayEmpty
+                    renderValue={(selected) => {
+                      if (!selected) {
+                        return (
+                          <Stack direction="row" alignItems="center" spacing={1}>
+                            <CategoryIcon sx={{ color: NEUTRAL_COLORS.textSecondary, fontSize: '1rem' }} />
+                            <Typography sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+                              Все категории
+                            </Typography>
+                          </Stack>
+                        );
+                      }
+                      const category = categories.find(c => c.id === selected);
+                      if (!category) {
+                        return (
+                          <Stack direction="row" alignItems="center" spacing={1}>
+                            <CategoryIcon sx={{ color: NEUTRAL_COLORS.info, fontSize: '1rem' }} />
+                            <Typography sx={{ color: NEUTRAL_COLORS.textPrimary }}>
+                              Неизвестная категория
+                            </Typography>
+                          </Stack>
+                        );
+                      }
+                      return (
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                          <CategoryIcon sx={{ color: NEUTRAL_COLORS.info, fontSize: '1rem' }} />
+                          <Typography sx={{ color: NEUTRAL_COLORS.textPrimary, fontWeight: 600 }}>
+                            {category.name}
+                          </Typography>
+                          {category.question_count && (
+                              <Chip
+                                label={category.question_count}
+                                size="small"
+                                sx={{
+                                  height: 20,
+                                  fontSize: '0.7rem',
+                                  backgroundColor: alpha(NEUTRAL_COLORS.info, 0.1),
+                                  color: NEUTRAL_COLORS.info,
+                                }}
+                              />
+                            )}
+                        </Stack>
+                      );
+                    }}
+                    sx={{
+                      borderRadius: 2,
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: NEUTRAL_COLORS.accent,
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: NEUTRAL_COLORS.accent,
+                        borderWidth: 2,
+                      },
+                      '& .MuiSelect-select': {
+                        display: 'flex',
+                        alignItems: 'center',
+                        minHeight: '24px !important',
+                        padding: '12px 14px',
+                      },
+                    }}
+                  >
+                    <MenuItem value="">
+                      <Stack direction="row" alignItems="center" spacing={1}>
+                        <CategoryIcon sx={{ color: NEUTRAL_COLORS.textSecondary, fontSize: '1rem' }} />
+                        <Typography sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+                          Все категории
+                        </Typography>
+                      </Stack>
+                    </MenuItem>
+                    {categories.map((category) => (
+                      <MenuItem key={category.id} value={category.id}>
+                        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ width: '100%' }}>
+                          <Stack direction="row" alignItems="center" spacing={1}>
+                            <CategoryIcon sx={{ color: NEUTRAL_COLORS.info, fontSize: '1rem' }} />
+                            <Typography>{category.name}</Typography>
+                          </Stack>
+                          {category.question_count && (
+                            <Chip
+                              label={category.question_count}
+                              size="small"
+                              sx={{
+                                height: 20,
+                                fontSize: '0.7rem',
+                                backgroundColor: alpha(NEUTRAL_COLORS.info, 0.1),
+                                color: NEUTRAL_COLORS.info,
+                              }}
+                            />
+                          )}
+                        </Stack>
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {isLoadingCategories && (
+                    <CircularProgress 
+                      size={20} 
+                      sx={{ 
+                        position: 'absolute', 
+                        right: 40, 
+                        top: '50%', 
+                        transform: 'translateY(-50%)' 
+                      }} 
+                    />
+                  )}
+                </FormControl>
+              </Box>
+
+                <Divider sx={{ borderColor: alpha(NEUTRAL_COLORS.border, 0.5) }} />
+
                 {/* Сложность */}
                 <Box>
                   <Typography
@@ -1372,15 +1564,6 @@ export const QuestionsPage: React.FC = () => {
                     Выбери сложность
                   </Typography>
                   <Stack spacing={1}>
-                    {/* <FilterButton
-                      active={difficulty === ''}
-                      onClick={() => {
-                        setDifficulty('');
-                        setPage(1);
-                      }}
-                    >
-                      Все сложности
-                    </FilterButton> */}
                     <FilterButton
                       active={difficulty === 'easy'}
                       onClick={() => {
@@ -1416,60 +1599,17 @@ export const QuestionsPage: React.FC = () => {
 
                 <Divider sx={{ borderColor: alpha(NEUTRAL_COLORS.border, 0.5) }} />
 
-                {/* Статус */}
-                <Box>
-                  <Typography
-                    variant="subtitle1"
-                    sx={{
-                      fontWeight: 700,
-                      color: NEUTRAL_COLORS.textPrimary,
-                      mb: 2,
-                    }}
-                  >
-                    Status
-                  </Typography>
-                  <Stack spacing={1}>
-                    <FilterButton
-                      active={isPublished === ''}
-                      onClick={() => {
-                        setIsPublished('');
-                        setPage(1);
-                      }}
-                    >
-                      All Status
-                    </FilterButton>
-                    <FilterButton
-                      active={isPublished === 'true'}
-                      onClick={() => {
-                        setIsPublished('true');
-                        setPage(1);
-                      }}
-                      color={NEUTRAL_COLORS.success}
-                    >
-                      Published
-                    </FilterButton>
-                    <FilterButton
-                      active={isPublished === 'false'}
-                      onClick={() => {
-                        setIsPublished('false');
-                        setPage(1);
-                      }}
-                      color={NEUTRAL_COLORS.secondary}
-                    >
-                      Draft
-                    </FilterButton>
-                  </Stack>
-                </Box>
-
-                <Divider sx={{ borderColor: alpha(NEUTRAL_COLORS.border, 0.5) }} />
-
                 {/* Сброс фильтров */}
                 <Button
                   fullWidth
                   variant="outlined"
                   startIcon={<ClearIcon />}
-                  onClick={handleResetFilters}
-                  disabled={!search && !difficulty && !isPublished}
+                  onClick={() => {
+                    // Проверяем, есть ли активные фильтры
+                    if (search || difficulty || categoryId) {
+                      handleResetFilters();
+                    }
+                  }}
                   sx={{
                     borderWidth: 2,
                     borderColor: NEUTRAL_COLORS.border,
@@ -1479,14 +1619,31 @@ export const QuestionsPage: React.FC = () => {
                     fontWeight: 700,
                     fontSize: '1rem',
                     '&:hover': {
-                      borderColor: NEUTRAL_COLORS.accent,
-                      backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
-                      transform: 'translateY(-1px)',
+                      // Показываем эффект ховера только если есть активные фильтры
+                      ...((search || difficulty || categoryId) && {
+                        borderColor: NEUTRAL_COLORS.accent,
+                        backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+                        transform: 'translateY(-1px)',
+                      }),
+                      // Для неактивного состояния показываем другой эффект
+                      ...(!search && !difficulty && !categoryId && {
+                        cursor: 'not-allowed',
+                        borderColor: alpha(NEUTRAL_COLORS.border, 0.5),
+                        backgroundColor: 'transparent',
+                      }),
                     },
-                    '&:disabled': {
-                      opacity: 0.5,
+                    // Стили для активного состояния
+                    ...((search || difficulty || categoryId) && {
+                      borderColor: NEUTRAL_COLORS.border,
+                      color: NEUTRAL_COLORS.textPrimary,
+                    }),
+                    // Стили для неактивного состояния
+                    ...(!search && !difficulty && !categoryId && {
+                      color: NEUTRAL_COLORS.textSecondary,
+                      borderColor: alpha(NEUTRAL_COLORS.border, 0.5),
+                      backgroundColor: alpha(NEUTRAL_COLORS.background, 0.5),
                       cursor: 'not-allowed',
-                    },
+                    }),
                     transition: 'all 0.2s',
                   }}
                 >
@@ -1533,7 +1690,7 @@ export const QuestionsPage: React.FC = () => {
                     fontWeight: 700,
                   }}
                 >
-                  {debouncedSearch ? 'No questions found for your search' : 'No questions available yet'}
+                  {debouncedSearch ? 'По вашему запросу ничего не найдено' : 'Вопросов пока нет'}
                 </Typography>
                 {debouncedSearch && (
                   <Button
@@ -1572,7 +1729,7 @@ export const QuestionsPage: React.FC = () => {
                   >
                     {total} Вопроса
                   </Typography>
-                  {(difficulty || isPublished || debouncedSearch) && (
+                  {(difficulty || categoryId || debouncedSearch) && (
                     <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
                       {difficulty && (
                         <Chip
@@ -1588,22 +1745,17 @@ export const QuestionsPage: React.FC = () => {
                           }}
                         />
                       )}
-                      {isPublished && (
+                      {categoryId && (
                         <Chip
-                          label={`Status: ${isPublished === 'true' ? 'Published' : 'Draft'}`}
+                          label={`Category: ${getSelectedCategoryName() || 'Unknown'}`}
                           size="medium"
-                          onDelete={() => setIsPublished('')}
+                          onDelete={() => setCategoryId('')}
+                          icon={<CategoryIcon />}
                           sx={{
                             fontWeight: 700,
-                            backgroundColor: isPublished === 'true' 
-                              ? alpha(NEUTRAL_COLORS.success, 0.1)
-                              : alpha(NEUTRAL_COLORS.secondary, 0.1),
-                            color: isPublished === 'true' 
-                              ? NEUTRAL_COLORS.success
-                              : NEUTRAL_COLORS.secondary,
-                            border: `2px solid ${isPublished === 'true' 
-                              ? alpha(NEUTRAL_COLORS.success, 0.3)
-                              : alpha(NEUTRAL_COLORS.secondary, 0.3)}`,
+                            backgroundColor: alpha(NEUTRAL_COLORS.info, 0.1),
+                            color: NEUTRAL_COLORS.info,
+                            border: `2px solid ${alpha(NEUTRAL_COLORS.info, 0.3)}`,
                             fontSize: '0.875rem',
                           }}
                         />
@@ -1637,6 +1789,7 @@ export const QuestionsPage: React.FC = () => {
                       question={question}
                       onClick={() => navigate(`/questions/${question.id}`)}
                       index={(page - 1) * ITEMS_PER_PAGE + index}
+                      categories={categories}
                     />
                   ))}
                 </Box>

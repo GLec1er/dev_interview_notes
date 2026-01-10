@@ -146,7 +146,16 @@ export const AdminQuestions: React.FC = () => {
   const loadQuestions = useCallback(async () => {
     try {
       setIsLoading(true);
-      const data = await questionService.getQuestions(1, ITEMS_PER_PAGE, undefined, undefined, 'updated_at', 'desc');
+      const data = await questionService.getQuestions(
+        1, 
+        ITEMS_PER_PAGE, 
+        undefined, 
+        undefined, 
+        'updated_at', 
+        'desc',
+        undefined,
+        false,
+    );
       
       // Используем данные напрямую, так как API возвращает category_name
       setQuestions(data.items);
@@ -163,7 +172,7 @@ export const AdminQuestions: React.FC = () => {
     try {
       setIsLoadingCategories(true);
       const data = await categoryService.getCategories(1, 100, true);
-      setCategories(data.items.filter((cat: Category) => cat.is_active));
+      setCategories(data.items);
     } catch (err) {
       console.error('Failed to load categories:', err);
       setError('Failed to load categories.');
@@ -366,14 +375,9 @@ export const AdminQuestions: React.FC = () => {
   // Функция для получения названия категории
   const getCategoryDisplayName = (question: Question) => {
     // Пробуем получить название в порядке приоритета:
-    // 1. category_name из API
     // 2. category.name если есть полный объект категории
     // 3. Ищем в локальном списке категорий по ID
     // 4. 'No category' если ничего не найдено
-    
-    if (question.category_name) {
-      return question.category_name;
-    }
     
     if (question.category?.name) {
       return question.category.name;

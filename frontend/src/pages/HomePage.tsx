@@ -19,10 +19,7 @@ import {
   Fade,
   Grow,
   alpha,
-  // ДОБАВЛЕНО:
   CardActionArea,
-  Avatar,
-  AvatarGroup,
   useScrollTrigger,
   Zoom,
   Fab,
@@ -30,12 +27,8 @@ import {
 import {
   ExitToApp as LogoutIcon,
   MenuBook as StartLearningIcon,
-  Dashboard as AdminPanelIcon,
-  Analytics as StatsIcon,
   Category as CategoryIcon,
   Lock as LoginIcon,
-  PersonAdd as RegisterIcon,
-  // ДОБАВЛЕНО:
   TrendingUp as TrendingIcon,
   QuestionAnswer as QuestionsIcon,
   Timer as TimerIcon,
@@ -46,7 +39,6 @@ import {
   EmojiEvents as TrophyIcon,
   Bolt as BoltIcon,
   KeyboardArrowDown as ArrowDownIcon,
-  CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { questionService } from '../services/questionService';
@@ -132,14 +124,6 @@ const getCategoryColor = (categoryName: string): string => {
   }
   return colors[Math.abs(hash) % colors.length];
 };
-
-// ДОБАВЛЕНО: Mock данные для активных пользователей
-const ACTIVE_USERS = [
-  { name: 'Алексей', progress: 85 },
-  { name: 'Мария', progress: 72 },
-  { name: 'Дмитрий', progress: 93 },
-  { name: 'Анна', progress: 65 },
-];
 
 // Memoized статистическая карточка
 const StatCard = memo(({ title, value, color, icon, onClick }: { 
@@ -360,36 +344,6 @@ const QuickStartCard = memo(() => {
   );
 });
 
-// ДОБАВЛЕНО: Компонент прогресс-бара для активных пользователей
-const UserProgress = memo(({ name, progress }: { name: string; progress: number }) => (
-  <Box sx={{ mb: 2 }}>
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-        {name}
-      </Typography>
-      <Typography variant="body2" color={NEUTRAL_COLORS.textSecondary}>
-        {progress}%
-      </Typography>
-    </Box>
-    <Box sx={{ 
-      height: 6, 
-      backgroundColor: alpha(NEUTRAL_COLORS.border, 0.5),
-      borderRadius: 3,
-      overflow: 'hidden'
-    }}>
-      <Box 
-        sx={{ 
-          height: '100%',
-          width: `${progress}%`,
-          background: `linear-gradient(90deg, ${NEUTRAL_COLORS.accent} 0%, ${alpha(NEUTRAL_COLORS.accent, 0.7)} 100%)`,
-          borderRadius: 3,
-          transition: 'width 1s ease-in-out'
-        }}
-      />
-    </Box>
-  </Box>
-));
-
 // ДОБАВЛЕНО: Кнопка скролла вверх
 const ScrollToTop = memo(() => {
   const trigger = useScrollTrigger({
@@ -449,8 +403,8 @@ export const HomePage: React.FC = () => {
       setError(null);
       
       const [questionsData, categoriesData] = await Promise.all([
-        questionService.getQuestions(1, 1),
-        categoryService.getCategories(1, 1),
+        questionService.getQuestions(1, 1, true, undefined, undefined, undefined, undefined, true),
+        categoryService.getCategories(1, 1, false),
       ]);
       
       setStats({
@@ -915,7 +869,7 @@ export const HomePage: React.FC = () => {
                   <Grid item xs={6} sm={4} md={2.4} key={category.id}>
                     <CategoryCard
                       category={category}
-                      onClick={() => navigate(`/questions?category=${category.name}`)}
+                      onClick={() => navigate(`/questions?category_id=${category.id}`)}
                     />
                   </Grid>
                 ))}

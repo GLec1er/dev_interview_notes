@@ -139,7 +139,8 @@ class CategoryRepository(BaseRepository[Category, CategoryCreate, CategoryUpdate
         """
         try:
             stmt = select(func.count()).select_from(Question).where(
-                Question.category_id == category_id
+                Question.category_id == category_id,
+                Question.is_published == True,
             )
             result = await self.session.execute(stmt)
             return result.scalar_one()

@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional, Dict, Any
 from uuid import UUID
 from pydantic import BaseModel, Field
@@ -51,6 +52,7 @@ class QuestionResponse(BaseModel):
     difficulty: DifficultyQuestionLevel
     is_published: bool
     category_id: UUID
+    updated_at: datetime
 
     class Config:
         from_attributes = True
@@ -74,6 +76,20 @@ class QuestionUpdate(BaseModel):
         from_attributes = True
 
 
+class QuestionUpdateResponse(BaseModel):
+    """Схема для ответа с вопросом."""
+    id: UUID
+    title: str
+    slug: str
+    content: List[Dict[str, Any]]
+    difficulty: DifficultyQuestionLevel
+    is_published: bool
+    category_id: UUID
+
+    class Config:
+        from_attributes = True
+
+
 class QuestionDetailResponse(QuestionResponse):
     """Детальная схема вопроса с ответами."""
     answers: List[AnswerResponse] = []
@@ -87,6 +103,9 @@ class QuestionFilterParams(BaseModel):
     is_published: Optional[bool] = None
     difficulty: Optional[DifficultyQuestionLevel] = None
     category_id: Optional[UUID] = None
+
+    # доп.фильтры
+    exclude_inactive_categories: Optional[bool] = None
     
     def get_filters(self) -> Dict[str, Any]:
         """Получить словарь фильтров для SQLAlchemy."""
@@ -100,6 +119,9 @@ class QuestionFilterParams(BaseModel):
         
         if self.category_id is not None:
             filters["category_id"] = self.category_id
+
+        if self.exclude_inactive_categories is not None:
+            filters["exclude_inactive_categories"] = self.exclude_inactive_categories
 
         return filters
     

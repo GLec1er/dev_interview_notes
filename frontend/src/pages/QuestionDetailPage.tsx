@@ -11,6 +11,9 @@ import {
   Stack,
   Paper,
   alpha,
+  IconButton,
+  Tooltip,
+  Fab,
 } from '@mui/material';
 import {
   ExpandMore as ExpandMoreIcon,
@@ -20,11 +23,19 @@ import {
   TrendingUp as DifficultyIcon,
   Visibility as PublishedIcon,
   VisibilityOff as DraftIcon,
+  Category as CategoryIcon,
+  Share as ShareIcon,
+  Bookmark as BookmarkIcon,
+  BookmarkBorder as BookmarkBorderIcon,
+  KeyboardArrowUp as ScrollTopIcon,
+  Comment as CommentIcon,
+  History as HistoryIcon,
 } from '@mui/icons-material';
 import { questionService } from '../services/questionService';
 import { answerService } from '../services/answerService';
+import { categoryService } from '../services/categoryService';
 import { ContentRenderer } from '../components/ContentRenderer';
-import type { Question, Answer } from '../types';
+import type { Question, Answer, Category } from '../types';
 
 // Нейтральная цветовая палитра
 const NEUTRAL_COLORS = {
@@ -48,9 +59,17 @@ interface SolutionCardProps {
   index: number;
   isExpanded: boolean;
   onToggle: () => void;
+  onCopyCode: (code: string) => void;
 }
 
-const SolutionCard: React.FC<SolutionCardProps> = ({ answer, index, isExpanded, onToggle }) => {
+const SolutionCard: React.FC<SolutionCardProps> = ({ 
+  answer, 
+  index, 
+  isExpanded, 
+  onToggle,
+  onCopyCode 
+}) => {
+
   return (
     <Paper
       elevation={0}
@@ -69,7 +88,6 @@ const SolutionCard: React.FC<SolutionCardProps> = ({ answer, index, isExpanded, 
     >
       {/* Заголовок карточки - кликабельная область */}
       <Box
-        onClick={onToggle}
         sx={{
           p: { xs: 2.5, md: 3 },
           backgroundColor: NEUTRAL_COLORS.background,
@@ -84,7 +102,13 @@ const SolutionCard: React.FC<SolutionCardProps> = ({ answer, index, isExpanded, 
         }}
       >
         {/* Левая часть с номером и информацией */}
-        <Stack direction="row" spacing={2.5} alignItems="center" sx={{ flex: 1 }}>
+        <Stack 
+          direction="row" 
+          spacing={2.5} 
+          alignItems="center" 
+          sx={{ flex: 1 }}
+          onClick={onToggle}
+        >
           {/* Номер решения */}
           <Box
             sx={{
@@ -118,7 +142,7 @@ const SolutionCard: React.FC<SolutionCardProps> = ({ answer, index, isExpanded, 
             >
               Решение {index + 1}
             </Typography>
-            <Stack direction="row" spacing={1.5} alignItems="center">
+            <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
               <Typography
                 variant="caption"
                 sx={{
@@ -138,7 +162,7 @@ const SolutionCard: React.FC<SolutionCardProps> = ({ answer, index, isExpanded, 
                     display: 'inline-block',
                   }}
                 />
-                Актуализация ответа: {new Date(answer.updated_at).toLocaleDateString()}
+                Обновлено: {new Date(answer.updated_at).toLocaleDateString()}
               </Typography>
               
               {answer.author && (
@@ -148,7 +172,7 @@ const SolutionCard: React.FC<SolutionCardProps> = ({ answer, index, isExpanded, 
                     color: NEUTRAL_COLORS.textSecondary,
                   }}
                 >
-                  • By {answer.author}
+                  • Автор: {answer.author}
                 </Typography>
               )}
             </Stack>
@@ -157,35 +181,18 @@ const SolutionCard: React.FC<SolutionCardProps> = ({ answer, index, isExpanded, 
 
         {/* Правая часть с иконкой и статусом */}
         <Stack direction="row" spacing={2} alignItems="center">
-          {/* Статус Verified */}
-          {answer.is_verified && (
-            <Chip
-              label="Verified"
-              size="small"
-              sx={{
-                fontWeight: 600,
-                backgroundColor: alpha(NEUTRAL_COLORS.success, 0.1),
-                color: NEUTRAL_COLORS.success,
-                border: `1px solid ${alpha(NEUTRAL_COLORS.success, 0.2)}`,
-                fontSize: '0.75rem',
-                height: 24,
-              }}
-            />
-          )}
-
           {/* Иконка раскрытия */}
-          <Box
+          <IconButton
+            onClick={onToggle}
+            size="small"
             sx={{
               transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
               transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               color: NEUTRAL_COLORS.accent,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
             }}
           >
             <ExpandMoreIcon />
-          </Box>
+          </IconButton>
         </Stack>
       </Box>
 
@@ -255,7 +262,6 @@ const SolutionCard: React.FC<SolutionCardProps> = ({ answer, index, isExpanded, 
                 padding: 3,
                 borderRadius: 2,
                 overflow: 'auto',
-                // border: `1px solid ${NEUTRAL_COLORS.border}`,
                 fontSize: '0.9rem',
                 lineHeight: 1.6,
               },
@@ -268,7 +274,10 @@ const SolutionCard: React.FC<SolutionCardProps> = ({ answer, index, isExpanded, 
               },
             }}
           >
-            <ContentRenderer blocks={answer.content} />
+            <ContentRenderer 
+              blocks={answer.content} 
+              onCopyCode={onCopyCode}
+            />
           </Box>
 
           {/* Футер с дополнительной информацией */}
@@ -310,9 +319,23 @@ export const QuestionDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const [question, setQuestion] = useState<Question | null>(null);
   const [answers, setAnswers] = useState<Answer[]>([]);
+  const [category, setCategory] = useState<Category | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [expandedSolutions, setExpandedSolutions] = useState<number[]>([0]); // По умолчанию раскрыт первый
+  const [expandedSolutions, setExpandedSolutions] = useState<number[]>([0]);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [solutionFilter, setSolutionFilter] = useState<string>('all');
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [showCopyNotification, setShowCopyNotification] = useState<string | null>(null);
+
+  // Отслеживание скролла для кнопки "Наверх"
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 400);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const loadData = useCallback(async () => {
     if (!questionId) return;
@@ -323,8 +346,31 @@ export const QuestionDetailPage: React.FC = () => {
       const questionData = await questionService.getQuestion(questionId);
       setQuestion(questionData);
 
+      // Если у вопроса есть category_id, загружаем категорию
+      if (questionData.category_id) {
+        try {
+          const categoriesData = await categoryService.getCategories(1, 100, true);
+          const foundCategory = categoriesData.items.find(
+            (cat: Category) => cat.id === questionData.category_id
+          );
+          if (foundCategory) {
+            setCategory(foundCategory);
+          }
+        } catch (categoryErr) {
+          console.warn('Failed to load category:', categoryErr);
+        }
+      }
+
+      // Загружаем ответы
       try {
-        const answersData = await answerService.getAnswers(questionId);
+        const answersData = await answerService.getAnswers(
+          questionId,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          true,
+        );
         setAnswers(answersData);
       } catch (answerErr) {
         console.warn('Failed to load answers:', answerErr);
@@ -361,6 +407,55 @@ export const QuestionDetailPage: React.FC = () => {
         ? prev.filter((i) => i !== index)
         : [...prev, index]
     );
+  };
+
+  const handleBookmarkToggle = () => {
+    const bookmarks = JSON.parse(localStorage.getItem('questionBookmarks') || '[]');
+    let newBookmarks;
+    
+    if (isBookmarked) {
+      newBookmarks = bookmarks.filter((id: string) => id !== questionId);
+    } else {
+      newBookmarks = [...bookmarks, questionId];
+    }
+    
+    localStorage.setItem('questionBookmarks', JSON.stringify(newBookmarks));
+    setIsBookmarked(!isBookmarked);
+    
+    // Показываем уведомление
+    setShowCopyNotification(isBookmarked ? 'Удалено из закладок' : 'Добавлено в закладки');
+    setTimeout(() => setShowCopyNotification(null), 2000);
+  };
+
+  const handleShareQuestion = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setShowCopyNotification('Ссылка скопирована в буфер обмена');
+    setTimeout(() => setShowCopyNotification(null), 2000);
+  };
+
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setShowCopyNotification('Код скопирован в буфер обмена');
+    setTimeout(() => setShowCopyNotification(null), 2000);
+  };
+
+  const filteredAnswers = () => {
+    switch (solutionFilter) {
+      case 'verified':
+        return answers.filter(answer => answer.is_verified);
+      case 'popular':
+        return [...answers].sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0));
+      case 'newest':
+        return [...answers].sort((a, b) => 
+          new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+        );
+      default:
+        return answers;
+    }
+  };
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   if (isLoading) {
@@ -405,6 +500,8 @@ export const QuestionDetailPage: React.FC = () => {
     );
   }
 
+  const answersToShow = filteredAnswers();
+
   return (
     <Box
       sx={{
@@ -414,9 +511,49 @@ export const QuestionDetailPage: React.FC = () => {
           0.8
         )} 100%)`,
         py: 4,
+        position: 'relative',
       }}
     >
       <Container maxWidth="lg">
+        {/* Уведомления */}
+        {showCopyNotification && (
+          <Alert
+            severity="success"
+            sx={{
+              position: 'fixed',
+              top: 20,
+              right: 20,
+              zIndex: 9999,
+              borderRadius: 2,
+              boxShadow: 3,
+            }}
+            onClose={() => setShowCopyNotification(null)}
+          >
+            {showCopyNotification}
+          </Alert>
+        )}
+
+        {/* Кнопка "Наверх" */}
+        {showScrollTop && (
+          <Fab
+            size="medium"
+            onClick={scrollToTop}
+            sx={{
+              position: 'fixed',
+              bottom: 32,
+              right: 32,
+              zIndex: 1000,
+              backgroundColor: NEUTRAL_COLORS.accent,
+              color: NEUTRAL_COLORS.surface,
+              '&:hover': {
+                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.9),
+              },
+            }}
+          >
+            <ScrollTopIcon />
+          </Fab>
+        )}
+
         {/* Кнопка назад */}
         <Button
           startIcon={<ArrowBackIcon />}
@@ -442,10 +579,56 @@ export const QuestionDetailPage: React.FC = () => {
             borderRadius: 3,
             border: `1px solid ${NEUTRAL_COLORS.border}`,
             backgroundColor: NEUTRAL_COLORS.surface,
+            position: 'relative',
           }}
         >
+          {/* Действия с вопросом (правый верхний угол) */}
+          <Stack 
+            direction="row" 
+            spacing={1} 
+            sx={{ 
+              position: 'absolute',
+              top: { xs: 16, md: 24 },
+              right: { xs: 16, md: 24 },
+              zIndex: 1,
+            }}
+          >
+            <Tooltip title={isBookmarked ? "Удалить из избранное" : "Добавить в избранное"}>
+              <IconButton
+                onClick={handleBookmarkToggle}
+                size="small"
+                // disabled={true}
+                sx={{
+                  color: isBookmarked ? NEUTRAL_COLORS.warning : NEUTRAL_COLORS.textSecondary,
+                  backgroundColor: alpha(NEUTRAL_COLORS.background, 0.8),
+                  '&:hover': {
+                    backgroundColor: alpha(NEUTRAL_COLORS.warning, 0.1),
+                  },
+                }}
+              >
+                {isBookmarked ? <BookmarkIcon /> : <BookmarkBorderIcon />}
+              </IconButton>
+            </Tooltip>
+            
+            <Tooltip title="Поделиться вопросом">
+              <IconButton
+                onClick={handleShareQuestion}
+                size="small"
+                sx={{
+                  color: NEUTRAL_COLORS.textSecondary,
+                  backgroundColor: alpha(NEUTRAL_COLORS.background, 0.8),
+                  '&:hover': {
+                    backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
+                  },
+                }}
+              >
+                <ShareIcon />
+              </IconButton>
+            </Tooltip>
+          </Stack>
+
           <Stack spacing={4}>
-            {/* Верхняя часть: статус и сложность */}
+            {/* Верхняя часть: статус, сложность и категория */}
             <Stack
               direction="row"
               spacing={1.5}
@@ -454,12 +637,14 @@ export const QuestionDetailPage: React.FC = () => {
                 mb: 3,
                 pb: 3,
                 borderBottom: `1px solid ${alpha(NEUTRAL_COLORS.border, 0.5)}`,
+                flexWrap: 'wrap',
+                gap: 1.5,
               }}
             >
               {/* Сложность */}
               <Chip
                 icon={<DifficultyIcon />}
-                label={question.difficulty}
+                label={`Сложность: ${question.difficulty.charAt(0).toUpperCase() + question.difficulty.slice(1)}`}
                 size="medium"
                 sx={{
                   fontWeight: 700,
@@ -469,14 +654,36 @@ export const QuestionDetailPage: React.FC = () => {
                   textTransform: 'capitalize',
                   fontSize: '0.95rem',
                   px: 1,
+                  height: 36,
                 }}
               />
+              
+              {/* Категория */}
+              {category && (
+                <Chip
+                  icon={<CategoryIcon />}
+                  label={`Категория: ${category.name}`}
+                  size="medium"
+                  sx={{
+                    fontWeight: 700,
+                    backgroundColor: alpha(NEUTRAL_COLORS.info, 0.1),
+                    color: NEUTRAL_COLORS.info,
+                    border: `1px solid ${alpha(NEUTRAL_COLORS.info, 0.3)}`,
+                    fontSize: '0.95rem',
+                    px: 1,
+                    height: 36,
+                    '& .MuiChip-icon': {
+                      color: NEUTRAL_COLORS.info,
+                    },
+                  }}
+                />
+              )}
               
               {/* Статус публикации */}
               {question.is_published ? (
                 <Chip
                   icon={<PublishedIcon />}
-                  label="Published"
+                  label="Опубликовано"
                   size="medium"
                   sx={{
                     fontWeight: 700,
@@ -485,12 +692,13 @@ export const QuestionDetailPage: React.FC = () => {
                     border: `1px solid ${alpha(NEUTRAL_COLORS.success, 0.3)}`,
                     fontSize: '0.95rem',
                     px: 1,
+                    height: 36,
                   }}
                 />
               ) : (
                 <Chip
                   icon={<DraftIcon />}
-                  label="Draft"
+                  label="Черновик"
                   size="medium"
                   sx={{
                     fontWeight: 700,
@@ -499,6 +707,7 @@ export const QuestionDetailPage: React.FC = () => {
                     border: `1px solid ${alpha(NEUTRAL_COLORS.secondary, 0.3)}`,
                     fontSize: '0.95rem',
                     px: 1,
+                    height: 36,
                   }}
                 />
               )}
@@ -552,8 +761,24 @@ export const QuestionDetailPage: React.FC = () => {
                     },
                   }}
                 >
-                  <ContentRenderer blocks={question.content} />
+                  <ContentRenderer 
+                    blocks={question.content} 
+                    onCopyCode={handleCopyCode}
+                  />
                 </Box>
+
+                {/* Дополнительная информация о вопросе */}
+                <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 3, pt: 3, borderTop: `1px dashed ${alpha(NEUTRAL_COLORS.border, 0.3)}` }}>
+                  <Typography variant="caption" sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+                    <HistoryIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                    Обновлено: {new Date(question.updated_at).toLocaleDateString()}
+                  </Typography>
+                  
+                  <Typography variant="caption" sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+                    <CommentIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                    Решений: {answers.length}
+                  </Typography>
+                </Stack>
               </Box>
             </Stack>
           </Stack>
@@ -571,7 +796,7 @@ export const QuestionDetailPage: React.FC = () => {
         >
           <Stack spacing={3}>
             {/* Заголовок секции решений с иконкой слева */}
-            <Stack direction="row" spacing={3} alignItems="center">
+            <Stack direction="row" spacing={3} alignItems="center" sx={{ flexWrap: 'wrap', gap: 2 }}>
               {/* Иконка решений */}
               <Box sx={{ flexShrink: 0 }}>
                 <Box
@@ -615,7 +840,7 @@ export const QuestionDetailPage: React.FC = () => {
             </Stack>
 
             {/* Список решений */}
-            {answers.length === 0 ? (
+            {answersToShow.length === 0 ? (
               <Paper
                 elevation={0}
                 sx={{
@@ -646,30 +871,79 @@ export const QuestionDetailPage: React.FC = () => {
                     mb: 1,
                   }}
                 >
-                  No solutions available yet
+                  {solutionFilter === 'all' 
+                    ? 'Пока нет доступных решений' 
+                    : 'Нет решений по выбранному фильтру'}
                 </Typography>
                 <Typography
                   variant="body2"
                   sx={{
                     color: NEUTRAL_COLORS.textSecondary,
+                    mb: 2,
                   }}
                 >
-                  Check back later or contribute a solution
+                  {solutionFilter !== 'all' && 'Попробуйте выбрать другой фильтр.'}
+                  Зайдите позже
                 </Typography>
               </Paper>
             ) : (
-              <Box sx={{ ml: { xs: 0, md: 9 } }}>
-                {answers.map((answer, index) => (
+              <Box>
+                <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary, mb: 2 }}>
+                  Кликните на заголовок, чтобы развернуть решение.
+                </Typography>
+                
+                {answersToShow.map((answer, index) => (
                   <SolutionCard
                     key={answer.id}
                     answer={answer}
                     index={index}
                     isExpanded={expandedSolutions.includes(index)}
                     onToggle={() => handleSolutionToggle(index)}
+                    onCopyCode={handleCopyCode}
                   />
                 ))}
               </Box>
             )}
+
+            {/* Быстрые действия внизу */}
+            <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center" sx={{ mt: 4, pt: 3, borderTop: `1px solid ${alpha(NEUTRAL_COLORS.border, 0.5)}` }}>
+              <Button
+                startIcon={<ArrowBackIcon />}
+                onClick={() => navigate('/questions')}
+                variant="outlined"
+              >
+                Вернуться к вопросам
+              </Button>
+            </Stack>
+          </Stack>
+        </Paper>
+
+        {/* Подсказки для пользователей */}
+        <Paper
+          elevation={0}
+          sx={{
+            mt: 4,
+            p: 3,
+            borderRadius: 3,
+            border: `1px dashed ${NEUTRAL_COLORS.border}`,
+            backgroundColor: alpha(NEUTRAL_COLORS.info, 0.05),
+          }}
+        >
+          <Stack spacing={2}>
+            <Typography variant="h6" sx={{ color: NEUTRAL_COLORS.info, fontWeight: 600 }}>
+              Советы по использованию платформы:
+            </Typography>
+            <Stack spacing={1}>
+              <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+                • Используйте фильтры для сортировки решений по популярности или новизне
+              </Typography>
+              <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+                • Нажимайте на код, чтобы скопировать его в буфер обмена
+              </Typography>
+              <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+                • Добавляйте понравившиеся вопросы в закладки для быстрого доступа
+              </Typography>
+            </Stack>
           </Stack>
         </Paper>
       </Container>

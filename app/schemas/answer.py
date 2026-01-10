@@ -65,12 +65,15 @@ class AnswerResponse(BaseModel):
 
 class AnswerFilterParams(BaseModel):
     """Параметры фильтрации ответов."""
-    pass
+    is_published: Optional[bool] = None
     
     def get_filters(self) -> Dict[str, Any]:
         """Получить словарь фильтров для SQLAlchemy."""
         filters = {}
         
+        if self.is_published is not None:
+            filters["is_published"] = self.is_published
+
         return filters
     
 

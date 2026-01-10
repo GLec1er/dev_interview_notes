@@ -6,6 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from pydantic import BaseModel
 
 from app.core.loggers import log
+from app.db.models.question import Category
 
 ModelType = TypeVar("ModelType")
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
@@ -139,6 +140,15 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         """Применить фильтры к запросу."""
         for key, value in filters.items():
             if value is not None:
+                # Обработка специального фильтра для неактивных категорий
+                if key == "exclude_inactive_categories" and value:
+                    # Используем join для фильтрации по активным категориям
+                    query = query.join(
+                        Category,
+                        self.model.category_id == Category.id
+                    ).where(Category.is_active == True)
+                    continue
+                    
                 column = getattr(self.model, key, None)
                 if column is not None:
                     query = query.where(column == value)

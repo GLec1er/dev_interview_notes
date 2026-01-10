@@ -8,7 +8,7 @@ from app.db.database import SessionDep
 from app.db.models.auth import UserRole
 from app.repositories.category import CategoryRepository
 from app.schemas.category import CategoryCreate, CategoryListResponse, CategoryResponse, CategoryUpdate
-from app.schemas.question import QuestionFilterParams, QuestionSortParams
+from app.schemas.question import QuestionFilterParams, QuestionSortParams, QuestionUpdateResponse
 from app.services.auth import CurrentActiveUser
 from app.services.category import CategoryService
 from app.services.question import QuestionService
@@ -170,7 +170,7 @@ async def get_question(
 
 @router.put(
     "/{question_id}", 
-    response_model=QuestionResponse,
+    response_model=QuestionUpdateResponse,
     description="Обновление вопроса по ID",
 )
 @check_permission(required_role=UserRole.ADMIN)

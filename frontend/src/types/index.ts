@@ -41,8 +41,8 @@ export interface Question {
   created_at: string;
   updated_at: string;
   category_id?: string; // ID категории
-  category_name?: string; // Название категории из API
   category?: Category;
+  exclude_inactive_categories?: boolean,
 }
 
 export interface QuestionCreate {
@@ -92,6 +92,7 @@ export interface Category {
   slug: string;
   description?: string;
   is_active: boolean;
+  question_count: number;
 }
 
 export interface CategoryCreate {

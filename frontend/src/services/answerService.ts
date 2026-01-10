@@ -52,13 +52,19 @@ export const answerService = {
     pageNumber: number = 1,
     limit: number = 10,
     sortBy: string = 'created_at',
-    sortDir: string = 'desc'
+    sortDir: string = 'desc',
+    is_published?: boolean,
   ): Promise<Answer[]> {
     const params = new URLSearchParams();
     params.append('page_number', pageNumber.toString());
     params.append('limit', limit.toString());
     params.append('sort_by', sortBy);
     params.append('sort_dir', sortDir);
+
+
+    if (is_published !== undefined) {
+      params.append('is_published', is_published.toString());
+    }
 
     const response = await api.get(`/questions/${questionId}/answers/?${params.toString()}`);
     

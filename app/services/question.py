@@ -9,7 +9,7 @@ from app.db.models.question import Question
 from app.repositories.category import CategoryRepository
 from app.repositories.question import QuestionRepository
 from app.schemas.base import PaginationParams
-from app.schemas.question import QuestionCreate, QuestionUpdate
+from app.schemas.question import QuestionCreate, QuestionUpdate, QuestionUpdateResponse
 from app.core.loggers import log
 from app.schemas.question import QuestionFilterParams, QuestionSortParams, QuestionResponse
 
@@ -123,7 +123,7 @@ class QuestionService:
         self,
         question_id: UUID,
         data: QuestionUpdate,
-    ) -> Optional[QuestionResponse]:
+    ) -> Optional[QuestionUpdateResponse]:
         """Обновление вопроса.
         
         Args:
@@ -154,7 +154,7 @@ class QuestionService:
             
             if updated_question:
                 log.info(f"✅ Вопрос успешно обновлен: {question_id}")
-                return QuestionResponse.model_validate(updated_question)
+                return QuestionUpdateResponse.model_validate(updated_question)
             
             return None
         except ValueError:
