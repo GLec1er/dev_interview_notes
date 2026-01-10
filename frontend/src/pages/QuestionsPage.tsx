@@ -38,7 +38,9 @@ import {
   BarChart as BarChartIcon,
   Timeline as TimelineIcon,
   ArrowBack as ArrowBackIcon,
+  ArrowForward as ArrowForwardIcon,
   Category as CategoryIcon,
+  Person as PersonIcon,
 } from '@mui/icons-material';
 import { questionService } from '../services/questionService';
 import { categoryService } from '../services/categoryService';
@@ -972,6 +974,57 @@ export const QuestionsPage: React.FC = () => {
             }}
           >
             <ArrowBackIcon />
+          </IconButton>
+
+          {/* Правая кнопка - в профиль */}
+          <Button
+            variant="outlined"
+            endIcon={<ArrowForwardIcon />}
+            onClick={() => navigate('/profile')}
+            sx={{
+              position: 'absolute',
+              right: 0,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              borderRadius: 3,
+              borderWidth: 2,
+              borderColor: alpha(NEUTRAL_COLORS.accent, 0.3),
+              color: NEUTRAL_COLORS.accent,
+              fontWeight: 600,
+              px: 3,
+              py: 1.5,
+              display: { xs: 'none', sm: 'flex' },
+              alignItems: 'center',
+              gap: 1,
+              '&:hover': {
+                borderColor: NEUTRAL_COLORS.accent,
+                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+                transform: 'translateY(-50%) translateX(4px)',
+                boxShadow: `0 8px 24px ${alpha(NEUTRAL_COLORS.accent, 0.1)}`,
+              },
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
+          >
+            Мой профиль
+          </Button>
+
+          {/* Мобильная кнопка профиля */}
+          <IconButton
+            onClick={() => navigate('/profile')}
+            sx={{
+              position: 'absolute',
+              right: 0,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              display: { xs: 'flex', sm: 'none' },
+              color: NEUTRAL_COLORS.accent,
+              backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
+              '&:hover': {
+                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.2),
+              },
+            }}
+          >
+            <PersonIcon />
           </IconButton>
 
           {/* Основная иконка с интерактивными элементами */}

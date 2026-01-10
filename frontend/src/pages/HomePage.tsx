@@ -426,7 +426,7 @@ export const HomePage: React.FC = () => {
       const categoriesData = await categoryService.getCategories(1, 10, true);
       
       // Фильтруем и сортируем категории по количеству вопросов
-      const sortedCategories = categoriesData.items
+      const sortedCategories = (categoriesData.items as ApiCategory[])
         .filter(cat => cat.is_active) // Только активные категории
         .sort((a, b) => b.question_count - a.question_count)
         .slice(0, 5); // Берем топ-5 категорий
@@ -537,12 +537,17 @@ export const HomePage: React.FC = () => {
                       <Chip 
                         label={`${user?.first_name} ${user?.last_name}`}
                         size="medium"
+                        onClick={() => handleNavigation('/profile')}
                         sx={{ 
                           fontWeight: 500,
                           backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
                           color: NEUTRAL_COLORS.textPrimary,
+                          cursor: 'pointer',
                           '& .MuiChip-label': {
                             px: 1.5,
+                          },
+                          '&:hover': {
+                            backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.2),
                           }
                         }}
                       />
@@ -730,30 +735,7 @@ export const HomePage: React.FC = () => {
                       transition: 'all 0.3s ease',
                     }}
                   >
-                    Продолжить обучение
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    size="large"
-                    startIcon={<TrophyIcon />}
-                    onClick={handleRandomCategory}
-                    sx={{
-                      px: 5,
-                      py: 1.8,
-                      borderRadius: 2,
-                      fontWeight: 600,
-                      fontSize: '1.1rem',
-                      borderWidth: 2,
-                      borderColor: NEUTRAL_COLORS.border,
-                      color: NEUTRAL_COLORS.textPrimary,
-                      '&:hover': {
-                        borderColor: NEUTRAL_COLORS.accent,
-                        backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
-                        borderWidth: 2,
-                      }
-                    }}
-                  >
-                    Случайная категория
+                    Начать обучение
                   </Button>
                 </>
               )}

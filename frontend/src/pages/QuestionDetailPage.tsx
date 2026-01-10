@@ -30,6 +30,7 @@ import {
   KeyboardArrowUp as ScrollTopIcon,
   Comment as CommentIcon,
   History as HistoryIcon,
+  ArrowForward as ArrowForwardIcon,
 } from '@mui/icons-material';
 import { questionService } from '../services/questionService';
 import { answerService } from '../services/answerService';
@@ -555,20 +556,44 @@ export const QuestionDetailPage: React.FC = () => {
         )}
 
         {/* Кнопка назад */}
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/questions')}
-          sx={{
-            mb: 3,
-            color: NEUTRAL_COLORS.accent,
-            '&:hover': {
-              backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
-            },
-          }}
-          variant="text"
-        >
-          Назад к вопросам
-        </Button>
+        <Box sx={{ 
+          mb: 3, 
+          display: 'flex', 
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 2
+        }}>
+          {/* Левая кнопка - назад к вопросам */}
+          <Button
+            startIcon={<ArrowBackIcon />}
+            onClick={() => navigate('/questions')}
+            sx={{
+              color: NEUTRAL_COLORS.accent,
+              '&:hover': {
+                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+              },
+            }}
+            variant="text"
+          >
+            Назад к вопросам
+          </Button>
+
+          {/* Правая кнопка - в профиль */}
+          <Button
+            endIcon={<ArrowForwardIcon />}
+            onClick={() => navigate('/profile')}
+            sx={{
+              color: NEUTRAL_COLORS.accent,
+              '&:hover': {
+                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+              },
+            }}
+            variant="text"
+          >
+            Мой профиль
+          </Button>
+        </Box>
 
         {/* Карточка вопроса */}
         <Paper

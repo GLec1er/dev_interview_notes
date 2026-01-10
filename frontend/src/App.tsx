@@ -11,6 +11,7 @@ import { RegisterPage } from './pages/RegisterPage';
 import { QuestionsPage } from './pages/QuestionsPage';
 import { QuestionDetailPage } from './pages/QuestionDetailPage';
 import { AdminPage } from './pages/AdminPage';
+import { UserProfilePage } from './pages/UserProfilePage';
 
 const theme = createTheme({
   palette: {
@@ -163,6 +164,14 @@ function App() {
                   element={
                     <ProtectedRoute requiredRole="admin">
                       <AdminPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <UserProfilePage />
                     </ProtectedRoute>
                   }
                 />
