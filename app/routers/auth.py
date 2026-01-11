@@ -261,7 +261,7 @@ async def get_current_user(
 @router.put(
     "/me",
     status_code=status.HTTP_200_OK,
-    response_model=UserBase,
+    response_model=UserMe,
     summary="Обновить профиль пользователя",
     description="Обновление доступных полей профиля текущего пользователя",
 )
