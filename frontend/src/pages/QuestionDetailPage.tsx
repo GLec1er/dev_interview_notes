@@ -31,10 +31,13 @@ import {
   Comment as CommentIcon,
   History as HistoryIcon,
   ArrowForward as ArrowForwardIcon,
+  CheckCircle as CheckCircleIcon,
+  RadioButtonUnchecked as RadioButtonUncheckedIcon,
 } from '@mui/icons-material';
 import { questionService } from '../services/questionService';
 import { answerService } from '../services/answerService';
 import { categoryService } from '../services/categoryService';
+import { questionCompletionService } from '../services/questionCompletionService';
 import { ContentRenderer } from '../components/ContentRenderer';
 import type { Question, Answer, Category } from '../types';
 
@@ -165,17 +168,6 @@ const SolutionCard: React.FC<SolutionCardProps> = ({
                 />
                 Обновлено: {new Date(answer.updated_at).toLocaleDateString()}
               </Typography>
-              
-              {answer.author && (
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: NEUTRAL_COLORS.textSecondary,
-                  }}
-                >
-                  • Автор: {answer.author}
-                </Typography>
-              )}
             </Stack>
           </Box>
         </Stack>
@@ -280,35 +272,6 @@ const SolutionCard: React.FC<SolutionCardProps> = ({
               onCopyCode={onCopyCode}
             />
           </Box>
-
-          {/* Футер с дополнительной информацией */}
-          {answer.author && (
-            <Box
-              sx={{
-                mt: 4,
-                pt: 3,
-                borderTop: `1px dashed ${alpha(NEUTRAL_COLORS.border, 0.5)}`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'flex-end',
-                opacity: isExpanded ? 1 : 0,
-                transform: isExpanded ? 'translateY(0)' : 'translateY(10px)',
-                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                transitionDelay: isExpanded ? '0.3s' : '0s',
-              }}
-            >
-              <Typography
-                variant="body2"
-                sx={{
-                  color: NEUTRAL_COLORS.textSecondary,
-                  fontSize: '0.875rem',
-                  fontStyle: 'italic',
-                }}
-              >
-                Solution provided by {answer.author}
-              </Typography>
-            </Box>
-          )}
         </Box>
       </Box>
     </Paper>
@@ -328,6 +291,8 @@ export const QuestionDetailPage: React.FC = () => {
   const [solutionFilter, setSolutionFilter] = useState<string>('all');
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showCopyNotification, setShowCopyNotification] = useState<string | null>(null);
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [isCompletionLoading, setIsCompletionLoading] = useState(false);
 
   // Отслеживание скролла для кнопки "Наверх"
   useEffect(() => {
@@ -442,13 +407,9 @@ export const QuestionDetailPage: React.FC = () => {
 
   const filteredAnswers = () => {
     switch (solutionFilter) {
-      case 'verified':
-        return answers.filter(answer => answer.is_verified);
-      case 'popular':
-        return [...answers].sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0));
       case 'newest':
         return [...answers].sort((a, b) => 
-          new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+          new Date(b.updated_at || '').getTime() - new Date(a.updated_at || '').getTime()
         );
       default:
         return answers;
@@ -787,8 +748,7 @@ export const QuestionDetailPage: React.FC = () => {
                   }}
                 >
                   <ContentRenderer 
-                    blocks={question.content} 
-                    onCopyCode={handleCopyCode}
+                    blocks={question.content}
                   />
                 </Box>
 

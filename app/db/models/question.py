@@ -12,10 +12,12 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     String,
+    UniqueConstraint,
     func,
     Enum as SQLEnum,
 )
 from sqlalchemy.orm import declarative_base, relationship, Mapped, mapped_column, validates
+from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.ext.hybrid import hybrid_property
 
@@ -125,6 +127,19 @@ class Question(Base):
         "Category", 
         back_populates="questions",
         lazy="joined"  # Опционально: загружать категорию вместе с вопросом
+    )
+
+    completions: Mapped[List["QuestionCompletion"]] = relationship(
+        "QuestionCompletion",
+        back_populates="question",
+        cascade="all, delete-orphan",
+        lazy="dynamic"
+    )
+    
+    # Association proxy для прямого доступа к пользователям
+    completed_by_users = association_proxy(
+        'completions', 
+        'user'
     )
 
     ############# Validations #############
@@ -295,3 +310,79 @@ class Category(Base):
 #             'created_at'
 #         ),
 #     )
+
+class QuestionCompletion(Base):
+    """Модель отметки выполнения вопросов пользователями."""
+
+    __tablename__ = "question_completions"
+
+    ############# Main fields #############
+    id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4,
+        comment="Уникальный идентификатор записи"
+    )
+    user_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+        comment="ID пользователя"
+    )
+    question_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("questions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+        comment="ID вопроса"
+    )
+    
+    ############# Metadata #############
+    completed_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+        index=True,
+        comment="Дата и время отметки выполнения"
+    )
+    
+    ############# Relationships #############
+    user: Mapped["User"] = relationship(
+        "User",
+        back_populates="completed_questions",
+        lazy="joined"  # Для быстрой загрузки пользователя
+    )
+    question: Mapped["Question"] = relationship(
+        "Question",
+        back_populates="completions",
+        lazy="joined"  # Для быстрой загрузки вопроса
+    )
+
+    __table_args__ = (
+        # Уникальная комбинация пользователь-вопрос
+        UniqueConstraint(
+            'user_id', 
+            'question_id', 
+            name='uq_user_question_completion'
+        ),
+        # Индекс для быстрого поиска по пользователю и дате
+        Index(
+            'idx_completions_user_completed_at',
+            'user_id',
+            'completed_at'
+        ),
+        # Индекс для быстрого подсчета выполненных вопросов
+        Index(
+            'idx_completions_question_count',
+            'question_id',
+            'completed_at'
+        ),
+        # Частичный индекс для активных пользователей
+        Index(
+            'idx_completions_active_users',
+            'user_id',
+            'question_id',
+            postgresql_where=user_id.is_not(None)
+        ),
+    )

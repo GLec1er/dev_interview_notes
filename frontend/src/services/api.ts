@@ -35,12 +35,24 @@ class ApiClient {
         const originalRequest = error.config as any;
 
         // Don't retry refresh endpoint itself to avoid infinite loops
-        if (originalRequest.url?.includes('/auth/refresh') || originalRequest.url?.includes('/auth/me')) {
+        if (originalRequest.url?.includes('/auth/refresh')) {
+          // Refresh token expired or invalid, clear cookies and redirect to login
+          Cookies.remove('access_token');
+          Cookies.remove('refresh_token');
+          window.location.href = '/login';
           return Promise.reject(error);
         }
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // Don't retry /auth/me on initial load to avoid infinite loops
+        if (originalRequest.url?.includes('/auth/me') && !originalRequest._retry) {
           originalRequest._retry = true;
+
+          // Check if we have a refresh token
+          const refreshToken = Cookies.get('refresh_token');
+          if (!refreshToken) {
+            // No refresh token, can't refresh
+            return Promise.reject(error);
+          }
 
           try {
             // Try to refresh the token
@@ -58,6 +70,41 @@ class ApiClient {
             return this.client(originalRequest);
           } catch (refreshError) {
             // Refresh failed, clear cookies and redirect to login
+            Cookies.remove('access_token');
+            Cookies.remove('refresh_token');
+            window.location.href = '/login';
+            return Promise.reject(refreshError);
+          }
+        }
+
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          originalRequest._retry = true;
+
+          // Check if we have a refresh token
+          const refreshToken = Cookies.get('refresh_token');
+          if (!refreshToken) {
+            // No refresh token, redirect to login
+            Cookies.remove('access_token');
+            window.location.href = '/login';
+            return Promise.reject(error);
+          }
+
+          try {
+            // Try to refresh the token
+            const response = await axios.post(
+              `${API_BASE_URL}/auth/refresh`,
+              {},
+              { withCredentials: true }
+            );
+
+            const newToken = response.data;
+            Cookies.set('access_token', newToken);
+
+            // Retry original request
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            return this.client(originalRequest);
+          } catch (refreshError) {
+            // Refresh failed (refresh token expired), clear cookies and redirect to login
             Cookies.remove('access_token');
             Cookies.remove('refresh_token');
             window.location.href = '/login';

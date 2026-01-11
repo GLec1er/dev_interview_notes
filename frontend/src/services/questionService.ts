@@ -53,24 +53,4 @@ export const questionService = {
   async deleteQuestion(questionId: string): Promise<void> {
     await api.delete(`/questions/${questionId}`);
   },
-
-  async addCategoryToQuestion(questionId: string, categoryId: string): Promise<Question> {
-    const response = await api.post(`/questions/${questionId}/categories/${categoryId}`);
-    return response.data;
-  },
-
-  async removeCategoryFromQuestion(questionId: string, categoryId: string): Promise<Question> {
-    const response = await api.delete(`/questions/${questionId}/categories/${categoryId}`);
-    return response.data;
-  },
-
-  async setQuestionCategories(questionId: string, categoryIds: string[]): Promise<Question> {
-    const response = await api.put(`/questions/${questionId}/categories/`, categoryIds);
-    return response.data;
-  },
-
-  async getQuestionCategories(questionId: string) {
-    const response = await api.get(`/questions/${questionId}/categories/`);
-    return response.data;
-  },
 };

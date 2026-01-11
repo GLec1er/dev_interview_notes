@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 from uuid import uuid4
 from sqlalchemy import (
     TIMESTAMP, 
@@ -10,12 +10,13 @@ from sqlalchemy import (
     func,
     Enum as SQLEnum,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime
 from enum import Enum
 
-from app.db.models.question import Base
+from app.db.models.question import Base, QuestionCompletion
 
 
 class UserRole(str, Enum):
@@ -107,5 +108,18 @@ class User(Base):
         onupdate=func.now(),
         nullable=False,
     )
-    
 
+    ############# Relationships #############
+
+    completed_questions: Mapped[List["QuestionCompletion"]] = relationship(
+        "QuestionCompletion",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="dynamic"  # Для пагинации
+    )
+
+    # Association proxy для прямого доступа к вопросам
+    completed_question_objects = association_proxy(
+        'completed_questions', 
+        'question'
+    )
