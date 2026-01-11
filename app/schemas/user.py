@@ -169,3 +169,95 @@ class Token(BaseModel):
     refresh_token: str
     token_type: str = "bearer"
     expires_in: int = settings.auth.access_token_expire_minutes * 60
+
+
+
+class UserAdminBase(BaseModel):
+    id: UUID
+    first_name: str = Field(
+        ..., 
+        min_length=2, 
+        max_length=100,
+        description="Имя пользователя"
+    )
+    last_name: str = Field(
+        ..., 
+        min_length=2, 
+        max_length=100,
+        description="Фамилия пользователя"
+    )
+    email: EmailStr = Field(
+        ...,
+        description="Email пользователя"
+    )
+    avatar_url: Optional[str] = Field(
+        None,
+        max_length=500,
+        description="URL аватарки пользователя"
+    )
+    is_active: bool = Field(
+        ..., 
+        description="Активен ли пользователь",
+    )
+    is_admin: bool = Field(
+        ..., 
+        description="Является ли администратором",
+    )
+    last_login: Optional[datetime] = Field(
+        None, 
+        description="Последний вход",
+    )
+    role: UserRole = Field(
+        ..., 
+        description="Роль пользователя",
+    )
+    email_verified: bool = Field(
+        ..., 
+        description="Подтвержден ли email",
+    )
+    created_at: datetime
+    updated_at: datetime
+
+
+class UserUpdateAdminBase(BaseModel):
+    first_name: str = Field(
+        ..., 
+        min_length=2, 
+        max_length=100,
+        description="Имя пользователя"
+    )
+    last_name: str = Field(
+        ..., 
+        min_length=2, 
+        max_length=100,
+        description="Фамилия пользователя"
+    )
+    email: EmailStr = Field(
+        ...,
+        description="Email пользователя"
+    )
+    avatar_url: Optional[str] = Field(
+        None,
+        max_length=500,
+        description="URL аватарки пользователя"
+    )
+    is_active: bool = Field(
+        ..., 
+        description="Активен ли пользователь",
+    )
+    is_admin: bool = Field(
+        False, 
+        description="Является ли администратором",
+    )
+    last_login: Optional[datetime] = Field(
+        None, 
+        description="Последний вход",
+    )
+    role: UserRole = Field(
+        UserRole.USER, 
+        description="Роль пользователя",
+    )
+    email_verified: bool = Field(
+        False, 
+        description="Подтвержден ли email",
+    )

@@ -25,11 +25,13 @@ import {
   Category as CategoriesIcon,
   Chat as AnswersIcon,
   AdminPanelSettings as AdminIcon,
+  People as UsersIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { AdminQuestions } from '../components/Admin/AdminQuestions';
 import { AdminCategories } from '../components/Admin/AdminCategories';
 import { AdminAnswers } from '../components/Admin/AdminAnswers';
+import { AdminUsers } from '../components/Admin/AdminUsers';
 
 // Нейтральная цветовая палитра (такая же как на главной)
 const NEUTRAL_COLORS = {
@@ -372,6 +374,12 @@ export const AdminPage: React.FC = () => {
                 label="Categories" 
                 {...a11yProps(2)} 
               />
+              <Tab 
+                icon={<UsersIcon />} 
+                iconPosition="start"
+                label="Users" 
+                {...a11yProps(3)} 
+              />
             </Tabs>
           </Box>
 
@@ -387,6 +395,10 @@ export const AdminPage: React.FC = () => {
 
             <TabPanel value={tabValue} index={2}>
               <AdminCategories />
+            </TabPanel>
+
+            <TabPanel value={tabValue} index={3}>
+              <AdminUsers />
             </TabPanel>
           </Box>
         </Paper>

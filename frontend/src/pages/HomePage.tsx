@@ -553,7 +553,8 @@ export const HomePage: React.FC = () => {
                       />
                       {user?.is_admin && (
                         <Chip 
-                          label="Admin" 
+                          label="Admin"
+                          onClick={() => handleNavigation('/admin')}
                           size="medium"
                           sx={{ 
                             fontWeight: 600,

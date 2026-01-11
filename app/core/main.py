@@ -14,6 +14,7 @@ from app.db.database import engine
 from app.core.loggers import log
 from app.routers.questions import router as question_router
 from app.routers.auth import router as auth_router
+from app.routers.users import router as users_router
 
 
 @asynccontextmanager
@@ -48,6 +49,7 @@ app.add_middleware(CookieAuthMiddleware)
 # Root endpoint
 app.include_router(question_router)
 app.include_router(auth_router)
+app.include_router(users_router)
 
 
 @app.get("/")
