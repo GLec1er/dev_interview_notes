@@ -227,9 +227,13 @@ async def get_completion_stats(
         overall_percentage = await service.get_overall_completion_percentage(current_user.id)
         
         return CompletionStatsResponse(
+            total=stats['total'],
             total_completed=stats['total_completed'],
+            total_easy=stats['total_easy'],
             easy_completed=stats['easy_completed'],
+            total_medium=stats['total_medium'],
             medium_completed=stats['medium_completed'],
+            total_hard=stats['total_hard'],
             hard_completed=stats['hard_completed'],
             overall_percentage=overall_percentage,
         )

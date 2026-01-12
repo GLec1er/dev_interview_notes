@@ -41,9 +41,12 @@ import {
   ArrowForward as ArrowForwardIcon,
   Category as CategoryIcon,
   Person as PersonIcon,
+  CheckCircle as CheckCircleIcon,
+  RadioButtonUnchecked as RadioButtonUncheckedIcon,
 } from '@mui/icons-material';
 import { questionService } from '../services/questionService';
 import { categoryService } from '../services/categoryService';
+import { questionCompletionService } from '../services/questionCompletionService';
 import type { Question, Category } from '../types';
 
 // Нейтральная цветовая палитра
@@ -346,7 +349,7 @@ const StatisticsSection: React.FC<{
         {/* Карточки статистики - теперь на всю ширину */}
         <Grid container spacing={3} sx={{ mb: 3 }}>
           {stats.map((stat) => (
-            <Grid item xs={12} sm={6} lg={3} key={stat.title}>
+            <Grid key={stat.title} sx={{ xs: 12, sm: 6, lg: 3 }}>
               <EnhancedStatCard
                 title={stat.title}
                 value={stat.value}
@@ -526,9 +529,26 @@ interface QuestionCardProps {
   onClick: () => void;
   index: number;
   categories: Category[];
+  onCompletionChange?: () => void;
 }
 
-const QuestionCard: React.FC<QuestionCardProps> = ({ question, onClick, index, categories }) => {
+const QuestionCard: React.FC<QuestionCardProps> = ({ 
+  question, 
+  onClick, 
+  index, 
+  categories,
+  onCompletionChange 
+}) => {
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [isCompletionLoading, setIsCompletionLoading] = useState(false);
+
+  // Загружаем статус выполнения при монтировании компонента
+  useEffect(() => {
+    questionCompletionService.isQuestionCompleted(question.id)
+      .then(result => setIsCompleted(result.is_completed))
+      .catch(err => console.error('Failed to check completion status:', err));
+  }, [question.id]);
+
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'easy':
@@ -558,6 +578,31 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, onClick, index, c
     }
     
     return null;
+  };
+
+  const handleToggleCompletion = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    try {
+      setIsCompletionLoading(true);
+      
+      if (isCompleted) {
+        await questionCompletionService.unmarkQuestionComplete(question.id);
+        setIsCompleted(false);
+      } else {
+        await questionCompletionService.markQuestionComplete(question.id);
+        setIsCompleted(true);
+      }
+      
+      // Обновляем статистику после изменения статуса
+      if (onCompletionChange) {
+        onCompletionChange();
+      }
+    } catch (err) {
+      console.error('Failed to toggle completion:', err);
+    } finally {
+      setIsCompletionLoading(false);
+    }
   };
 
   const categoryName = getCategoryName(question);
@@ -697,19 +742,49 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, onClick, index, c
           </Box>
         </Box>
 
-        {/* Правая часть - стрелка */}
+        {/* Правая часть - кнопка выполнения и стрелка */}
         <Box
-          className="arrow-icon"
           sx={{
             display: 'flex',
             alignItems: 'center',
-            color: NEUTRAL_COLORS.textSecondary,
-            transition: 'transform 0.2s',
+            gap: 1,
             ml: 2,
             flexShrink: 0,
           }}
         >
-          <ArrowRightIcon />
+          <IconButton
+            onClick={handleToggleCompletion}
+            disabled={isCompletionLoading}
+            size="small"
+            sx={{
+              color: isCompleted ? NEUTRAL_COLORS.success : NEUTRAL_COLORS.textSecondary,
+              backgroundColor: alpha(NEUTRAL_COLORS.background, 0.8),
+              '&:hover': {
+                backgroundColor: alpha(NEUTRAL_COLORS.success, 0.1),
+              },
+            }}
+          >
+            {isCompletionLoading ? (
+              <CircularProgress size={20} />
+            ) : isCompleted ? (
+              <CheckCircleIcon />
+            ) : (
+              <RadioButtonUncheckedIcon />
+            )}
+          </IconButton>
+
+          <Box
+            className="arrow-icon"
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              color: NEUTRAL_COLORS.textSecondary,
+              transition: 'transform 0.2s',
+              flexShrink: 0,
+            }}
+          >
+            <ArrowRightIcon />
+          </Box>
         </Box>
       </Box>
     </Paper>
@@ -771,6 +846,30 @@ export const QuestionsPage: React.FC = () => {
     medium: 0,
     hard: 0,
   });
+  const [overallPercentage, setOverallPercentage] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Функция для загрузки статистики завершения
+  const loadCompletionStats = useCallback(async () => {
+    try {
+      const stats = await questionCompletionService.getCompletionStats();
+      setOverallPercentage(stats.overall_percentage);
+    } catch (err) {
+      console.error('Failed to load completion stats:', err);
+    }
+  }, []);
+
+  // Функция для обновления статистики
+  const refreshStats = useCallback(() => {
+    loadCompletionStats();
+    // Также обновляем ключ для принудительного перерендера, если нужно
+    setRefreshKey(prev => prev + 1);
+  }, [loadCompletionStats]);
+
+  // Загружаем статистику при монтировании и при изменении refreshKey
+  useEffect(() => {
+    loadCompletionStats();
+  }, [loadCompletionStats, refreshKey]);
 
   // Загрузка категорий
   const loadCategories = useCallback(async () => {
@@ -1218,7 +1317,7 @@ export const QuestionsPage: React.FC = () => {
               <Stack direction="row" alignItems="center" spacing={1}>
                 <CircularProgress
                   variant="determinate"
-                  value={total > 0 ? (totalCounts.easy / total) * 100 : 0}
+                  value={overallPercentage}
                   size={40}
                   thickness={4}
                   sx={{
@@ -1230,10 +1329,10 @@ export const QuestionsPage: React.FC = () => {
                 />
                 <Box>
                   <Typography variant="caption" sx={{ color: NEUTRAL_COLORS.textSecondary, fontWeight: 600 }}>
-                    Mastery Progress
+                    Ваш прогресс
                   </Typography>
                   <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textPrimary, fontWeight: 700 }}>
-                    {total > 0 ? Math.round((totalCounts.easy / total) * 100) : 0}% Complete
+                    {overallPercentage}% закрыто
                   </Typography>
                 </Box>
               </Stack>
@@ -1614,7 +1713,7 @@ export const QuestionsPage: React.FC = () => {
                       mb: 2,
                     }}
                   >
-                    Выбери сложность
+                    Выберите сложность
                   </Typography>
                   <Stack spacing={1}>
                     <FilterButton
@@ -1718,7 +1817,7 @@ export const QuestionsPage: React.FC = () => {
                 sx={{
                   p: 8,
                   borderRadius: 3,
-                  border: `2px dashed ${alpha(NEUTRAL_COLORS.border, 0.5)}`,
+                  border: `2px solid ${alpha(NEUTRAL_COLORS.border, 0.5)}`,
                   backgroundColor: NEUTRAL_COLORS.surface,
                   textAlign: 'center',
                   width: '100%',
@@ -1843,6 +1942,7 @@ export const QuestionsPage: React.FC = () => {
                       onClick={() => navigate(`/questions/${question.id}`)}
                       index={(page - 1) * ITEMS_PER_PAGE + index}
                       categories={categories}
+                      onCompletionChange={refreshStats}
                     />
                   ))}
                 </Box>

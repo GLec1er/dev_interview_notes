@@ -405,6 +405,41 @@ export const QuestionDetailPage: React.FC = () => {
     setTimeout(() => setShowCopyNotification(null), 2000);
   };
 
+  const handleToggleCompletion = async () => {
+    if (!questionId) return;
+    
+    try {
+      setIsCompletionLoading(true);
+      
+      if (isCompleted) {
+        await questionCompletionService.unmarkQuestionComplete(questionId);
+        setIsCompleted(false);
+        setShowCopyNotification('Отметка выполнения удалена');
+      } else {
+        await questionCompletionService.markQuestionComplete(questionId);
+        setIsCompleted(true);
+        setShowCopyNotification('Вопрос отмечен как выполненный!');
+      }
+      
+      setTimeout(() => setShowCopyNotification(null), 2000);
+    } catch (err) {
+      console.error('Failed to toggle completion:', err);
+      setShowCopyNotification('Ошибка при обновлении статуса');
+      setTimeout(() => setShowCopyNotification(null), 2000);
+    } finally {
+      setIsCompletionLoading(false);
+    }
+  };
+
+  // Загружаем статус выполнения при загрузке вопроса
+  useEffect(() => {
+    if (questionId) {
+      questionCompletionService.isQuestionCompleted(questionId)
+        .then(result => setIsCompleted(result.is_completed))
+        .catch(err => console.error('Failed to check completion status:', err));
+    }
+  }, [questionId]);
+
   const filteredAnswers = () => {
     switch (solutionFilter) {
       case 'newest':
@@ -579,11 +614,33 @@ export const QuestionDetailPage: React.FC = () => {
               zIndex: 1,
             }}
           >
+            <Tooltip title={isCompleted ? "Снять отметку выполнения" : "Отметить как выполненный"}>
+              <IconButton
+                onClick={handleToggleCompletion}
+                disabled={isCompletionLoading}
+                size="small"
+                sx={{
+                  color: isCompleted ? NEUTRAL_COLORS.success : NEUTRAL_COLORS.textSecondary,
+                  backgroundColor: alpha(NEUTRAL_COLORS.background, 0.8),
+                  '&:hover': {
+                    backgroundColor: alpha(NEUTRAL_COLORS.success, 0.1),
+                  },
+                }}
+              >
+                {isCompletionLoading ? (
+                  <CircularProgress size={24} />
+                ) : isCompleted ? (
+                  <CheckCircleIcon />
+                ) : (
+                  <RadioButtonUncheckedIcon />
+                )}
+              </IconButton>
+            </Tooltip>
+
             <Tooltip title={isBookmarked ? "Удалить из избранное" : "Добавить в избранное"}>
               <IconButton
                 onClick={handleBookmarkToggle}
                 size="small"
-                // disabled={true}
                 sx={{
                   color: isBookmarked ? NEUTRAL_COLORS.warning : NEUTRAL_COLORS.textSecondary,
                   backgroundColor: alpha(NEUTRAL_COLORS.background, 0.8),

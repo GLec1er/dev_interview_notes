@@ -17,9 +17,13 @@ export const questionCompletionService = {
   },
 
   async getCompletionStats(): Promise<{
+    total: number;
     total_completed: number;
+    total_easy: number;
     easy_completed: number;
+    total_medium: number;
     medium_completed: number;
+    total_hard: number;
     hard_completed: number;
     overall_percentage: number;
   }> {

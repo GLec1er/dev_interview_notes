@@ -6,17 +6,14 @@ import {
   Typography,
   Button,
   Paper,
-  TextField,
   Stack,
   Alert,
   CircularProgress,
-  Divider,
   Chip,
   IconButton,
   Tooltip,
   alpha,
   Fade,
-  InputAdornment,
   FormControl,
   InputLabel,
   OutlinedInput,
@@ -33,8 +30,15 @@ import {
   CheckCircle as VerifiedIcon,
   AccessTime as ClockIcon,
   Image as ImageIcon,
+  TrendingUp as TrendingUpIcon,
+  BarChart as BarChartIcon,
+  Bolt as BoltIcon,
+  Category as CategoryIcon,
+  Speed as SpeedIcon,
+  EmojiEvents as EmojiEventsIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
+import { questionCompletionService } from '../services/questionCompletionService';
 
 // Нейтральная цветовая палитра
 const NEUTRAL_COLORS = {
@@ -50,6 +54,9 @@ const NEUTRAL_COLORS = {
   warning: '#DD6B20',
   error: '#E53E3E',
   info: '#3182CE',
+  easy: '#38A169',
+  medium: '#D69E2E',
+  hard: '#E53E3E',
 };
 
 // Компонент текстового поля со стилями
@@ -88,9 +95,9 @@ const StyledInputField = ({
       label={label}
       readOnly={readOnly}
       startAdornment={startIcon ? (
-        <InputAdornment position="start">
+        <Box sx={{ color: NEUTRAL_COLORS.textSecondary, mr: 1 }}>
           {startIcon}
-        </InputAdornment>
+        </Box>
       ) : undefined}
       sx={{
         borderRadius: 2,
@@ -282,6 +289,94 @@ const InfoField = ({
   </Box>
 );
 
+// Компонент статистической карточки
+const StatCard = ({ 
+  title, 
+  value, 
+  subtitle, 
+  color, 
+  icon,
+  percentage = false 
+}: {
+  title: string;
+  value: string | number;
+  subtitle: string;
+  color: string;
+  icon: React.ReactNode;
+  percentage?: boolean;
+}) => (
+  <Paper
+    elevation={0}
+    sx={{
+      p: 3,
+      borderRadius: 2,
+      backgroundColor: alpha(color, 0.05),
+      border: `1px solid ${alpha(color, 0.2)}`,
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      transition: 'all 0.3s ease',
+      '&:hover': {
+        transform: 'translateY(-4px)',
+        boxShadow: `0 8px 24px ${alpha(color, 0.15)}`,
+        borderColor: alpha(color, 0.4),
+      },
+    }}
+  >
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+      <Box
+        sx={{
+          p: 1.5,
+          borderRadius: '50%',
+          backgroundColor: alpha(color, 0.1),
+          color: color,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        {icon}
+      </Box>
+      <Typography
+        variant="subtitle1"
+        sx={{
+          fontWeight: 600,
+          color: NEUTRAL_COLORS.textPrimary,
+        }}
+      >
+        {title}
+      </Typography>
+    </Box>
+    
+    <Typography
+      variant="h3"
+      sx={{
+        fontWeight: 800,
+        color: color,
+        mb: 1,
+        fontSize: { xs: '2rem', md: '2.5rem' },
+        background: percentage ? `linear-gradient(135deg, ${color} 0%, ${alpha(color, 0.7)} 100%)` : 'none',
+        backgroundClip: percentage ? 'text' : 'none',
+        WebkitBackgroundClip: percentage ? 'text' : 'none',
+        WebkitTextFillColor: percentage ? 'transparent' : 'inherit',
+      }}
+    >
+      {percentage ? `${value}%` : value}
+    </Typography>
+    
+    <Typography
+      variant="body2"
+      sx={{
+        color: NEUTRAL_COLORS.textSecondary,
+        flexGrow: 1,
+      }}
+    >
+      {subtitle}
+    </Typography>
+  </Paper>
+);
+
 export const UserProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading, updateProfile, error: authError, clearError } = useAuth();
@@ -295,6 +390,12 @@ export const UserProfilePage: React.FC = () => {
   const [lastName, setLastName] = useState(user?.last_name || '');
   const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url || '');
 
+  // Статистика выполнения
+  const [completionStats, setCompletionStats] = useState<any>(null);
+  const [categoryStats, setCategoryStats] = useState<any[]>([]);
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+
+
   // Обновляем локальное состояние при изменении пользователя
   useEffect(() => {
     if (user) {
@@ -303,6 +404,26 @@ export const UserProfilePage: React.FC = () => {
       setAvatarUrl(user.avatar_url || '');
     }
   }, [user]);
+
+  // Загружаем статистику выполнения
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        setIsLoadingStats(true);
+        const stats = await questionCompletionService.getCompletionStats();
+        setCompletionStats(stats);
+
+        const categoryStatsData = await questionCompletionService.getCompletionStatsByCategory();
+        setCategoryStats(categoryStatsData.items || []);
+      } catch (err) {
+        console.error('Failed to load completion stats:', err);
+      } finally {
+        setIsLoadingStats(false);
+      }
+    };
+
+    loadStats();
+  }, []);
 
   const handleSaveChanges = useCallback(async () => {
     setLocalError('');
@@ -390,40 +511,40 @@ export const UserProfilePage: React.FC = () => {
         position: 'relative',
       }}
     >
-      <Container maxWidth="md">
+      <Container maxWidth="lg">
         {/* Кнопка назад */}
-      <Stack 
-        direction="row" 
-        spacing={2} 
-        sx={{ 
-          mb: 3,
-          flexWrap: 'wrap',
-          gap: 2,
-          alignItems: 'center'
-        }}
-      >        
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/questions')}
-          sx={{
-            borderRadius: 2,
-            backgroundColor: NEUTRAL_COLORS.accent,
-            color: NEUTRAL_COLORS.surface,
-            px: 3,
-            py: 1,
-            fontWeight: 600,
-            '&:hover': {
-              backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.9),
-              transform: 'translateY(-1px)',
-              boxShadow: `0 4px 12px ${alpha(NEUTRAL_COLORS.accent, 0.3)}`,
-            },
-            transition: 'all 0.2s',
+        <Stack 
+          direction="row" 
+          spacing={2} 
+          sx={{ 
+            mb: 3,
+            flexWrap: 'wrap',
+            gap: 2,
+            alignItems: 'center'
           }}
-          variant="contained"
-        >
-          К вопросам
-        </Button>
-      </Stack>
+        >        
+          <Button
+            startIcon={<ArrowBackIcon />}
+            onClick={() => navigate('/questions')}
+            sx={{
+              borderRadius: 2,
+              backgroundColor: NEUTRAL_COLORS.accent,
+              color: NEUTRAL_COLORS.surface,
+              px: 3,
+              py: 1,
+              fontWeight: 600,
+              '&:hover': {
+                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.9),
+                transform: 'translateY(-1px)',
+                boxShadow: `0 4px 12px ${alpha(NEUTRAL_COLORS.accent, 0.3)}`,
+              },
+              transition: 'all 0.2s',
+            }}
+            variant="contained"
+          >
+            К вопросам
+          </Button>
+        </Stack>
 
         {/* Уведомления */}
         {(authError || localError) && (
@@ -759,7 +880,7 @@ export const UserProfilePage: React.FC = () => {
                 onChange={(e: any) => setAvatarUrl(e.target.value)}
                 disabled={isSaving}
                 startIcon={<ImageIcon sx={{ color: NEUTRAL_COLORS.textSecondary }} />}
-                helperText="Введите полный URL изображения (например, https://example.com/avatar.jpg)"
+                helperText="Введите полный URL изображения (например, https://example.com/avatar.jpg  )"
               />
 
               {/* Кнопки действий */}
@@ -792,7 +913,283 @@ export const UserProfilePage: React.FC = () => {
           )}
         </Paper>
 
-        {/* Дополнительная информация */}
+        {/* Статистика выполнения */}
+        {!isLoadingStats && completionStats && (
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 3, md: 4 },
+              borderRadius: 3,
+              border: `1px solid ${NEUTRAL_COLORS.border}`,
+              backgroundColor: NEUTRAL_COLORS.surface,
+              mb: 4,
+            }}
+          >
+            {/* Заголовок */}
+            <Box sx={{ mb: 4, pb: 3, borderBottom: `1px solid ${alpha(NEUTRAL_COLORS.border, 0.5)}` }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                <Box
+                  sx={{
+                    p: 1.5,
+                    borderRadius: '50%',
+                    backgroundColor: alpha(NEUTRAL_COLORS.success, 0.1),
+                    color: NEUTRAL_COLORS.success,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <EmojiEventsIcon sx={{ fontSize: 28 }} />
+                </Box>
+                <Box>
+                  <Typography
+                    variant="h4"
+                    sx={{
+                      fontWeight: 800,
+                      color: NEUTRAL_COLORS.textPrimary,
+                      fontSize: { xs: '1.5rem', md: '2rem' },
+                    }}
+                  >
+                    Ваша статистика
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: NEUTRAL_COLORS.textSecondary,
+                      mt: 0.5,
+                    }}
+                  >
+                    Подробная статистика выполнения вопросов
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+
+            {/* Общие карточки статистики */}
+            <Box sx={{ mb: 5 }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 700,
+                  color: NEUTRAL_COLORS.textPrimary,
+                  mb: 3,
+                }}
+              >
+                Общая статистика
+              </Typography>
+              
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: {
+                    xs: '1fr',
+                    sm: 'repeat(2, 1fr)',
+                    md: 'repeat(4, 1fr)',
+                  },
+                  gap: 3,
+                }}
+              >
+                <StatCard
+                  title="Общий прогресс"
+                  value={completionStats.overall_percentage.toFixed(1)}
+                  subtitle={`${completionStats.total_completed} из ${completionStats.total} вопросов`}
+                  color={NEUTRAL_COLORS.success}
+                  icon={<TrendingUpIcon />}
+                  percentage
+                />
+
+                <StatCard
+                  title="Легкие вопросы"
+                  value={completionStats.easy_completed}
+                  subtitle={`из ${completionStats.total_easy} доступных`}
+                  color={NEUTRAL_COLORS.easy}
+                  icon={<BoltIcon />}
+                />
+
+                <StatCard
+                  title="Средние вопросы"
+                  value={completionStats.medium_completed}
+                  subtitle={`из ${completionStats.total_medium} доступных`}
+                  color={NEUTRAL_COLORS.medium}
+                  icon={<BarChartIcon />}
+                />
+
+                <StatCard
+                  title="Сложные вопросы"
+                  value={completionStats.hard_completed}
+                  subtitle={`из ${completionStats.total_hard} доступных`}
+                  color={NEUTRAL_COLORS.hard}
+                  icon={<SpeedIcon />}
+                />
+              </Box>
+            </Box>
+          </Paper>
+        )}
+
+        {/* Статистика по категориям */}
+        {!isLoadingStats && categoryStats.length > 0 && (
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 3, md: 4 },
+              borderRadius: 3,
+              border: `1px solid ${NEUTRAL_COLORS.border}`,
+              backgroundColor: NEUTRAL_COLORS.surface,
+              mb: 4,
+            }}
+          >
+            {/* Заголовок */}
+            <Box sx={{ mb: 4, pb: 3, borderBottom: `1px solid ${alpha(NEUTRAL_COLORS.border, 0.5)}` }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box
+                  sx={{
+                    p: 1.5,
+                    borderRadius: '50%',
+                    backgroundColor: alpha(NEUTRAL_COLORS.info, 0.1),
+                    color: NEUTRAL_COLORS.info,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <CategoryIcon sx={{ fontSize: 28 }} />
+                </Box>
+                <Box>
+                  <Typography
+                    variant="h4"
+                    sx={{
+                      fontWeight: 800,
+                      color: NEUTRAL_COLORS.textPrimary,
+                      fontSize: { xs: '1.5rem', md: '2rem' },
+                    }}
+                  >
+                    Статистика по темам
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: NEUTRAL_COLORS.textSecondary,
+                      mt: 0.5,
+                    }}
+                  >
+                    Ваш прогресс в каждой категории
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+
+            {/* Список категорий */}
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: {
+                  xs: '1fr',
+                  sm: 'repeat(2, 1fr)',
+                  md: 'repeat(3, 1fr)',
+                },
+                gap: 3,
+              }}
+            >
+              {categoryStats.map((category) => (
+                <Paper
+                  key={category.category_id}
+                  elevation={0}
+                  sx={{
+                    p: 3,
+                    borderRadius: 3,
+                    backgroundColor: alpha(NEUTRAL_COLORS.background, 0.5),
+                    border: `1px solid ${NEUTRAL_COLORS.border}`,
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: `0 8px 24px ${alpha(NEUTRAL_COLORS.accent, 0.1)}`,
+                      borderColor: alpha(NEUTRAL_COLORS.accent, 0.3),
+                    },
+                  }}
+                >
+                  {/* Заголовок категории */}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontWeight: 700,
+                        color: NEUTRAL_COLORS.textPrimary,
+                        lineHeight: 1.3,
+                      }}
+                    >
+                      {category.category_name}
+                    </Typography>
+                    <Chip
+                      label={`${category.percentage.toFixed(1)}%`}
+                      size="small"
+                      sx={{
+                        backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
+                        color: NEUTRAL_COLORS.accent,
+                        fontWeight: 700,
+                        fontSize: '0.75rem',
+                      }}
+                    />
+                  </Box>
+
+                  {/* Прогресс-бар */}
+                  <Box
+                    sx={{
+                      mb: 2,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        height: 8,
+                        borderRadius: 4,
+                        backgroundColor: alpha(NEUTRAL_COLORS.border, 0.3),
+                        overflow: 'hidden',
+                        position: 'relative',
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          height: '100%',
+                          width: `${Math.min(category.percentage, 100)}%`,
+                          backgroundColor: NEUTRAL_COLORS.accent,
+                          borderRadius: 4,
+                          transition: 'width 0.6s ease-out',
+                          backgroundImage: `linear-gradient(90deg, ${NEUTRAL_COLORS.accent} 0%, ${alpha(NEUTRAL_COLORS.accent, 0.8)} 100%)`,
+                        }}
+                      />
+                    </Box>
+                  </Box>
+
+                  {/* Статистика */}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: NEUTRAL_COLORS.textSecondary,
+                        fontWeight: 600,
+                      }}
+                    >
+                      {category.completed_count} из {category.total_count}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: NEUTRAL_COLORS.textSecondary,
+                        fontWeight: 500,
+                      }}
+                    >
+                      вопросов выполнено
+                    </Typography>
+                  </Box>
+                </Paper>
+              ))}
+            </Box>
+          </Paper>
+        )}
+
+        {/* Итоговая информация */}
         <Paper
           elevation={0}
           sx={{
@@ -814,28 +1211,34 @@ export const UserProfilePage: React.FC = () => {
               }}
             >
               <InfoIcon />
-              Информация об аккаунте
+              Итоговая информация
             </Typography>
-            <Stack spacing={1}>
-              <Typography
-                variant="body2"
-                sx={{ color: NEUTRAL_COLORS.textSecondary }}
-              >
-                • Вы можете редактировать только имя, фамилию и аватар
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{ color: NEUTRAL_COLORS.textSecondary }}
-              >
-                • Email и роль не могут быть изменены в этом интерфейсе
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{ color: NEUTRAL_COLORS.textSecondary }}
-              >
-                • Для изменения пароля обратитесь в службу поддержки
-              </Typography>
-            </Stack>
+            {completionStats && (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: NEUTRAL_COLORS.textPrimary, fontWeight: 500 }}
+                >
+                  • Всего выполнено вопросов: <strong>{completionStats.total_completed}</strong>
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{ color: NEUTRAL_COLORS.textPrimary, fontWeight: 500 }}
+                >
+                  • Общий прогресс: <strong>{completionStats.overall_percentage.toFixed(1)}%</strong>
+                </Typography>
+              </Box>
+            )}
+            <Typography
+              variant="caption"
+              sx={{
+                color: NEUTRAL_COLORS.textSecondary,
+                fontStyle: 'italic',
+                mt: 1,
+              }}
+            >
+              Продолжайте изучать вопросы для улучшения вашей статистики!
+            </Typography>
           </Stack>
         </Paper>
       </Container>

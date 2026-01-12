@@ -23,6 +23,14 @@ import {
   useScrollTrigger,
   Zoom,
   Fab,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  LinearProgress,
+  Paper,
+  Divider,
+  Collapse,
 } from '@mui/material';
 import {
   ExitToApp as LogoutIcon,
@@ -36,9 +44,20 @@ import {
   ChevronRight as ChevronRightIcon,
   ArrowUpward as ArrowUpwardIcon,
   People as PeopleIcon,
-  EmojiEvents as TrophyIcon,
   Bolt as BoltIcon,
   KeyboardArrowDown as ArrowDownIcon,
+  Close as CloseIcon,
+  PlayArrow as PlayIcon,
+  Pause as PauseIcon,
+  RestartAlt as RestartIcon,
+  CheckCircle as CheckIcon,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon2,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+  Psychology as PsychologyIcon,
+  School as SchoolIcon,
+  Work as WorkIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { questionService } from '../services/questionService';
@@ -46,21 +65,21 @@ import { categoryService } from '../services/categoryService';
 
 // Нейтральная цветовая палитра
 const NEUTRAL_COLORS = {
-  primary: '#2D3748', // Тёмно-серый
-  secondary: '#4A5568', // Средне-серый
-  accent: '#3182CE', // Приглушённый синий
-  background: '#F7FAFC', // Светло-серый фон
-  surface: '#FFFFFF', // Белый для поверхностей
-  textPrimary: '#1A202C', // Тёмный текст
-  textSecondary: '#718096', // Серый текст
-  border: '#E2E8F0', // Светлая граница
-  success: '#38A169', // Приглушённый зелёный
-  error: '#E53E3E', // Приглушённый красный
+  primary: '#2D3748',
+  secondary: '#4A5568',
+  accent: '#3182CE',
+  background: '#F7FAFC',
+  surface: '#FFFFFF',
+  textPrimary: '#1A202C',
+  textSecondary: '#718096',
+  border: '#E2E8F0',
+  success: '#38A169',
+  error: '#E53E3E',
   gradientStart: '#EDF2F7',
   gradientEnd: '#CBD5E0',
-  warning: '#D69E2E', // ДОБАВЛЕНО: золотой для достижений
-  purple: '#805AD5', // ДОБАВЛЕНО: фиолетовый
-  blue: '#61DAFB', // ДОБАВЛЕНО: голубой
+  warning: '#D69E2E',
+  purple: '#805AD5',
+  blue: '#61DAFB',
 };
 
 interface Stats {
@@ -68,7 +87,6 @@ interface Stats {
   categories: number;
 }
 
-// ДОБАВЛЕНО: Тип для категории из API
 interface ApiCategory {
   id: string;
   name: string;
@@ -78,7 +96,6 @@ interface ApiCategory {
   question_count: number;
 }
 
-// ДОБАВЛЕНО: Цвета для категорий на основе названия
 const getCategoryColor = (categoryName: string): string => {
   const colorMap: Record<string, string> = {
     'javascript': NEUTRAL_COLORS.warning,
@@ -106,7 +123,6 @@ const getCategoryColor = (categoryName: string): string => {
     }
   }
 
-  // Если не нашли совпадение, возвращаем цвет на основе хэша
   const colors = [
     NEUTRAL_COLORS.accent,
     NEUTRAL_COLORS.success,
@@ -125,7 +141,6 @@ const getCategoryColor = (categoryName: string): string => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-// Memoized статистическая карточка
 const StatCard = memo(({ title, value, color, icon, onClick }: { 
   title: string; 
   value: number; 
@@ -201,7 +216,6 @@ const StatCard = memo(({ title, value, color, icon, onClick }: {
   </Grow>
 ));
 
-// ДОБАВЛЕНО: Карточка категории
 const CategoryCard = memo(({ category, onClick }: {
   category: ApiCategory;
   onClick: () => void;
@@ -274,77 +288,877 @@ const CategoryCard = memo(({ category, onClick }: {
   );
 });
 
-// ДОБАВЛЕНО: Кнопка для быстрого старта
-const QuickStartCard = memo(() => {
-  const navigate = useNavigate();
-  
+interface QuickStartModalProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+interface Question {
+  id: string;
+  title: string;
+  content: any[];
+  difficulty: 'easy' | 'medium' | 'hard';
+  category_name?: string;
+}
+
+interface Answer {
+  content: any[];
+  is_published: boolean;
+}
+
+const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
+  const [step, setStep] = useState<'level' | 'countdown' | 'questions' | 'results'>('level');
+  const [userLevel, setUserLevel] = useState<'beginner' | 'intermediate' | 'expert'>('beginner');
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [answers, setAnswers] = useState<Record<string, Answer>>({});
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(600);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [expandedQuestions, setExpandedQuestions] = useState<string[]>([]);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const getDifficultyByLevel = (level: 'beginner' | 'intermediate' | 'expert') => {
+    switch (level) {
+      case 'beginner':
+        return 'easy';
+      case 'intermediate':
+        return 'medium';
+      case 'expert':
+        return 'hard';
+      default:
+        return 'easy';
+    }
+  };
+
+  const loadRandomQuestions = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const difficulty = getDifficultyByLevel(userLevel);
+      
+      const allQuestions = await questionService.getQuestions(
+        1,
+        100,
+        true,
+        difficulty
+      );
+      
+      if (allQuestions.items.length === 0) {
+        throw new Error(`No ${difficulty} questions available`);
+      }
+      
+      const shuffled = [...allQuestions.items].sort(() => Math.random() - 0.5);
+      const selectedQuestions = shuffled.slice(0, 5).map(q => ({
+        id: q.id,
+        title: q.title,
+        content: q.content || [],
+        difficulty: q.difficulty,
+        category_name: q.category_name,
+      }));
+      
+      setQuestions(selectedQuestions);
+      
+      const answersData: Record<string, Answer> = {};
+      for (const question of selectedQuestions) {
+        try {
+          const answerResponse = await questionService.getQuestionAnswers(question.id);
+          if (answerResponse && answerResponse.length > 0) {
+            const publishedAnswer = answerResponse.find(a => a.is_published);
+            if (publishedAnswer) {
+              answersData[question.id] = {
+                content: publishedAnswer.content || [],
+                is_published: true,
+              };
+            }
+          }
+        } catch (err) {
+          console.error(`Failed to load answer for question ${question.id}:`, err);
+        }
+      }
+      
+      setAnswers(answersData);
+      setIsLoading(false);
+      
+    } catch (error) {
+      console.error('Failed to load questions:', error);
+      setIsLoading(false);
+    }
+  }, [userLevel]);
+
+  const handleLevelSelect = (level: 'beginner' | 'intermediate' | 'expert') => {
+    setUserLevel(level);
+    setTimeout(() => {
+      setStep('countdown');
+      loadRandomQuestions();
+    }, 500);
+  };
+
+  const handleStartTimer = () => {
+    if (!isTimerRunning) {
+      setIsTimerRunning(true);
+      setStep('questions');
+      
+      timerRef.current = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            if (timerRef.current) clearInterval(timerRef.current);
+            setStep('results');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+  };
+
+  const handleToggleTimer = () => {
+    if (isTimerRunning) {
+      if (timerRef.current) clearInterval(timerRef.current);
+    } else {
+      timerRef.current = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            if (timerRef.current) clearInterval(timerRef.current);
+            setStep('results');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    setIsTimerRunning(!isTimerRunning);
+  };
+
+  const handleReset = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    setStep('level');
+    setTimeLeft(600);
+    setIsTimerRunning(false);
+    setQuestions([]);
+    setAnswers({});
+    setCurrentQuestionIndex(0);
+    setExpandedQuestions([]);
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleNextQuestion = () => {
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+    }
+  };
+
+  const handlePrevQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prev => prev - 1);
+    }
+  };
+
+  const handleToggleExpand = (questionId: string) => {
+    setExpandedQuestions(prev =>
+      prev.includes(questionId)
+        ? prev.filter(id => id !== questionId)
+        : [...prev, questionId]
+    );
+  };
+
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'easy':
+        return NEUTRAL_COLORS.success;
+      case 'medium':
+        return NEUTRAL_COLORS.warning;
+      case 'hard':
+        return NEUTRAL_COLORS.error;
+      default:
+        return NEUTRAL_COLORS.secondary;
+    }
+  };
+
+  const getLevelIcon = (level: string) => {
+    switch (level) {
+      case 'beginner':
+        return <SchoolIcon />;
+      case 'intermediate':
+        return <PsychologyIcon />;
+      case 'expert':
+        return <WorkIcon />;
+      default:
+        return <SchoolIcon />;
+    }
+  };
+
+  const getLevelTitle = (level: string) => {
+    switch (level) {
+      case 'beginner':
+        return 'Новичок';
+      case 'intermediate':
+        return 'Опытный';
+      case 'expert':
+        return 'Профессионал';
+      default:
+        return 'Новичок';
+    }
+  };
+
+  const getLevelDescription = (level: string) => {
+    switch (level) {
+      case 'beginner':
+        return 'Легкие вопросы для тех, кто только начинает';
+      case 'intermediate':
+        return 'Средние вопросы для опытных разработчиков';
+      case 'expert':
+        return 'Сложные вопросы для профессионалов';
+      default:
+        return '';
+    }
+  };
+
+  const renderQuestionContent = (content: any[]) => {
+    if (!content || content.length === 0) {
+      return (
+        <Typography variant="body2" color={NEUTRAL_COLORS.textSecondary}>
+          Содержимое вопроса отсутствует
+        </Typography>
+      );
+    }
+
+    return content.map((block, index) => {
+      switch (block.type) {
+        case 'heading':
+          return (
+            <Typography key={index} variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+              {block.data?.text}
+            </Typography>
+          );
+        case 'paragraph':
+          return (
+            <Typography key={index} variant="body1" paragraph>
+              {block.data?.text}
+            </Typography>
+          );
+        case 'code':
+          return (
+            <Paper
+              key={index}
+              elevation={0}
+              sx={{
+                p: 2,
+                my: 1,
+                bgcolor: alpha(NEUTRAL_COLORS.textPrimary, 0.05),
+                borderRadius: 1,
+                fontFamily: 'monospace',
+                fontSize: '0.875rem',
+                overflow: 'auto',
+              }}
+            >
+              <Typography variant="caption" color={NEUTRAL_COLORS.textSecondary} display="block" mb={0.5}>
+                {block.data?.language || 'code'}
+              </Typography>
+              <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
+                {block.data?.code || block.data?.text || block.content}
+              </pre>
+            </Paper>
+          );
+        case 'info':
+          return (
+            <Paper
+              key={index}
+              elevation={0}
+              sx={{
+                p: 2,
+                my: 1,
+                bgcolor: alpha(NEUTRAL_COLORS.accent, 0.1),
+                borderLeft: `4px solid ${NEUTRAL_COLORS.accent}`,
+                borderRadius: '0 8px 8px 0',
+              }}
+            >
+              <Typography variant="body2">
+                {block.data?.text || block.content}
+              </Typography>
+            </Paper>
+          );
+        default:
+          return null;
+      }
+    });
+  };
+
+  const renderAnswerContent = (content: any[]) => {
+    if (!content || content.length === 0) {
+      return (
+        <Typography variant="body2" color={NEUTRAL_COLORS.textSecondary} fontStyle="italic">
+          Ответ не найден
+        </Typography>
+      );
+    }
+
+    return content.map((block, index) => {
+      switch (block.type) {
+        case 'heading':
+          return (
+            <Typography key={index} variant="h6" gutterBottom sx={{ fontWeight: 600, color: NEUTRAL_COLORS.success }}>
+              {block.data?.text}
+            </Typography>
+          );
+        case 'paragraph':
+          return (
+            <Typography key={index} variant="body1" paragraph>
+              {block.data?.text}
+            </Typography>
+          );
+        case 'code':
+          return (
+            <Paper
+              key={index}
+              elevation={0}
+              sx={{
+                p: 2,
+                my: 1,
+                bgcolor: alpha(NEUTRAL_COLORS.success, 0.1),
+                border: `1px solid ${alpha(NEUTRAL_COLORS.success, 0.2)}`,
+                borderRadius: 1,
+                fontFamily: 'monospace',
+                fontSize: '0.875rem',
+                overflow: 'auto',
+              }}
+            >
+              <Typography variant="caption" color={NEUTRAL_COLORS.success} display="block" mb={0.5}>
+                {block.data?.language || 'code'}
+              </Typography>
+              <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
+                {block.data?.code || block.data?.text || block.content}
+              </pre>
+            </Paper>
+          );
+        default:
+          return null;
+      }
+    });
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, []);
+
   return (
-    <Zoom in timeout={1200}>
-      <Card
-        sx={{
-          background: `linear-gradient(135deg, ${alpha(NEUTRAL_COLORS.accent, 0.9)} 0%, ${alpha(NEUTRAL_COLORS.accent, 0.7)} 100%)`,
-          color: 'white',
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
           borderRadius: 3,
           overflow: 'hidden',
-          position: 'relative',
-          boxShadow: `0 10px 30px ${alpha(NEUTRAL_COLORS.accent, 0.3)}`,
-          '&:hover': {
-            boxShadow: `0 15px 40px ${alpha(NEUTRAL_COLORS.accent, 0.4)}`,
-            transform: 'translateY(-2px)',
-          },
-          transition: 'all 0.3s ease',
-        }}
-      >
-        <CardContent sx={{ p: 4, position: 'relative', zIndex: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <BoltIcon sx={{ fontSize: 32, mr: 1.5 }} />
+          bgcolor: NEUTRAL_COLORS.surface,
+        }
+      }}
+    >
+      <DialogTitle sx={{ 
+        bgcolor: NEUTRAL_COLORS.accent,
+        color: 'white',
+        py: 3,
+        position: 'relative',
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <BoltIcon />
             <Typography variant="h5" sx={{ fontWeight: 700 }}>
-              Быстрый старт
+              {step === 'level' && 'Быстрый старт'}
+              {step === 'countdown' && 'Приготовьтесь!'}
+              {step === 'questions' && 'Вопросы'}
+              {step === 'results' && 'Результаты'}
             </Typography>
           </Box>
-          
-          <Typography variant="body1" sx={{ mb: 3, opacity: 0.95 }}>
-            Ответьте на 5 вопросов за 10 минут и проверьте свои навыки
-          </Typography>
-          
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Box>
-              <Typography variant="caption" sx={{ opacity: 0.8, display: 'block', mb: 0.5 }}>
-                <TimerIcon sx={{ fontSize: 14, verticalAlign: 'middle', mr: 0.5 }} />
-                10 минут
+          <IconButton onClick={onClose} sx={{ color: 'white' }}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      </DialogTitle>
+
+      <DialogContent sx={{ p: 0 }}>
+        {step !== 'results' && (
+          <LinearProgress 
+            variant="determinate" 
+            value={
+              step === 'level' ? 25 :
+              step === 'countdown' ? 50 :
+              step === 'questions' ? 75 : 100
+            }
+            sx={{ 
+              height: 4,
+              '& .MuiLinearProgress-bar': {
+                bgcolor: NEUTRAL_COLORS.accent,
+              }
+            }}
+          />
+        )}
+
+        {step === 'level' && (
+          <Box sx={{ p: 4 }}>
+            <Typography variant="h6" gutterBottom align="center" sx={{ mb: 4 }}>
+              Выберите ваш уровень, чтобы получить подходящие вопросы
+            </Typography>
+            
+            <Grid container spacing={3}>
+              {['beginner', 'intermediate', 'expert'].map((level) => (
+                <Grid item xs={12} sm={4} key={level}>
+                  <Card
+                    elevation={userLevel === level ? 4 : 0}
+                    sx={{
+                      cursor: 'pointer',
+                      border: `2px solid ${userLevel === level ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.border}`,
+                      borderRadius: 2,
+                      transition: 'all 0.2s',
+                      '&:hover': {
+                        borderColor: NEUTRAL_COLORS.accent,
+                        transform: 'translateY(-4px)',
+                      },
+                    }}
+                    onClick={() => handleLevelSelect(level as any)}
+                  >
+                    <CardContent sx={{ textAlign: 'center', p: 3 }}>
+                      <Box sx={{ 
+                        mb: 2,
+                        color: userLevel === level ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.textSecondary,
+                        display: 'inline-flex',
+                        p: 2,
+                        borderRadius: '50%',
+                        bgcolor: userLevel === level ? alpha(NEUTRAL_COLORS.accent, 0.1) : alpha(NEUTRAL_COLORS.border, 0.3),
+                      }}>
+                        {getLevelIcon(level)}
+                      </Box>
+                      <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                        {getLevelTitle(level)}
+                      </Typography>
+                      <Typography variant="body2" color={NEUTRAL_COLORS.textSecondary} sx={{ mb: 2 }}>
+                        {getLevelDescription(level)}
+                      </Typography>
+                      <Chip
+                        label={getDifficultyByLevel(level as any).toUpperCase()}
+                        size="small"
+                        sx={{
+                          bgcolor: alpha(getDifficultyColor(getDifficultyByLevel(level as any)), 0.1),
+                          color: getDifficultyColor(getDifficultyByLevel(level as any)),
+                          fontWeight: 600,
+                        }}
+                      />
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+
+            <Box sx={{ mt: 4, textAlign: 'center' }}>
+              <Button
+                variant="contained"
+                size="large"
+                onClick={() => handleLevelSelect(userLevel)}
+                disabled={!userLevel}
+                sx={{
+                  px: 6,
+                  py: 1.5,
+                  borderRadius: 2,
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                }}
+              >
+                Продолжить
+              </Button>
+            </Box>
+          </Box>
+        )}
+
+        {step === 'countdown' && (
+          <Box sx={{ p: 8, textAlign: 'center' }}>
+            {isLoading ? (
+              <>
+                <CircularProgress size={80} sx={{ mb: 4, color: NEUTRAL_COLORS.accent }} />
+                <Typography variant="h6" gutterBottom>
+                  Загружаем вопросы...
+                </Typography>
+                <Typography variant="body2" color={NEUTRAL_COLORS.textSecondary}>
+                  Подбираем идеальные вопросы для вашего уровня
+                </Typography>
+              </>
+            ) : (
+              <>
+                <Box sx={{ 
+                  width: 200, 
+                  height: 200, 
+                  mx: 'auto',
+                  mb: 4,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '50%',
+                  bgcolor: alpha(NEUTRAL_COLORS.accent, 0.1),
+                  position: 'relative',
+                }}>
+                  <Box sx={{ 
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    border: `4px solid ${NEUTRAL_COLORS.accent}`,
+                    borderRadius: '50%',
+                    animation: 'pulse 2s infinite',
+                    '@keyframes pulse': {
+                      '0%': { transform: 'scale(1)', opacity: 1 },
+                      '50%': { transform: 'scale(1.1)', opacity: 0.7 },
+                      '100%': { transform: 'scale(1)', opacity: 1 },
+                    }
+                  }} />
+                  <TimerIcon sx={{ fontSize: 80, color: NEUTRAL_COLORS.accent }} />
+                </Box>
+                
+                <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
+                  Готовы?
+                </Typography>
+                <Typography variant="body1" color={NEUTRAL_COLORS.textSecondary} sx={{ mb: 4 }}>
+                  У вас есть 10 минут на 5 вопросов уровня {getLevelTitle(userLevel)}
+                </Typography>
+                
+                <Button
+                  variant="contained"
+                  size="large"
+                  startIcon={<PlayIcon />}
+                  onClick={handleStartTimer}
+                  sx={{
+                    px: 6,
+                    py: 1.5,
+                    borderRadius: 2,
+                    fontWeight: 600,
+                    fontSize: '1.1rem',
+                    bgcolor: NEUTRAL_COLORS.success,
+                    '&:hover': {
+                      bgcolor: alpha(NEUTRAL_COLORS.success, 0.9),
+                    }
+                  }}
+                >
+                  Начать тест
+                </Button>
+              </>
+            )}
+          </Box>
+        )}
+
+        {step === 'questions' && (
+          <Box sx={{ display: 'flex', flexDirection: 'column', height: '500px' }}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                bgcolor: alpha(NEUTRAL_COLORS.accent, 0.05),
+                borderBottom: `1px solid ${NEUTRAL_COLORS.border}`,
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <IconButton onClick={handleToggleTimer} size="small">
+                    {isTimerRunning ? <PauseIcon /> : <PlayIcon />}
+                  </IconButton>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <TimerIcon sx={{ color: NEUTRAL_COLORS.accent }} />
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: NEUTRAL_COLORS.accent }}>
+                      {formatTime(timeLeft)}
+                    </Typography>
+                  </Box>
+                  <Chip
+                    label={`Вопрос ${currentQuestionIndex + 1} из ${questions.length}`}
+                    size="small"
+                    sx={{ fontWeight: 600 }}
+                  />
+                </Box>
+                
+                <Button
+                  variant="outlined"
+                  color="error"
+                  startIcon={<RestartIcon />}
+                  onClick={handleReset}
+                  size="small"
+                >
+                  Сбросить
+                </Button>
+              </Box>
+            </Paper>
+
+            <Box sx={{ flex: 1, overflow: 'auto', p: 3 }}>
+              {isLoading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                  <CircularProgress />
+                </Box>
+              ) : questions.length > 0 && currentQuestionIndex < questions.length ? (
+                <>
+                  <Box sx={{ mb: 3 }}>
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+                      <Chip
+                        label={questions[currentQuestionIndex].difficulty.toUpperCase()}
+                        size="small"
+                        sx={{
+                          bgcolor: alpha(getDifficultyColor(questions[currentQuestionIndex].difficulty), 0.1),
+                          color: getDifficultyColor(questions[currentQuestionIndex].difficulty),
+                          fontWeight: 600,
+                        }}
+                      />
+                      {questions[currentQuestionIndex].category_name && (
+                        <Chip
+                          icon={<CategoryIcon />}
+                          label={questions[currentQuestionIndex].category_name}
+                          size="small"
+                          sx={{ fontWeight: 500 }}
+                        />
+                      )}
+                    </Stack>
+                    
+                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                      {questions[currentQuestionIndex].title}
+                    </Typography>
+                    
+                    {renderQuestionContent(questions[currentQuestionIndex].content)}
+                  </Box>
+
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3, pt: 2, borderTop: `1px solid ${NEUTRAL_COLORS.border}` }}>
+                    <Button
+                      startIcon={<ChevronLeftIcon />}
+                      onClick={handlePrevQuestion}
+                      disabled={currentQuestionIndex === 0}
+                    >
+                      Назад
+                    </Button>
+                    
+                    {currentQuestionIndex === questions.length - 1 ? (
+                      <Button
+                        variant="contained"
+                        onClick={() => setStep('results')}
+                        sx={{ fontWeight: 600 }}
+                      >
+                        Завершить тест
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="contained"
+                        endIcon={<ChevronRightIcon2 />}
+                        onClick={handleNextQuestion}
+                      >
+                        Следующий вопрос
+                      </Button>
+                    )}
+                  </Box>
+                </>
+              ) : (
+                <Typography variant="body1" color={NEUTRAL_COLORS.textSecondary} align="center">
+                  Вопросы не найдены
+                </Typography>
+              )}
+            </Box>
+          </Box>
+        )}
+
+        {step === 'results' && (
+          <Box sx={{ p: 3 }}>
+            <Box sx={{ textAlign: 'center', mb: 4, p: 3, bgcolor: alpha(NEUTRAL_COLORS.success, 0.1), borderRadius: 2 }}>
+              <CheckIcon sx={{ fontSize: 60, color: NEUTRAL_COLORS.success, mb: 2 }} />
+              <Typography variant="h5" gutterBottom sx={{ fontWeight: 700 }}>
+                Тест завершен!
               </Typography>
-              <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                <QuestionsIcon sx={{ fontSize: 14, verticalAlign: 'middle', mr: 0.5 }} />
-                5 вопросов
+              <Typography variant="body1" color={NEUTRAL_COLORS.textSecondary}>
+                Вы ответили на все вопросы за {formatTime(600 - timeLeft)}
+              </Typography>
+            </Box>
+
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+              Вопросы и ответы для проверки:
+            </Typography>
+
+            <Box sx={{ maxHeight: '400px', overflow: 'auto' }}>
+              {questions.map((question, index) => (
+                <Paper
+                  key={question.id}
+                  elevation={0}
+                  sx={{
+                    mb: 2,
+                    border: `1px solid ${NEUTRAL_COLORS.border}`,
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <Box
+                    sx={{
+                      p: 2,
+                      bgcolor: alpha(NEUTRAL_COLORS.accent, 0.05),
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                    onClick={() => handleToggleExpand(question.id)}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                        Вопрос {index + 1}: {question.title}
+                      </Typography>
+                      <Chip
+                        label={question.difficulty.toUpperCase()}
+                        size="small"
+                        sx={{
+                          bgcolor: alpha(getDifficultyColor(question.difficulty), 0.1),
+                          color: getDifficultyColor(question.difficulty),
+                          fontWeight: 600,
+                        }}
+                      />
+                    </Box>
+                    {expandedQuestions.includes(question.id) ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                  </Box>
+
+                  <Collapse in={expandedQuestions.includes(question.id)}>
+                    <Box sx={{ p: 3 }}>
+                      <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: NEUTRAL_COLORS.textSecondary }}>
+                        Вопрос:
+                      </Typography>
+                      {renderQuestionContent(question.content)}
+                      
+                      <Divider sx={{ my: 3 }} />
+                      
+                      <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: NEUTRAL_COLORS.success }}>
+                        Ответ:
+                      </Typography>
+                      {answers[question.id] ? (
+                        renderAnswerContent(answers[question.id].content)
+                      ) : (
+                        <Typography variant="body2" color={NEUTRAL_COLORS.textSecondary} fontStyle="italic">
+                          Ответ не найден в базе данных
+                        </Typography>
+                      )}
+                    </Box>
+                  </Collapse>
+                </Paper>
+              ))}
+            </Box>
+
+            <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center', gap: 2 }}>
+              <Button
+                variant="outlined"
+                onClick={handleReset}
+                sx={{ fontWeight: 600 }}
+              >
+                Пройти еще раз
+              </Button>
+              <Button
+                variant="contained"
+                onClick={onClose}
+                sx={{ fontWeight: 600 }}
+              >
+                Закрыть
+              </Button>
+            </Box>
+          </Box>
+        )}
+      </DialogContent>
+
+      {step !== 'results' && step !== 'countdown' && (
+        <DialogActions sx={{ p: 2, bgcolor: alpha(NEUTRAL_COLORS.background, 0.5) }}>
+          <Button onClick={onClose}>
+            Отмена
+          </Button>
+          <Box sx={{ flex: 1 }} />
+          <Typography variant="caption" color={NEUTRAL_COLORS.textSecondary}>
+            Быстрый старт • 5 вопросов • 10 минут
+          </Typography>
+        </DialogActions>
+      )}
+    </Dialog>
+  );
+};
+
+const QuickStartCard = memo(() => {
+  const [quickStartOpen, setQuickStartOpen] = useState(false);
+  
+  return (
+    <>
+      <Zoom in timeout={1200}>
+        <Card
+          sx={{
+            background: `linear-gradient(135deg, ${alpha(NEUTRAL_COLORS.accent, 0.9)} 0%, ${alpha(NEUTRAL_COLORS.accent, 0.7)} 100%)`,
+            color: 'white',
+            borderRadius: 3,
+            overflow: 'hidden',
+            position: 'relative',
+            boxShadow: `0 10px 30px ${alpha(NEUTRAL_COLORS.accent, 0.3)}`,
+            '&:hover': {
+              boxShadow: `0 15px 40px ${alpha(NEUTRAL_COLORS.accent, 0.4)}`,
+              transform: 'translateY(-2px)',
+            },
+            transition: 'all 0.3s ease',
+            cursor: 'pointer',
+          }}
+          onClick={() => setQuickStartOpen(true)}
+        >
+          <CardContent sx={{ p: 4, position: 'relative', zIndex: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <BoltIcon sx={{ fontSize: 32, mr: 1.5 }} />
+              <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                Быстрый старт
               </Typography>
             </Box>
             
-            <Button
-              variant="contained"
-              endIcon={<ChevronRightIcon />}
-              onClick={() => navigate('/questions')}
-              sx={{
-                backgroundColor: 'white',
-                color: NEUTRAL_COLORS.accent,
-                fontWeight: 600,
-                px: 3,
-                py: 1,
-                borderRadius: 2,
-                '&:hover': {
-                  backgroundColor: alpha('#FFFFFF', 0.9),
-                }
-              }}
-            >
-              Начать сейчас
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
-    </Zoom>
+            <Typography variant="body1" sx={{ mb: 3, opacity: 0.95 }}>
+              Ответьте на 5 вопросов за 10 минут и проверьте свои навыки
+            </Typography>
+            
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box>
+                <Typography variant="caption" sx={{ opacity: 0.8, display: 'block', mb: 0.5 }}>
+                  <TimerIcon sx={{ fontSize: 14, verticalAlign: 'middle', mr: 0.5 }} />
+                  10 минут
+                </Typography>
+                <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                  <QuestionsIcon sx={{ fontSize: 14, verticalAlign: 'middle', mr: 0.5 }} />
+                  5 вопросов
+                </Typography>
+              </Box>
+              
+              <Button
+                variant="contained"
+                endIcon={<ChevronRightIcon />}
+                onClick={() => setQuickStartOpen(true)}
+                sx={{
+                  backgroundColor: 'white',
+                  color: NEUTRAL_COLORS.accent,
+                  fontWeight: 600,
+                  px: 3,
+                  py: 1,
+                  borderRadius: 2,
+                  '&:hover': {
+                    backgroundColor: alpha('#FFFFFF', 0.9),
+                  }
+                }}
+              >
+                Начать сейчас
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
+      </Zoom>
+
+      <QuickStartModal
+        open={quickStartOpen}
+        onClose={() => setQuickStartOpen(false)}
+      />
+    </>
   );
 });
 
-// ДОБАВЛЕНО: Кнопка скролла вверх
 const ScrollToTop = memo(() => {
   const trigger = useScrollTrigger({
     threshold: 100,
@@ -392,7 +1206,6 @@ export const HomePage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const featuresRef = useRef<HTMLDivElement>(null);
 
-  // ДОБАВЛЕНО: Функция для скролла к секции
   const scrollToFeatures = useCallback(() => {
     featuresRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
@@ -403,7 +1216,7 @@ export const HomePage: React.FC = () => {
       setError(null);
       
       const [questionsData, categoriesData] = await Promise.all([
-        questionService.getQuestions(1, 1, true, undefined, undefined, undefined, undefined, true),
+        questionService.getQuestions(1, 1, true),
         categoryService.getCategories(1, 1, false),
       ]);
       
@@ -419,17 +1232,15 @@ export const HomePage: React.FC = () => {
     }
   }, []);
 
-  // ДОБАВЛЕНО: Загрузка категорий
   const loadCategories = useCallback(async () => {
     try {
       setCategoriesLoading(true);
       const categoriesData = await categoryService.getCategories(1, 10, true);
       
-      // Фильтруем и сортируем категории по количеству вопросов
       const sortedCategories = (categoriesData.items as ApiCategory[])
-        .filter(cat => cat.is_active) // Только активные категории
+        .filter(cat => cat.is_active)
         .sort((a, b) => b.question_count - a.question_count)
-        .slice(0, 5); // Берем топ-5 категорий
+        .slice(0, 5);
       
       setCategories(sortedCategories);
     } catch (err) {
@@ -460,17 +1271,6 @@ export const HomePage: React.FC = () => {
     navigate(path);
   }, [navigate]);
 
-  // ДОБАВЛЕНО: Функция для перехода к случайной категории
-  const handleRandomCategory = useCallback(() => {
-    if (categories.length > 0) {
-      const randomCategory = categories[Math.floor(Math.random() * categories.length)];
-      navigate(`/questions?category=${randomCategory.name}`);
-    } else {
-      // Если категории еще не загружены, используем дефолтные
-      navigate('/questions');
-    }
-  }, [categories, navigate]);
-
   return (
     <Box sx={{ 
       minHeight: '100vh',
@@ -491,7 +1291,6 @@ export const HomePage: React.FC = () => {
         `,
       }
     }}>
-      {/* Навигационная панель */}
       {isAuthenticated && (
         <Fade in>
           <AppBar 
@@ -588,9 +1387,7 @@ export const HomePage: React.FC = () => {
         </Fade>
       )}
 
-      {/* Основной контент */}
       <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-        {/* Герой секция */}
         <Box sx={{ 
           pt: { xs: 8, md: 12 },
           pb: { xs: 8, md: 6 },
@@ -600,7 +1397,6 @@ export const HomePage: React.FC = () => {
           <Fade in timeout={600}>
             <Box sx={{ mb: 4 }}>
               <Chip 
-                // icon={<TrendingIcon />}
                 label="Нам доверяют опытные разработчики"
                 size="medium"
                 sx={{ 
@@ -656,7 +1452,6 @@ export const HomePage: React.FC = () => {
             </Box>
           </Fade>
 
-          {/* Призыв к действию */}
           <Fade in timeout={900}>
             <Box sx={{ 
               display: 'flex', 
@@ -743,7 +1538,6 @@ export const HomePage: React.FC = () => {
             </Box>
           </Fade>
 
-          {/* Анимированная стрелка вниз */}
           <Fade in timeout={1500}>
             <Box 
               sx={{ 
@@ -764,7 +1558,6 @@ export const HomePage: React.FC = () => {
           </Fade>
         </Box>
 
-        {/* Секция статистики */}
         <Box sx={{ mb: 10, px: { xs: 2, sm: 3 } }} ref={featuresRef}>
           <Fade in timeout={1200}>
             <Typography 
@@ -818,14 +1611,12 @@ export const HomePage: React.FC = () => {
             </Grid>
           </Grid>
 
-          {/* Quick Start Challenge */}
           {isAuthenticated && (
             <Box sx={{ mb: 8 }}>
               <QuickStartCard />
             </Box>
           )}
 
-          {/* Популярные категории */}
           <Box sx={{ mb: 10 }}>
             <Typography 
               variant="h5" 
@@ -852,7 +1643,6 @@ export const HomePage: React.FC = () => {
                   <Grid item xs={6} sm={4} md={2.4} key={category.id}>
                     <CategoryCard
                       category={category}
-                      onClick={() => navigate(`/questions?category_id=${category.id}`)}
                     />
                   </Grid>
                 ))}
@@ -870,7 +1660,6 @@ export const HomePage: React.FC = () => {
         </Box>
       </Container>
 
-      {/* Футер */}
       <Fade in timeout={1500}>
         <Box sx={{ 
           py: 6, 
@@ -954,7 +1743,6 @@ export const HomePage: React.FC = () => {
         </Box>
       </Fade>
 
-      {/* Кнопка скролла вверх */}
       <ScrollToTop />
     </Box>
   );

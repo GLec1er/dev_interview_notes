@@ -3,7 +3,7 @@
 from typing import Optional, List, Dict, Any
 from uuid import UUID
 
-from sqlalchemy import func, select, delete
+from sqlalchemy import case, func, select, delete
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
@@ -192,49 +192,62 @@ class QuestionCompletionRepository(
             Словарь со статистикой
         """
         try:
-            # Общее количество выполненных вопросов
-            total_stmt = select(func.count()).select_from(QuestionCompletion).where(
+            # Единый запрос для получения всей статистики
+            stmt = select(
+                func.count().label('total'),
+                func.sum(case((Question.difficulty == 'easy', 1), else_=0)).label('easy'),
+                func.sum(case((Question.difficulty == 'medium', 1), else_=0)).label('medium'),
+                func.sum(case((Question.difficulty == 'hard', 1), else_=0)).label('hard')
+            ).select_from(QuestionCompletion).join(
+                Question, Question.id == QuestionCompletion.question_id
+            ).where(
                 QuestionCompletion.user_id == user_id
             )
-            total_result = await self.session.execute(total_stmt)
-            total_completed = total_result.scalar_one()
             
-            # Количество выполненных вопросов по сложности
-            easy_stmt = select(func.count()).select_from(QuestionCompletion).join(
-                Question
-            ).where(
-                (QuestionCompletion.user_id == user_id) &
-                (Question.difficulty == 'easy')
-            )
-            easy_result = await self.session.execute(easy_stmt)
-            easy_completed = easy_result.scalar_one()
+            result = await self.session.execute(stmt)
+            row = result.first()
             
-            medium_stmt = select(func.count()).select_from(QuestionCompletion).join(
-                Question
-            ).where(
-                (QuestionCompletion.user_id == user_id) &
-                (Question.difficulty == 'medium')
-            )
-            medium_result = await self.session.execute(medium_stmt)
-            medium_completed = medium_result.scalar_one()
+            # Если результатов нет, возвращаем нули
+            if not row or row.total is None:
+                stats = {
+                    'total_completed': 0,
+                    'easy_completed': 0,
+                    'medium_completed': 0,
+                    'hard_completed': 0,
+                }
+            else:
+                stats = {
+                    'total_completed': row.total,
+                    'easy_completed': row.easy or 0,
+                    'medium_completed': row.medium or 0,
+                    'hard_completed': row.hard or 0,
+                }
             
-            hard_stmt = select(func.count()).select_from(QuestionCompletion).join(
-                Question
-            ).where(
-                (QuestionCompletion.user_id == user_id) &
-                (Question.difficulty == 'hard')
-            )
-            hard_result = await self.session.execute(hard_stmt)
-            hard_completed = hard_result.scalar_one()
+            # Дополнительно: количество вопросов по каждой сложности в системе
+            total_counts_stmt = select(
+                Question.difficulty,
+                func.count(Question.id).label('count')
+            ).group_by(Question.difficulty)
             
-            log.debug(f"📊 Получена статистика выполнения для пользователя {user_id}")
+            total_counts_result = await self.session.execute(total_counts_stmt)
+            total_counts = total_counts_result.all()
             
-            return {
-                'total_completed': total_completed,
-                'easy_completed': easy_completed,
-                'medium_completed': medium_completed,
-                'hard_completed': hard_completed,
-            }
+            # Преобразуем в удобный формат
+            difficulty_totals = {'easy': 0, 'medium': 0, 'hard': 0, 'all': 0}
+            for difficulty, count in total_counts:
+                difficulty_totals[difficulty] = count
+                difficulty_totals['all'] += count
+            
+            # Добавляем прогресс по каждой сложности (в процентах)
+            stats.update({
+                'total': difficulty_totals['all'],
+                'total_easy': difficulty_totals['easy'],
+                'total_medium': difficulty_totals['medium'],
+                'total_hard': difficulty_totals['hard'],
+            })
+            
+            return stats
+            
         except SQLAlchemyError as e:
             log.error(f"❌ Ошибка при получении статистики выполнения: {e}")
             raise

@@ -12,9 +12,13 @@ class CompletionResponse(BaseModel):
 
 class CompletionStatsResponse(BaseModel):
     """Статистика выполнения вопросов."""
+    total: int
     total_completed: int
+    total_easy: int
     easy_completed: int
+    total_medium: int
     medium_completed: int
+    total_hard: int
     hard_completed: int
     overall_percentage: float
 
