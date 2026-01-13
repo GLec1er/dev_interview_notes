@@ -74,6 +74,7 @@ export interface Answer {
   content: ContentBlock[];
   created_at?: string;
   updated_at?: string;
+  is_published?: boolean;
 }
 
 export interface AnswerCreate {

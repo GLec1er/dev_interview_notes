@@ -51,7 +51,6 @@ import {
   RestartAlt as RestartIcon,
   CheckCircle as CheckIcon,
   ChevronLeft as ChevronLeftIcon,
-  ChevronRight as ChevronRightIcon2,
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
   Psychology as PsychologyIcon,
@@ -153,8 +152,8 @@ const StatCard = memo(({ title, value, color, icon, onClick }: {
   <Grow in timeout={800}>
     <Card 
       sx={{ 
-        height: '100%', // Занимает всю высоту Grid item
-        minWidth: '160px', // Минимальная высота для всех карточек
+        height: '100%',
+        minWidth: '160px',
         background: NEUTRAL_COLORS.surface,
         border: `1px solid ${NEUTRAL_COLORS.border}`,
         borderRadius: 3,
@@ -163,7 +162,7 @@ const StatCard = memo(({ title, value, color, icon, onClick }: {
         cursor: onClick ? 'pointer' : 'default',
         position: 'relative',
         overflow: 'hidden',
-        display: 'flex', // Flex для лучшего контроля над содержимым
+        display: 'flex',
         flexDirection: 'column',
         '&::before': {
           content: '""',
@@ -185,10 +184,10 @@ const StatCard = memo(({ title, value, color, icon, onClick }: {
       <CardContent sx={{ 
         p: 3, 
         textAlign: 'center',
-        flexGrow: 1, // Занимает всё доступное пространство
+        flexGrow: 1,
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'center', // Вертикальное центрирование содержимого
+        justifyContent: 'center',
         alignItems: 'center',
       }}>
         <Box sx={{ 
@@ -213,7 +212,7 @@ const StatCard = memo(({ title, value, color, icon, onClick }: {
             mb: 1,
             fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
             fontSize: { xs: '2rem', md: '2.5rem' },
-            lineHeight: 1, // Убираем лишний межстрочный интервал
+            lineHeight: 1,
           }}
         >
           {value.toLocaleString()}
@@ -225,7 +224,7 @@ const StatCard = memo(({ title, value, color, icon, onClick }: {
             fontWeight: 500, 
             fontSize: '0.95rem',
             textAlign: 'center',
-            width: '100%', // Занимает всю ширину
+            width: '100%',
           }}
         >
           {title}
@@ -335,7 +334,7 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [expandedQuestions, setExpandedQuestions] = useState<string[]>([]);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const getDifficultyByLevel = (level: 'beginner' | 'intermediate' | 'expert') => {
     switch (level) {
@@ -438,31 +437,6 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
         });
       }, 1000);
     }
-  };
-
-  const handleToggleTimer = () => {
-    if (isTimerRunning) {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    } else {
-      timerRef.current = setInterval(() => {
-        setTimeLeft(prev => {
-          if (prev <= 1) {
-            if (timerRef.current) {
-              clearInterval(timerRef.current);
-              timerRef.current = null;
-            }
-            setIsTimerRunning(false);
-            setStep('results');
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    setIsTimerRunning(!isTimerRunning);
   };
 
   const handleReset = () => {
@@ -778,6 +752,10 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
     }
   }, [open]);
 
+  const handleCardClick = (level: 'beginner' | 'intermediate' | 'expert') => {
+    handleLevelSelect(level);
+  };
+
   return (
     <Dialog
       open={open}
@@ -838,95 +816,83 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
               Выберите ваш уровень, чтобы получить подходящие вопросы
             </Typography>
             
-            <Grid 
-              container 
-              spacing={3}
-              justifyContent="center"
-              alignItems="stretch"
-            >
-              {['beginner', 'intermediate', 'expert'].map((level) => (
-                <Grid 
-                  item 
-                  xs={12} 
-                  md={4} 
-                  key={level}
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'center', // Центрируем карточку внутри Grid item
-                  }}
-                >
-                  <Card
-                    elevation={userLevel === level ? 4 : 0}
-                    sx={{
-                      cursor: 'pointer',
-                      border: `2px solid ${userLevel === level ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.border}`,
-                      borderRadius: 2,
-                      transition: 'all 0.2s',
-                      width: '100%', // Карточка занимает всю ширину Grid item
-                      maxWidth: '300px', // Фиксированная максимальная ширина для всех карточек
-                      minWidth: '200px', // Минимальная ширина для всех карточек
-                      display: 'flex',
-                      flexDirection: 'column',
-                      '&:hover': {
-                        borderColor: NEUTRAL_COLORS.accent,
-                        transform: 'translateY(-4px)',
-                        boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
-                      },
-                    }}
-                    onClick={() => handleLevelSelect(level as any)}
-                  >
-                    <CardContent sx={{ 
-                      textAlign: 'center', 
-                      p: 3,
-                      flexGrow: 1,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between', // Распределяем пространство между элементами
-                      alignItems: 'center',
-                      minHeight: '250px', // Фиксированная минимальная высота для всех карточек
-                      bgcolor: NEUTRAL_COLORS.background,
-                    }}>
-                      <Box>
-                        <Box sx={{ 
-                          mb: 2,
-                          color: userLevel === level ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.textSecondary,
-                          display: 'inline-flex',
-                          p: 2,
-                          borderRadius: '50%',
-                          bgcolor: userLevel === level ? alpha(NEUTRAL_COLORS.accent, 0.1) : alpha(NEUTRAL_COLORS.border, 0.3),
-                        }}>
-                          {getLevelIcon(level)}
+            <Grid container spacing={3} justifyContent="center">
+              {(['beginner', 'intermediate', 'expert'] as const).map((level) => (
+                <Grid item xs={12} sm={6} md={4} key={level}>
+                  <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                    <Card
+                      elevation={userLevel === level ? 4 : 0}
+                      sx={{
+                        cursor: 'pointer',
+                        border: `2px solid ${userLevel === level ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.border}`,
+                        borderRadius: 2,
+                        transition: 'all 0.2s',
+                        width: '100%',
+                        maxWidth: '300px',
+                        minWidth: '200px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        '&:hover': {
+                          borderColor: NEUTRAL_COLORS.accent,
+                          transform: 'translateY(-4px)',
+                          boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
+                        },
+                      }}
+                      onClick={() => handleCardClick(level)}
+                    >
+                      <CardContent sx={{ 
+                        textAlign: 'center', 
+                        p: 3,
+                        flexGrow: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        minHeight: '250px',
+                        bgcolor: NEUTRAL_COLORS.background,
+                      }}>
+                        <Box>
+                          <Box sx={{ 
+                            mb: 2,
+                            color: userLevel === level ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.textSecondary,
+                            display: 'inline-flex',
+                            p: 2,
+                            borderRadius: '50%',
+                            bgcolor: userLevel === level ? alpha(NEUTRAL_COLORS.accent, 0.1) : alpha(NEUTRAL_COLORS.border, 0.3),
+                          }}>
+                            {getLevelIcon(level)}
+                          </Box>
+                          <Typography 
+                            variant="h6" 
+                            sx={{ 
+                              fontWeight: 600, 
+                              mb: 1, 
+                              color: NEUTRAL_COLORS.textPrimary,
+                              minHeight: '60px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            {getLevelTitle(level)}
+                          </Typography>
+
                         </Box>
-                        <Typography 
-                          variant="h6" 
-                          sx={{ 
-                            fontWeight: 600, 
-                            mb: 1, 
-                            color: NEUTRAL_COLORS.textPrimary,
-                            minHeight: '60px', // Фиксированная высота для заголовка
-                            display: 'flex',
-                            alignItems: 'center',
+                        
+                        <Chip
+                          label={getDifficultyByLevel(level).toUpperCase()}
+                          size="small"
+                          sx={{
+                            bgcolor: alpha(getDifficultyColor(getDifficultyByLevel(level)), 0.1),
+                            color: getDifficultyColor(getDifficultyByLevel(level)),
+                            fontWeight: 600,
+                            minWidth: '50px',
                             justifyContent: 'center'
                           }}
-                        >
-                          {getLevelTitle(level)}
-                        </Typography>
-
-                      </Box>
-                      
-                      <Chip
-                        label={getDifficultyByLevel(level as any).toUpperCase()}
-                        size="small"
-                        sx={{
-                          bgcolor: alpha(getDifficultyColor(getDifficultyByLevel(level as any)), 0.1),
-                          color: getDifficultyColor(getDifficultyByLevel(level as any)),
-                          fontWeight: 600,
-                          minWidth: '50px', // Минимальная ширина для чипа
-                          justifyContent: 'center'
-                        }}
-                      />
-                    </CardContent>
-                  </Card>
+                        />
+                      </CardContent>
+                    </Card>
+                  </Box>
                 </Grid>
               ))}
             </Grid>
@@ -1127,7 +1093,7 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
                     ) : (
                       <Button
                         variant="contained"
-                        endIcon={<ChevronRightIcon2 />}
+                        endIcon={<ChevronRightIcon />}
                         onClick={handleNextQuestion}
                       >
                         Следующий вопрос
@@ -1396,7 +1362,6 @@ export const HomePage: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const featuresRef = useRef<HTMLDivElement>(null);
 
@@ -1424,7 +1389,7 @@ export const HomePage: React.FC = () => {
     featuresRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
-  const loadStats = useCallback(async () => {
+  const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -1447,36 +1412,25 @@ export const HomePage: React.FC = () => {
         questions: questionsData.total,
         categories: categoriesData.total,
       });
-    } catch (err) {
-      setError('Не удалось загрузить статистику');
-      console.error('Failed to load stats:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const loadCategories = useCallback(async () => {
-    try {
-      setCategoriesLoading(true);
-      const categoriesData = await categoryService.getCategories(1, 10, false);
       
       const sortedCategories = (categoriesData.items as ApiCategory[])
         .sort((a, b) => b.question_count - a.question_count)
         .slice(0, 5);
       
       setCategories(sortedCategories);
+      
     } catch (err) {
-      console.error('Failed to load categories:', err);
+      setError('Не удалось загрузить данные');
+      console.error('Failed to load data:', err);
     } finally {
-      setCategoriesLoading(false);
+      setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    loadStats();
-    loadCategories();
+    loadData();
     loadUsers();
-  }, [loadStats, loadCategories, loadUsers]);
+  }, [loadData, loadUsers]);
 
   const handleLogout = useCallback(async () => {
     try {
@@ -1493,6 +1447,10 @@ export const HomePage: React.FC = () => {
   const handleNavigation = useCallback((path: string) => {
     navigate(path);
   }, [navigate]);
+
+  const handleCardClick = (category: ApiCategory) => {
+    navigate(`/questions?category=${category.id}`);
+  };
 
   return (
     <Box sx={{ 
@@ -1796,46 +1754,46 @@ export const HomePage: React.FC = () => {
             </Typography>
           </Fade>
 
-          <Grid 
-            container 
-            spacing={3} 
-            justifyContent="center" 
-            sx={{ mb: 8 }}
-            alignItems="stretch" // Это заставит все Grid items быть одинаковой высоты
-          >
-            <Grid item xs={12} sm={6} md={3} sx={{ display: 'flex' }}>
-              <StatCard
-                title="Вопросов"
-                value={stats.questions}
-                color={NEUTRAL_COLORS.accent}
-                icon={<QuestionsIcon sx={{ fontSize: 32 }} />}
-                onClick={() => navigate('/questions')}
-              />
+          <Grid container spacing={3} justifyContent="center" sx={{ mb: 8 }}>
+            <Grid item xs={12} sm={6} md={3}>
+              <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                <StatCard
+                  title="Вопросов"
+                  value={stats.questions}
+                  color={NEUTRAL_COLORS.accent}
+                  icon={<QuestionsIcon sx={{ fontSize: 32 }} />}
+                />
+              </Box>
             </Grid>
-            <Grid item xs={12} sm={6} md={3} sx={{ display: 'flex' }}>
-              <StatCard
-                title="Категорий"
-                value={stats.categories}
-                color={NEUTRAL_COLORS.success}
-                icon={<CategoryIcon sx={{ fontSize: 32 }} />}
-                onClick={() => navigate('/questions')}
-              />
+            <Grid item xs={12} sm={6} md={3}>
+              <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                <StatCard
+                  title="Категорий"
+                  value={stats.categories}
+                  color={NEUTRAL_COLORS.success}
+                  icon={<CategoryIcon sx={{ fontSize: 32 }} />}
+                />
+              </Box>
             </Grid>
-            <Grid item xs={12} sm={6} md={3} sx={{ display: 'flex' }}>
-              <StatCard
-                title="Пользователь"
-                value={users.length}
-                color={NEUTRAL_COLORS.warning}
-                icon={<PeopleIcon sx={{ fontSize: 32 }} />}
-              />
+            <Grid item xs={12} sm={6} md={3}>
+              <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                <StatCard
+                  title="Пользователей"
+                  value={users.length}
+                  color={NEUTRAL_COLORS.warning}
+                  icon={<PeopleIcon sx={{ fontSize: 32 }} />}
+                />
+              </Box>
             </Grid>
-            <Grid item xs={12} sm={6} md={3} sx={{ display: 'flex' }}>
-              <StatCard
-                title="Успешность"
-                value={100}
-                color={NEUTRAL_COLORS.purple}
-                icon={<TrendingIcon sx={{ fontSize: 32 }} />}
-              />
+            <Grid item xs={12} sm={6} md={3}>
+              <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                <StatCard
+                  title="Успешность"
+                  value={100}
+                  color={NEUTRAL_COLORS.purple}
+                  icon={<TrendingIcon sx={{ fontSize: 32 }} />}
+                />
+              </Box>
             </Grid>
           </Grid>
 
@@ -1861,7 +1819,7 @@ export const HomePage: React.FC = () => {
               Популярные категории
             </Typography>
             
-            {categoriesLoading ? (
+            {isLoading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
                 <CircularProgress sx={{ color: NEUTRAL_COLORS.accent }} />
               </Box>
@@ -1871,6 +1829,7 @@ export const HomePage: React.FC = () => {
                   <Grid item xs={6} sm={4} md={2.4} key={category.id}>
                     <CategoryCard
                       category={category}
+                      onClick={() => handleCardClick(category)}
                     />
                   </Grid>
                 ))}
