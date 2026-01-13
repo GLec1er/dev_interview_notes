@@ -48,7 +48,6 @@ import {
   KeyboardArrowDown as ArrowDownIcon,
   Close as CloseIcon,
   PlayArrow as PlayIcon,
-  Pause as PauseIcon,
   RestartAlt as RestartIcon,
   CheckCircle as CheckIcon,
   ChevronLeft as ChevronLeftIcon,
@@ -62,6 +61,9 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { questionService } from '../services/questionService';
 import { categoryService } from '../services/categoryService';
+import { answerService } from '../services/answerService';
+import type { User } from '../types';
+import { userService } from '../services/userService';
 
 // Нейтральная цветовая палитра
 const NEUTRAL_COLORS = {
@@ -151,7 +153,8 @@ const StatCard = memo(({ title, value, color, icon, onClick }: {
   <Grow in timeout={800}>
     <Card 
       sx={{ 
-        height: '100%',
+        height: '100%', // Занимает всю высоту Grid item
+        minWidth: '160px', // Минимальная высота для всех карточек
         background: NEUTRAL_COLORS.surface,
         border: `1px solid ${NEUTRAL_COLORS.border}`,
         borderRadius: 3,
@@ -160,6 +163,8 @@ const StatCard = memo(({ title, value, color, icon, onClick }: {
         cursor: onClick ? 'pointer' : 'default',
         position: 'relative',
         overflow: 'hidden',
+        display: 'flex', // Flex для лучшего контроля над содержимым
+        flexDirection: 'column',
         '&::before': {
           content: '""',
           position: 'absolute',
@@ -177,7 +182,15 @@ const StatCard = memo(({ title, value, color, icon, onClick }: {
       }}
       onClick={onClick}
     >
-      <CardContent sx={{ p: 3, textAlign: 'center' }}>
+      <CardContent sx={{ 
+        p: 3, 
+        textAlign: 'center',
+        flexGrow: 1, // Занимает всё доступное пространство
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center', // Вертикальное центрирование содержимого
+        alignItems: 'center',
+      }}>
         <Box sx={{ 
           mb: 2, 
           color: color,
@@ -199,7 +212,8 @@ const StatCard = memo(({ title, value, color, icon, onClick }: {
             color: NEUTRAL_COLORS.textPrimary,
             mb: 1,
             fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
-            fontSize: { xs: '2rem', md: '2.5rem' }
+            fontSize: { xs: '2rem', md: '2.5rem' },
+            lineHeight: 1, // Убираем лишний межстрочный интервал
           }}
         >
           {value.toLocaleString()}
@@ -207,7 +221,12 @@ const StatCard = memo(({ title, value, color, icon, onClick }: {
         <Typography 
           variant="subtitle1" 
           color={NEUTRAL_COLORS.textSecondary}
-          sx={{ fontWeight: 500, fontSize: '0.95rem' }}
+          sx={{ 
+            fontWeight: 500, 
+            fontSize: '0.95rem',
+            textAlign: 'center',
+            width: '100%', // Занимает всю ширину
+          }}
         >
           {title}
         </Typography>
@@ -308,7 +327,7 @@ interface Answer {
 
 const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
   const [step, setStep] = useState<'level' | 'countdown' | 'questions' | 'results'>('level');
-  const [userLevel, setUserLevel] = useState<'beginner' | 'intermediate' | 'expert'>('beginner');
+  const [userLevel, setUserLevel] = useState<'beginner' | 'intermediate' | 'expert' | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<string, Answer>>({});
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -331,16 +350,20 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
     }
   };
 
-  const loadRandomQuestions = useCallback(async () => {
+  const loadRandomQuestions = useCallback(async (level: 'beginner' | 'intermediate' | 'expert') => {
     try {
       setIsLoading(true);
-      const difficulty = getDifficultyByLevel(userLevel);
+      const difficulty = getDifficultyByLevel(level);
       
       const allQuestions = await questionService.getQuestions(
         1,
         100,
         true,
-        difficulty
+        difficulty,
+        undefined,
+        undefined,
+        undefined,
+        true,
       );
       
       if (allQuestions.items.length === 0) {
@@ -353,7 +376,6 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
         title: q.title,
         content: q.content || [],
         difficulty: q.difficulty,
-        category_name: q.category_name,
       }));
       
       setQuestions(selectedQuestions);
@@ -361,7 +383,7 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
       const answersData: Record<string, Answer> = {};
       for (const question of selectedQuestions) {
         try {
-          const answerResponse = await questionService.getQuestionAnswers(question.id);
+          const answerResponse = await answerService.getAnswers(question.id);
           if (answerResponse && answerResponse.length > 0) {
             const publishedAnswer = answerResponse.find(a => a.is_published);
             if (publishedAnswer) {
@@ -383,14 +405,17 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
       console.error('Failed to load questions:', error);
       setIsLoading(false);
     }
-  }, [userLevel]);
+  }, []);
 
   const handleLevelSelect = (level: 'beginner' | 'intermediate' | 'expert') => {
     setUserLevel(level);
-    setTimeout(() => {
+  };
+
+  const handleContinue = () => {
+    if (userLevel) {
       setStep('countdown');
-      loadRandomQuestions();
-    }, 500);
+      loadRandomQuestions(userLevel);
+    }
   };
 
   const handleStartTimer = () => {
@@ -401,7 +426,11 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
       timerRef.current = setInterval(() => {
         setTimeLeft(prev => {
           if (prev <= 1) {
-            if (timerRef.current) clearInterval(timerRef.current);
+            if (timerRef.current) {
+              clearInterval(timerRef.current);
+              timerRef.current = null;
+            }
+            setIsTimerRunning(false);
             setStep('results');
             return 0;
           }
@@ -413,12 +442,19 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
 
   const handleToggleTimer = () => {
     if (isTimerRunning) {
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
     } else {
       timerRef.current = setInterval(() => {
         setTimeLeft(prev => {
           if (prev <= 1) {
-            if (timerRef.current) clearInterval(timerRef.current);
+            if (timerRef.current) {
+              clearInterval(timerRef.current);
+              timerRef.current = null;
+            }
+            setIsTimerRunning(false);
             setStep('results');
             return 0;
           }
@@ -430,14 +466,34 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
   };
 
   const handleReset = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
     setStep('level');
+    setUserLevel(null);
     setTimeLeft(600);
     setIsTimerRunning(false);
     setQuestions([]);
     setAnswers({});
     setCurrentQuestionIndex(0);
     setExpandedQuestions([]);
+  };
+
+  const handleCloseModal = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    setStep('level');
+    setUserLevel(null);
+    setTimeLeft(600);
+    setIsTimerRunning(false);
+    setQuestions([]);
+    setAnswers({});
+    setCurrentQuestionIndex(0);
+    setExpandedQuestions([]);
+    onClose();
   };
 
   const formatTime = (seconds: number) => {
@@ -505,19 +561,6 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
     }
   };
 
-  const getLevelDescription = (level: string) => {
-    switch (level) {
-      case 'beginner':
-        return 'Легкие вопросы для тех, кто только начинает';
-      case 'intermediate':
-        return 'Средние вопросы для опытных разработчиков';
-      case 'expert':
-        return 'Сложные вопросы для профессионалов';
-      default:
-        return '';
-    }
-  };
-
   const renderQuestionContent = (content: any[]) => {
     if (!content || content.length === 0) {
       return (
@@ -531,13 +574,31 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
       switch (block.type) {
         case 'heading':
           return (
-            <Typography key={index} variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+            <Typography 
+              key={index} 
+              variant="h6" 
+              gutterBottom 
+              sx={{ 
+                fontWeight: 600, 
+                color: NEUTRAL_COLORS.textPrimary,
+                mt: 2,
+                mb: 1
+              }}
+            >
               {block.data?.text}
             </Typography>
           );
         case 'paragraph':
           return (
-            <Typography key={index} variant="body1" paragraph>
+            <Typography 
+              key={index} 
+              variant="body1" 
+              paragraph 
+              sx={{ 
+                color: NEUTRAL_COLORS.textPrimary,
+                lineHeight: 1.6 
+              }}
+            >
               {block.data?.text}
             </Typography>
           );
@@ -548,18 +609,34 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
               elevation={0}
               sx={{
                 p: 2,
-                my: 1,
-                bgcolor: alpha(NEUTRAL_COLORS.textPrimary, 0.05),
+                my: 1.5,
+                bgcolor: alpha(NEUTRAL_COLORS.textPrimary, 0.03),
+                border: `1px solid ${alpha(NEUTRAL_COLORS.border, 0.5)}`,
                 borderRadius: 1,
-                fontFamily: 'monospace',
-                fontSize: '0.875rem',
+                fontFamily: '"Roboto Mono", monospace',
+                fontSize: '0.85rem',
                 overflow: 'auto',
               }}
             >
-              <Typography variant="caption" color={NEUTRAL_COLORS.textSecondary} display="block" mb={0.5}>
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  color: NEUTRAL_COLORS.textSecondary, 
+                  display: 'block', 
+                  mb: 0.5,
+                  fontWeight: 500,
+                  fontSize: '0.75rem'
+                }}
+              >
                 {block.data?.language || 'code'}
               </Typography>
-              <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
+              <pre style={{ 
+                margin: 0, 
+                whiteSpace: 'pre-wrap',
+                color: NEUTRAL_COLORS.textPrimary,
+                fontSize: '0.85rem',
+                lineHeight: 1.4
+              }}>
                 {block.data?.code || block.data?.text || block.content}
               </pre>
             </Paper>
@@ -571,13 +648,13 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
               elevation={0}
               sx={{
                 p: 2,
-                my: 1,
-                bgcolor: alpha(NEUTRAL_COLORS.accent, 0.1),
+                my: 1.5,
+                bgcolor: alpha(NEUTRAL_COLORS.accent, 0.08),
                 borderLeft: `4px solid ${NEUTRAL_COLORS.accent}`,
                 borderRadius: '0 8px 8px 0',
               }}
             >
-              <Typography variant="body2">
+              <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textPrimary }}>
                 {block.data?.text || block.content}
               </Typography>
             </Paper>
@@ -601,13 +678,31 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
       switch (block.type) {
         case 'heading':
           return (
-            <Typography key={index} variant="h6" gutterBottom sx={{ fontWeight: 600, color: NEUTRAL_COLORS.success }}>
+            <Typography 
+              key={index} 
+              variant="h6" 
+              gutterBottom 
+              sx={{ 
+                fontWeight: 600, 
+                color: NEUTRAL_COLORS.textPrimary,
+                mt: 2,
+                mb: 1
+              }}
+            >
               {block.data?.text}
             </Typography>
           );
         case 'paragraph':
           return (
-            <Typography key={index} variant="body1" paragraph>
+            <Typography 
+              key={index} 
+              variant="body1" 
+              paragraph 
+              sx={{ 
+                color: NEUTRAL_COLORS.textPrimary,
+                lineHeight: 1.6 
+              }}
+            >
               {block.data?.text}
             </Typography>
           );
@@ -618,25 +713,52 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
               elevation={0}
               sx={{
                 p: 2,
-                my: 1,
-                bgcolor: alpha(NEUTRAL_COLORS.success, 0.1),
-                border: `1px solid ${alpha(NEUTRAL_COLORS.success, 0.2)}`,
+                my: 1.5,
+                bgcolor: alpha(NEUTRAL_COLORS.textPrimary, 0.03),
+                border: `1px solid ${alpha(NEUTRAL_COLORS.success, 0.3)}`,
                 borderRadius: 1,
-                fontFamily: 'monospace',
-                fontSize: '0.875rem',
+                fontFamily: '"Roboto Mono", monospace',
+                fontSize: '0.85rem',
                 overflow: 'auto',
               }}
             >
-              <Typography variant="caption" color={NEUTRAL_COLORS.success} display="block" mb={0.5}>
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  color: NEUTRAL_COLORS.success, 
+                  display: 'block', 
+                  mb: 0.5,
+                  fontWeight: 500,
+                  fontSize: '0.75rem'
+                }}
+              >
                 {block.data?.language || 'code'}
               </Typography>
-              <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
+              <pre style={{ 
+                margin: 0, 
+                whiteSpace: 'pre-wrap',
+                color: NEUTRAL_COLORS.textPrimary,
+                fontSize: '0.85rem',
+                lineHeight: 1.4
+              }}>
                 {block.data?.code || block.data?.text || block.content}
               </pre>
             </Paper>
           );
         default:
-          return null;
+          return (
+            <Typography 
+              key={index} 
+              variant="body1" 
+              paragraph 
+              sx={{ 
+                color: NEUTRAL_COLORS.textPrimary,
+                lineHeight: 1.6 
+              }}
+            >
+              {block.data?.text || block.content}
+            </Typography>
+          );
       }
     });
   };
@@ -645,14 +767,21 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
+        timerRef.current = null;
       }
     };
   }, []);
 
+  useEffect(() => {
+    if (!open) {
+      handleReset();
+    }
+  }, [open]);
+
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={handleCloseModal}
       maxWidth="md"
       fullWidth
       PaperProps={{
@@ -679,7 +808,7 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
               {step === 'results' && 'Результаты'}
             </Typography>
           </Box>
-          <IconButton onClick={onClose} sx={{ color: 'white' }}>
+          <IconButton onClick={handleCloseModal} sx={{ color: 'white' }}>
             <CloseIcon />
           </IconButton>
         </Box>
@@ -705,13 +834,27 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
 
         {step === 'level' && (
           <Box sx={{ p: 4 }}>
-            <Typography variant="h6" gutterBottom align="center" sx={{ mb: 4 }}>
+            <Typography variant="h6" gutterBottom align="center" sx={{ mb: 4, color: NEUTRAL_COLORS.textPrimary }}>
               Выберите ваш уровень, чтобы получить подходящие вопросы
             </Typography>
             
-            <Grid container spacing={3}>
+            <Grid 
+              container 
+              spacing={3}
+              justifyContent="center"
+              alignItems="stretch"
+            >
               {['beginner', 'intermediate', 'expert'].map((level) => (
-                <Grid item xs={12} sm={4} key={level}>
+                <Grid 
+                  item 
+                  xs={12} 
+                  md={4} 
+                  key={level}
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'center', // Центрируем карточку внутри Grid item
+                  }}
+                >
                   <Card
                     elevation={userLevel === level ? 4 : 0}
                     sx={{
@@ -719,30 +862,58 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
                       border: `2px solid ${userLevel === level ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.border}`,
                       borderRadius: 2,
                       transition: 'all 0.2s',
+                      width: '100%', // Карточка занимает всю ширину Grid item
+                      maxWidth: '300px', // Фиксированная максимальная ширина для всех карточек
+                      minWidth: '200px', // Минимальная ширина для всех карточек
+                      display: 'flex',
+                      flexDirection: 'column',
                       '&:hover': {
                         borderColor: NEUTRAL_COLORS.accent,
                         transform: 'translateY(-4px)',
+                        boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
                       },
                     }}
                     onClick={() => handleLevelSelect(level as any)}
                   >
-                    <CardContent sx={{ textAlign: 'center', p: 3 }}>
-                      <Box sx={{ 
-                        mb: 2,
-                        color: userLevel === level ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.textSecondary,
-                        display: 'inline-flex',
-                        p: 2,
-                        borderRadius: '50%',
-                        bgcolor: userLevel === level ? alpha(NEUTRAL_COLORS.accent, 0.1) : alpha(NEUTRAL_COLORS.border, 0.3),
-                      }}>
-                        {getLevelIcon(level)}
+                    <CardContent sx={{ 
+                      textAlign: 'center', 
+                      p: 3,
+                      flexGrow: 1,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between', // Распределяем пространство между элементами
+                      alignItems: 'center',
+                      minHeight: '250px', // Фиксированная минимальная высота для всех карточек
+                      bgcolor: NEUTRAL_COLORS.background,
+                    }}>
+                      <Box>
+                        <Box sx={{ 
+                          mb: 2,
+                          color: userLevel === level ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.textSecondary,
+                          display: 'inline-flex',
+                          p: 2,
+                          borderRadius: '50%',
+                          bgcolor: userLevel === level ? alpha(NEUTRAL_COLORS.accent, 0.1) : alpha(NEUTRAL_COLORS.border, 0.3),
+                        }}>
+                          {getLevelIcon(level)}
+                        </Box>
+                        <Typography 
+                          variant="h6" 
+                          sx={{ 
+                            fontWeight: 600, 
+                            mb: 1, 
+                            color: NEUTRAL_COLORS.textPrimary,
+                            minHeight: '60px', // Фиксированная высота для заголовка
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          {getLevelTitle(level)}
+                        </Typography>
+
                       </Box>
-                      <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-                        {getLevelTitle(level)}
-                      </Typography>
-                      <Typography variant="body2" color={NEUTRAL_COLORS.textSecondary} sx={{ mb: 2 }}>
-                        {getLevelDescription(level)}
-                      </Typography>
+                      
                       <Chip
                         label={getDifficultyByLevel(level as any).toUpperCase()}
                         size="small"
@@ -750,6 +921,8 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
                           bgcolor: alpha(getDifficultyColor(getDifficultyByLevel(level as any)), 0.1),
                           color: getDifficultyColor(getDifficultyByLevel(level as any)),
                           fontWeight: 600,
+                          minWidth: '50px', // Минимальная ширина для чипа
+                          justifyContent: 'center'
                         }}
                       />
                     </CardContent>
@@ -762,7 +935,7 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
               <Button
                 variant="contained"
                 size="large"
-                onClick={() => handleLevelSelect(userLevel)}
+                onClick={handleContinue}
                 disabled={!userLevel}
                 sx={{
                   px: 6,
@@ -770,6 +943,7 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
                   borderRadius: 2,
                   fontWeight: 600,
                   fontSize: '1rem',
+                  bgcolor: NEUTRAL_COLORS.accent
                 }}
               >
                 Продолжить
@@ -783,7 +957,7 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
             {isLoading ? (
               <>
                 <CircularProgress size={80} sx={{ mb: 4, color: NEUTRAL_COLORS.accent }} />
-                <Typography variant="h6" gutterBottom>
+                <Typography variant="h6" gutterBottom color={NEUTRAL_COLORS.textPrimary}>
                   Загружаем вопросы...
                 </Typography>
                 <Typography variant="body2" color={NEUTRAL_COLORS.textSecondary}>
@@ -822,11 +996,11 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
                   <TimerIcon sx={{ fontSize: 80, color: NEUTRAL_COLORS.accent }} />
                 </Box>
                 
-                <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
+                <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, color: NEUTRAL_COLORS.textPrimary }}>
                   Готовы?
                 </Typography>
                 <Typography variant="body1" color={NEUTRAL_COLORS.textSecondary} sx={{ mb: 4 }}>
-                  У вас есть 10 минут на 5 вопросов уровня {getLevelTitle(userLevel)}
+                  У вас есть 10 минут на 5 вопросов уровня
                 </Typography>
                 
                 <Button
@@ -854,7 +1028,7 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
         )}
 
         {step === 'questions' && (
-          <Box sx={{ display: 'flex', flexDirection: 'column', height: '500px' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', height: '600px' }}>
             <Paper
               elevation={0}
               sx={{
@@ -865,9 +1039,6 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
             >
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <IconButton onClick={handleToggleTimer} size="small">
-                    {isTimerRunning ? <PauseIcon /> : <PlayIcon />}
-                  </IconButton>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <TimerIcon sx={{ color: NEUTRAL_COLORS.accent }} />
                     <Typography variant="h5" sx={{ fontWeight: 700, color: NEUTRAL_COLORS.accent }}>
@@ -877,7 +1048,7 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
                   <Chip
                     label={`Вопрос ${currentQuestionIndex + 1} из ${questions.length}`}
                     size="small"
-                    sx={{ fontWeight: 600 }}
+                    sx={{ fontWeight: 600, color: NEUTRAL_COLORS.accent  }}
                   />
                 </Box>
                 
@@ -893,7 +1064,7 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
               </Box>
             </Paper>
 
-            <Box sx={{ flex: 1, overflow: 'auto', p: 3 }}>
+            <Box sx={{ flex: 1, overflow: 'auto', p: 3, bgcolor: NEUTRAL_COLORS.surface }}>
               {isLoading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                   <CircularProgress />
@@ -921,7 +1092,7 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
                       )}
                     </Stack>
                     
-                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: NEUTRAL_COLORS.textPrimary }}>
                       {questions[currentQuestionIndex].title}
                     </Typography>
                     
@@ -933,6 +1104,7 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
                       startIcon={<ChevronLeftIcon />}
                       onClick={handlePrevQuestion}
                       disabled={currentQuestionIndex === 0}
+                      sx={{ color: NEUTRAL_COLORS.textPrimary }}
                     >
                       Назад
                     </Button>
@@ -940,7 +1112,14 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
                     {currentQuestionIndex === questions.length - 1 ? (
                       <Button
                         variant="contained"
-                        onClick={() => setStep('results')}
+                        onClick={() => {
+                          if (timerRef.current) {
+                            clearInterval(timerRef.current);
+                            timerRef.current = null;
+                          }
+                          setIsTimerRunning(false);
+                          setStep('results');
+                        }}
                         sx={{ fontWeight: 600 }}
                       >
                         Завершить тест
@@ -966,10 +1145,10 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
         )}
 
         {step === 'results' && (
-          <Box sx={{ p: 3 }}>
+          <Box sx={{ p: 3, bgcolor: NEUTRAL_COLORS.surface }}>
             <Box sx={{ textAlign: 'center', mb: 4, p: 3, bgcolor: alpha(NEUTRAL_COLORS.success, 0.1), borderRadius: 2 }}>
               <CheckIcon sx={{ fontSize: 60, color: NEUTRAL_COLORS.success, mb: 2 }} />
-              <Typography variant="h5" gutterBottom sx={{ fontWeight: 700 }}>
+              <Typography variant="h5" gutterBottom sx={{ fontWeight: 700, color: NEUTRAL_COLORS.textPrimary }}>
                 Тест завершен!
               </Typography>
               <Typography variant="body1" color={NEUTRAL_COLORS.textSecondary}>
@@ -977,11 +1156,11 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
               </Typography>
             </Box>
 
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: NEUTRAL_COLORS.textPrimary }}>
               Вопросы и ответы для проверки:
             </Typography>
 
-            <Box sx={{ maxHeight: '400px', overflow: 'auto' }}>
+            <Box sx={{ maxHeight: '400px', overflow: 'auto', bgcolor: NEUTRAL_COLORS.background }}>
               {questions.map((question, index) => (
                 <Paper
                   key={question.id}
@@ -991,6 +1170,7 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
                     border: `1px solid ${NEUTRAL_COLORS.border}`,
                     borderRadius: 2,
                     overflow: 'hidden',
+                    bgcolor: NEUTRAL_COLORS.surface,
                   }}
                 >
                   <Box
@@ -1005,7 +1185,7 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
                     onClick={() => handleToggleExpand(question.id)}
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600, color: NEUTRAL_COLORS.textPrimary }}>
                         Вопрос {index + 1}: {question.title}
                       </Typography>
                       <Chip
@@ -1022,15 +1202,31 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
                   </Box>
 
                   <Collapse in={expandedQuestions.includes(question.id)}>
-                    <Box sx={{ p: 3 }}>
-                      <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: NEUTRAL_COLORS.textSecondary }}>
+                    <Box sx={{ p: 3, bgcolor: NEUTRAL_COLORS.surface }}>
+                      <Typography 
+                        variant="subtitle2" 
+                        gutterBottom 
+                        sx={{ 
+                          fontWeight: 600, 
+                          color: NEUTRAL_COLORS.textSecondary,
+                          mb: 2 
+                        }}
+                      >
                         Вопрос:
                       </Typography>
                       {renderQuestionContent(question.content)}
                       
                       <Divider sx={{ my: 3 }} />
                       
-                      <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: NEUTRAL_COLORS.success }}>
+                      <Typography 
+                        variant="subtitle2" 
+                        gutterBottom 
+                        sx={{ 
+                          fontWeight: 600, 
+                          color: NEUTRAL_COLORS.success,
+                          mb: 2 
+                        }}
+                      >
                         Ответ:
                       </Typography>
                       {answers[question.id] ? (
@@ -1050,13 +1246,13 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
               <Button
                 variant="outlined"
                 onClick={handleReset}
-                sx={{ fontWeight: 600 }}
+                sx={{ fontWeight: 600, color: NEUTRAL_COLORS.textPrimary }}
               >
                 Пройти еще раз
               </Button>
               <Button
                 variant="contained"
-                onClick={onClose}
+                onClick={handleCloseModal}
                 sx={{ fontWeight: 600 }}
               >
                 Закрыть
@@ -1068,9 +1264,6 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
 
       {step !== 'results' && step !== 'countdown' && (
         <DialogActions sx={{ p: 2, bgcolor: alpha(NEUTRAL_COLORS.background, 0.5) }}>
-          <Button onClick={onClose}>
-            Отмена
-          </Button>
           <Box sx={{ flex: 1 }} />
           <Typography variant="caption" color={NEUTRAL_COLORS.textSecondary}>
             Быстрый старт • 5 вопросов • 10 минут
@@ -1129,7 +1322,6 @@ const QuickStartCard = memo(() => {
               </Box>
               
               <Button
-                variant="contained"
                 endIcon={<ChevronRightIcon />}
                 onClick={() => setQuickStartOpen(true)}
                 sx={{
@@ -1201,10 +1393,32 @@ export const HomePage: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const [stats, setStats] = useState<Stats>({ questions: 0, categories: 0 });
   const [categories, setCategories] = useState<ApiCategory[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const featuresRef = useRef<HTMLDivElement>(null);
+
+  const loadUsers = useCallback(async () => {
+    try {
+      setIsLoadingUsers(true);
+      
+      const usersResponse = await userService.getUsers(
+        1, 
+        100, 
+        'created_at', 
+        'desc'
+      );
+      const activeUsers = usersResponse.items.filter(user => user.is_active);
+      
+      setUsers(activeUsers);
+    } catch (err) {
+      console.error('Failed to load users:', err);
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  }, []);
 
   const scrollToFeatures = useCallback(() => {
     featuresRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -1216,8 +1430,17 @@ export const HomePage: React.FC = () => {
       setError(null);
       
       const [questionsData, categoriesData] = await Promise.all([
-        questionService.getQuestions(1, 1, true),
-        categoryService.getCategories(1, 1, false),
+        questionService.getQuestions(
+          1,
+          1,
+          true,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          true,
+        ),
+        categoryService.getCategories(1, 10, false),
       ]);
       
       setStats({
@@ -1235,10 +1458,9 @@ export const HomePage: React.FC = () => {
   const loadCategories = useCallback(async () => {
     try {
       setCategoriesLoading(true);
-      const categoriesData = await categoryService.getCategories(1, 10, true);
+      const categoriesData = await categoryService.getCategories(1, 10, false);
       
       const sortedCategories = (categoriesData.items as ApiCategory[])
-        .filter(cat => cat.is_active)
         .sort((a, b) => b.question_count - a.question_count)
         .slice(0, 5);
       
@@ -1253,7 +1475,8 @@ export const HomePage: React.FC = () => {
   useEffect(() => {
     loadStats();
     loadCategories();
-  }, [loadStats, loadCategories]);
+    loadUsers();
+  }, [loadStats, loadCategories, loadUsers]);
 
   const handleLogout = useCallback(async () => {
     try {
@@ -1439,15 +1662,14 @@ export const HomePage: React.FC = () => {
                 sx={{ 
                   mb: 4, 
                   color: NEUTRAL_COLORS.textSecondary,
-                  maxWidth: '680px',
+                  maxWidth: '780px',
                   mx: 'auto',
                   lineHeight: 1.6,
                   fontWeight: 400,
                   fontSize: { xs: '1.125rem', md: '1.5rem' }
                 }}
               >
-                Потренируйтесь на {stats.questions}+ реальных вопросах, 
-                получите персонализированную обратную связь и отслеживайте свой прогресс
+                Закрывайте слабые места. Большая база из {stats.questions}+ вопросов с ответами, которые прошли отбор. Ваш прогресс — под контролем.
               </Typography>
             </Box>
           </Fade>
@@ -1574,8 +1796,14 @@ export const HomePage: React.FC = () => {
             </Typography>
           </Fade>
 
-          <Grid container spacing={3} justifyContent="center" sx={{ mb: 8 }}>
-            <Grid item xs={12} sm={6} md={3}>
+          <Grid 
+            container 
+            spacing={3} 
+            justifyContent="center" 
+            sx={{ mb: 8 }}
+            alignItems="stretch" // Это заставит все Grid items быть одинаковой высоты
+          >
+            <Grid item xs={12} sm={6} md={3} sx={{ display: 'flex' }}>
               <StatCard
                 title="Вопросов"
                 value={stats.questions}
@@ -1584,7 +1812,7 @@ export const HomePage: React.FC = () => {
                 onClick={() => navigate('/questions')}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={3} sx={{ display: 'flex' }}>
               <StatCard
                 title="Категорий"
                 value={stats.categories}
@@ -1593,18 +1821,18 @@ export const HomePage: React.FC = () => {
                 onClick={() => navigate('/questions')}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={3} sx={{ display: 'flex' }}>
               <StatCard
-                title="Пользователей"
-                value={346}
+                title="Пользователь"
+                value={users.length}
                 color={NEUTRAL_COLORS.warning}
                 icon={<PeopleIcon sx={{ fontSize: 32 }} />}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={3} sx={{ display: 'flex' }}>
               <StatCard
                 title="Успешность"
-                value={87}
+                value={100}
                 color={NEUTRAL_COLORS.purple}
                 icon={<TrendingIcon sx={{ fontSize: 32 }} />}
               />
@@ -1698,8 +1926,7 @@ export const HomePage: React.FC = () => {
                     maxWidth: '400px'
                   }}
                 >
-                  Лучшая платформа для подготовки к техническим собеседованиям. 
-                  Присоединяйтесь к тысячам разработчиков, которые получили работу мечты.
+                  Платформа для подготовки к техническим собеседованиям
                 </Typography>
                 <Button
                   variant="contained"
@@ -1735,7 +1962,7 @@ export const HomePage: React.FC = () => {
                     fontSize: '0.75rem'
                   }}
                 >
-                  Профессиональная платформа подготовки к собеседованиям • v2.1.0
+                  Платформа подготовки к собеседованиям • v1.0.0
                 </Typography>
               </Grid>
             </Grid>
