@@ -18,7 +18,6 @@ import {
   Divider,
   Fade,
   FormControl,
-  InputLabel,
   Select,
   MenuItem,
 } from '@mui/material';
@@ -27,10 +26,7 @@ import {
   FilterList as FilterIcon,
   Clear as ClearIcon,
   QuestionAnswer as QuestionIcon,
-  TrendingUp as DifficultyIcon,
   Numbers as NumbersIcon,
-  CheckCircle as PublishedIcon,
-  RadioButtonUnchecked as DraftIcon,
   Bolt as BoltIcon,
   KeyboardArrowRight as ArrowRightIcon,
   TrendingFlat as TrendingFlatIcon,
@@ -931,7 +927,7 @@ export const QuestionsPage: React.FC = () => {
         // Без поиска используем пагинацию
         data = await questionService.getQuestions(
           pageNumber,
-          ITEMS_PER_PAGE,
+          1000,
           is_published,
           difficulty || undefined,
           'updated_at',

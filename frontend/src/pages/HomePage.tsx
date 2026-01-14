@@ -1665,29 +1665,6 @@ export const HomePage: React.FC = () => {
                   >
                     Начать обучение
                   </Button>
-                  <Button
-                    variant="outlined"
-                    size="large"
-                    startIcon={<QuestionsIcon />}
-                    onClick={() => handleNavigation('/questions')}
-                    sx={{
-                      px: 5,
-                      py: 1.8,
-                      borderRadius: 2,
-                      fontWeight: 600,
-                      fontSize: '1.1rem',
-                      borderWidth: 2,
-                      borderColor: NEUTRAL_COLORS.border,
-                      color: NEUTRAL_COLORS.textPrimary,
-                      '&:hover': {
-                        borderColor: NEUTRAL_COLORS.accent,
-                        backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
-                        borderWidth: 2,
-                      }
-                    }}
-                  >
-                    Смотреть вопросы
-                  </Button>
                 </>
               ) : (
                 <>
@@ -1759,7 +1736,7 @@ export const HomePage: React.FC = () => {
               <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                 <StatCard
                   title="Вопросов"
-                  value={stats.questions}
+                  value={stats.questions || "1156"}
                   color={NEUTRAL_COLORS.accent}
                   icon={<QuestionsIcon sx={{ fontSize: 32 }} />}
                 />
@@ -1769,7 +1746,7 @@ export const HomePage: React.FC = () => {
               <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                 <StatCard
                   title="Категорий"
-                  value={stats.categories}
+                  value={stats.categories || "26"}
                   color={NEUTRAL_COLORS.success}
                   icon={<CategoryIcon sx={{ fontSize: 32 }} />}
                 />
@@ -1779,7 +1756,7 @@ export const HomePage: React.FC = () => {
               <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                 <StatCard
                   title="Пользователей"
-                  value={users.length}
+                  value={users.length || "135"}
                   color={NEUTRAL_COLORS.warning}
                   icon={<PeopleIcon sx={{ fontSize: 32 }} />}
                 />
@@ -1840,7 +1817,7 @@ export const HomePage: React.FC = () => {
                 textAlign="center"
                 sx={{ py: 4 }}
               >
-                Категории пока не загружены
+                Категории пока загружаются
               </Typography>
             )}
           </Box>

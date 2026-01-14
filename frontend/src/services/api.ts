@@ -6,6 +6,8 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8888/api/
 
 class ApiClient {
   private client: AxiosInstance;
+  private isRefreshing = false;
+  private failedQueue: any[] = [];
 
   constructor() {
     this.client = axios.create({
@@ -30,85 +32,81 @@ class ApiClient {
 
     // Response interceptor to handle token refresh
     this.client.interceptors.response.use(
-      (response) => response,
+      (response) => {
+        return response;
+      },
       async (error: AxiosError) => {
         const originalRequest = error.config as any;
 
-        // Don't retry refresh endpoint itself to avoid infinite loops
-        if (originalRequest.url?.includes('/auth/refresh')) {
-          // Refresh token expired or invalid, clear cookies and redirect to login
-          Cookies.remove('access_token');
-          Cookies.remove('refresh_token');
-          window.location.href = '/login';
-          return Promise.reject(error);
-        }
-
-        // Don't retry /auth/me on initial load to avoid infinite loops
-        if (originalRequest.url?.includes('/auth/me') && !originalRequest._retry) {
-          originalRequest._retry = true;
-
-          // Check if we have a refresh token
-          const refreshToken = Cookies.get('refresh_token');
-          if (!refreshToken) {
-            // No refresh token, can't refresh
-            return Promise.reject(error);
+        // Если ошибка 401 и это не запрос на refresh
+        if (error.response?.status === 401 && 
+            !originalRequest?.url?.includes('/auth/refresh') &&
+            !originalRequest?._retry) {
+          
+          // Если уже обновляем токен, ставим запрос в очередь
+          if (this.isRefreshing) {
+            return new Promise((resolve, reject) => {
+              this.failedQueue.push({ 
+                resolve: (token: string) => {
+                  originalRequest.headers.Authorization = `Bearer ${token}`;
+                  resolve(this.client(originalRequest));
+                }, 
+                reject 
+              });
+            });
           }
 
+          // Помечаем запрос как повторяемый
+          originalRequest._retry = true;
+          this.isRefreshing = true;
+
           try {
-            // Try to refresh the token
             const response = await axios.post(
               `${API_BASE_URL}/auth/refresh`,
               {},
-              { withCredentials: true }
+              { 
+                withCredentials: true,
+                headers: {
+                  'Content-Type': 'application/json',
+                }
+              }
             );
 
-            const newToken = response.data;
+            // Получаем новый токен
+            let newToken: string;
+            if (typeof response.data === 'string') {
+              newToken = response.data;
+            } else if (response.data?.access_token) {
+              newToken = response.data.access_token;
+            } else {
+              throw new Error('Invalid refresh response format');
+            }
+
+            // Сохраняем новый токен
             Cookies.set('access_token', newToken);
 
-            // Retry original request
+            // Обновляем заголовок для текущего запроса
             originalRequest.headers.Authorization = `Bearer ${newToken}`;
+
+            // Обрабатываем очередь запросов
+            this.failedQueue.forEach(({ resolve }) => resolve(newToken));
+            this.failedQueue = [];
+
+            // Повторяем оригинальный запрос
             return this.client(originalRequest);
-          } catch (refreshError) {
-            // Refresh failed, clear cookies and redirect to login
+          } catch (refreshError: any) {
+            console.error('[API] Token refresh failed:', refreshError.message);
+            
+            // Очищаем очередь с ошибкой
+            this.failedQueue.forEach(({ reject }) => reject(refreshError));
+            this.failedQueue = [];
+            
+            // Очищаем токены
             Cookies.remove('access_token');
-            Cookies.remove('refresh_token');
-            window.location.href = '/login';
+            
             return Promise.reject(refreshError);
-          }
-        }
-
-        if (error.response?.status === 401 && !originalRequest._retry) {
-          originalRequest._retry = true;
-
-          // Check if we have a refresh token
-          const refreshToken = Cookies.get('refresh_token');
-          if (!refreshToken) {
-            // No refresh token, redirect to login
-            Cookies.remove('access_token');
-            window.location.href = '/login';
-            return Promise.reject(error);
-          }
-
-          try {
-            // Try to refresh the token
-            const response = await axios.post(
-              `${API_BASE_URL}/auth/refresh`,
-              {},
-              { withCredentials: true }
-            );
-
-            const newToken = response.data;
-            Cookies.set('access_token', newToken);
-
-            // Retry original request
-            originalRequest.headers.Authorization = `Bearer ${newToken}`;
-            return this.client(originalRequest);
-          } catch (refreshError) {
-            // Refresh failed (refresh token expired), clear cookies and redirect to login
-            Cookies.remove('access_token');
-            Cookies.remove('refresh_token');
-            window.location.href = '/login';
-            return Promise.reject(refreshError);
+          } finally {
+            this.isRefreshing = false;
           }
         }
 
