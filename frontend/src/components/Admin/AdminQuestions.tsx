@@ -31,6 +31,9 @@ import {
   Tooltip,
   Switch,
   FormControlLabel,
+  Pagination,
+  InputAdornment,
+  TableSortLabel,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -39,6 +42,10 @@ import {
   Visibility as PublishedIcon,
   VisibilityOff as DraftIcon,
   Category as CategoryIcon,
+  Search as SearchIcon,
+  Clear as ClearIcon,
+  ArrowUpward as ArrowUpIcon,
+  ArrowDownward as ArrowDownIcon,
 } from '@mui/icons-material';
 import { questionService } from '../../services/questionService';
 import { categoryService } from '../../services/categoryService';
@@ -126,6 +133,7 @@ const StyledTableRow = ({ children, hover = true }: any) => (
 
 export const AdminQuestions: React.FC = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [filteredQuestions, setFilteredQuestions] = useState<Question[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
@@ -142,23 +150,48 @@ export const AdminQuestions: React.FC = () => {
   const [content, setContent] = useState<ContentBlock[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
+  
+  // Пагинация
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  
+  // Поиск
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  
+  // Сортировка
+  const [sortBy, setSortBy] = useState<string>('updated_at');
+  const [sortDir, setSortDir] = useState<string>('desc');
+  
+  // Фильтры
+  const [difficulty, setDifficulty] = useState<string>('');
+  const [categoryId, setCategoryId] = useState<string>('');
+
+  // Дебаунс для поиска
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const loadQuestions = useCallback(async () => {
     try {
       setIsLoading(true);
       const data = await questionService.getQuestions(
-        1, 
+        page, 
         ITEMS_PER_PAGE, 
-        undefined, 
-        undefined, 
-        'updated_at', 
-        'desc',
-        undefined,
-        false,
-    );
+        undefined, // is_published
+        difficulty || undefined, 
+        sortBy, 
+        sortDir,
+        categoryId || undefined,
+        false, // exclude_inactive_categories
+      );
       
-      // Используем данные напрямую, так как API возвращает category_name
       setQuestions(data.items);
+      setTotal(data.total);
       setError(null);
     } catch (err) {
       console.error('Failed to load questions:', err);
@@ -166,7 +199,7 @@ export const AdminQuestions: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [page, difficulty, sortBy, sortDir, categoryId]);
 
   const loadCategories = useCallback(async () => {
     try {
@@ -183,8 +216,24 @@ export const AdminQuestions: React.FC = () => {
 
   useEffect(() => {
     loadQuestions();
+  }, [loadQuestions]);
+
+  useEffect(() => {
     loadCategories();
-  }, [loadQuestions, loadCategories]);
+  }, [loadCategories]);
+
+  // Фильтрация по поиску
+  useEffect(() => {
+    if (debouncedSearch) {
+      const filtered = questions.filter(q =>
+        q.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        q.slug.toLowerCase().includes(debouncedSearch.toLowerCase())
+      );
+      setFilteredQuestions(filtered);
+    } else {
+      setFilteredQuestions(questions);
+    }
+  }, [questions, debouncedSearch]);
 
   const handleOpenDialog = async (question?: Question) => {
     if (question) {
@@ -359,6 +408,23 @@ export const AdminQuestions: React.FC = () => {
     }
   };
 
+  const handleSort = (field: string) => {
+    const isAsc = sortBy === field && sortDir === 'asc';
+    setSortDir(isAsc ? 'desc' : 'asc');
+    setSortBy(field);
+    setPage(1);
+  };
+
+  const handleResetFilters = () => {
+    setSearch('');
+    setDebouncedSearch('');
+    setDifficulty('');
+    setCategoryId('');
+    setSortBy('updated_at');
+    setSortDir('desc');
+    setPage(1);
+  };
+
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'easy':
@@ -374,11 +440,6 @@ export const AdminQuestions: React.FC = () => {
 
   // Функция для получения названия категории
   const getCategoryDisplayName = (question: Question) => {
-    // Пробуем получить название в порядке приоритета:
-    // 2. category.name если есть полный объект категории
-    // 3. Ищем в локальном списке категорий по ID
-    // 4. 'No category' если ничего не найдено
-    
     if (question.category?.name) {
       return question.category.name;
     }
@@ -395,9 +456,10 @@ export const AdminQuestions: React.FC = () => {
 
   // Функция для получения ID категории из вопроса
   const getCategoryId = (question: Question) => {
-    // Пробуем получить ID в порядке приоритета:
     return question.category_id || question.category?.id || '';
   };
+
+  const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
 
   if (isLoading) {
     return (
@@ -435,7 +497,7 @@ export const AdminQuestions: React.FC = () => {
             variant="body2" 
             sx={{ color: NEUTRAL_COLORS.textSecondary }}
           >
-            Total: {questions.length} questions
+            Total: {total} questions | Showing page {page} of {totalPages}
           </Typography>
         </Box>
         <StyledButton
@@ -446,6 +508,307 @@ export const AdminQuestions: React.FC = () => {
           Add Question
         </StyledButton>
       </Stack>
+
+      {/* Панель поиска и фильтров */}
+      <Paper 
+        elevation={0}
+        sx={{ 
+          p: 3,
+          mb: 3,
+          borderRadius: 3,
+          border: `1px solid ${NEUTRAL_COLORS.border}`,
+          backgroundColor: NEUTRAL_COLORS.surface,
+        }}
+      >
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
+
+        {/* Поиск */}
+        <TextField
+          fullWidth
+          placeholder="Search questions by title or slug..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          size="medium"
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ color: NEUTRAL_COLORS.textSecondary }} />
+              </InputAdornment>
+            ),
+            endAdornment: search && (
+              <InputAdornment position="end">
+                <IconButton
+                  size="small"
+                  onClick={() => setSearch('')}
+                  sx={{ color: NEUTRAL_COLORS.textSecondary }}
+                >
+                  <ClearIcon fontSize="small" />
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 2,
+              backgroundColor: NEUTRAL_COLORS.background,
+              '&:hover fieldset': {
+                borderColor: NEUTRAL_COLORS.accent,
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: NEUTRAL_COLORS.accent,
+              },
+            },
+            // Добавьте этот стиль для видимости текста
+            '& .MuiInputBase-input': {
+              color: NEUTRAL_COLORS.textPrimary,
+              '&::placeholder': {
+                color: NEUTRAL_COLORS.textSecondary,
+                opacity: 0.8,
+              },
+            },
+          }}
+        />
+
+        {/* Фильтр по сложности */}
+        <FormControl size="medium" sx={{ minWidth: 120 }}>
+          <InputLabel 
+            shrink={Boolean(difficulty)}
+            sx={{
+              color: NEUTRAL_COLORS.textSecondary,
+              '&.Mui-focused': {
+                color: NEUTRAL_COLORS.accent,
+              },
+            }}
+          >
+            
+          </InputLabel>
+          <Select
+            value={difficulty}
+            label="Difficulty"
+            onChange={(e) => {
+              setDifficulty(e.target.value);
+              setPage(1);
+            }}
+            displayEmpty
+            renderValue={(selected) => {
+              if (!selected || selected === '') {
+                return (
+                  <Typography 
+                    sx={{ 
+                      color: NEUTRAL_COLORS.textSecondary,
+                      fontSize: '0.875rem',
+                    }}
+                  >
+                    All Difficulty
+                  </Typography>
+                );
+              }
+              return (
+                <Typography 
+                  sx={{ 
+                    color: NEUTRAL_COLORS.textPrimary,
+                    fontWeight: 500,
+                    fontSize: '0.875rem',
+                  }}
+                >
+                  {selected.charAt(0).toUpperCase() + selected.slice(1)}
+                </Typography>
+              );
+            }}
+            sx={{
+              borderRadius: 2,
+              backgroundColor: NEUTRAL_COLORS.background,
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: NEUTRAL_COLORS.accent,
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: NEUTRAL_COLORS.accent,
+              },
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: alpha(NEUTRAL_COLORS.border, 0.6),
+              },
+              // Важно: стили для выбранного значения
+              '& .MuiSelect-select': {
+                color: NEUTRAL_COLORS.textPrimary,
+              },
+            }}
+          >
+            <MenuItem value="">
+              <Typography sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+                All
+              </Typography>
+            </MenuItem>
+            <MenuItem value="easy">
+              <Typography sx={{ color: NEUTRAL_COLORS.textPrimary }}>
+                Easy
+              </Typography>
+            </MenuItem>
+            <MenuItem value="medium">
+              <Typography sx={{ color: NEUTRAL_COLORS.textPrimary }}>
+                Medium
+              </Typography>
+            </MenuItem>
+            <MenuItem value="hard">
+              <Typography sx={{ color: NEUTRAL_COLORS.textPrimary }}>
+                Hard
+              </Typography>
+            </MenuItem>
+          </Select>
+        </FormControl>
+
+        {/* Фильтр по категории */}
+        <FormControl size="medium" sx={{ minWidth: 150 }}>
+          <InputLabel 
+            shrink={Boolean(categoryId)}
+            sx={{
+              color: NEUTRAL_COLORS.textSecondary,
+              '&.Mui-focused': {
+                color: NEUTRAL_COLORS.accent,
+              },
+            }}
+          >
+          </InputLabel>
+          <Select
+            value={categoryId}
+            label="Category"
+            onChange={(e) => {
+              setCategoryId(e.target.value);
+              setPage(1);
+            }}
+            displayEmpty
+            disabled={isLoadingCategories}
+            renderValue={(selected) => {
+              if (!selected || selected === '') {
+                return (
+                  <Typography 
+                    sx={{ 
+                      color: NEUTRAL_COLORS.textSecondary,
+                      fontSize: '0.875rem',
+                    }}
+                  >
+                    All Categories
+                  </Typography>
+                );
+              }
+              const category = categories.find(c => c.id === selected);
+              return (
+                <Typography 
+                  sx={{ 
+                    color: NEUTRAL_COLORS.textPrimary,
+                    fontWeight: 500,
+                    fontSize: '0.875rem',
+                  }}
+                >
+                  {category?.name || 'Unknown'}
+                </Typography>
+              );
+            }}
+            sx={{
+              borderRadius: 2,
+              backgroundColor: NEUTRAL_COLORS.background,
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: NEUTRAL_COLORS.accent,
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: NEUTRAL_COLORS.accent,
+              },
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: alpha(NEUTRAL_COLORS.border, 0.6),
+              },
+              '&.Mui-disabled': {
+                backgroundColor: alpha(NEUTRAL_COLORS.background, 0.5),
+              },
+              // Важно: стили для выбранного значения
+              '& .MuiSelect-select': {
+                color: NEUTRAL_COLORS.textPrimary,
+                '&.Mui-disabled': {
+                  opacity: 0.7,
+                },
+              },
+            }}
+          >
+            <MenuItem value="">
+              <Typography sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+                All Categories
+              </Typography>
+            </MenuItem>
+            {categories.map((category) => (
+              <MenuItem key={category.id} value={category.id}>
+                <Typography sx={{ color: NEUTRAL_COLORS.textPrimary }}>
+                  {category.name}
+                </Typography>
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+          {/* Сброс фильтров */}
+          <Button
+            variant="outlined"
+            startIcon={<ClearIcon />}
+            onClick={handleResetFilters}
+            disabled={!search && !difficulty && !categoryId}
+            sx={{
+              borderWidth: 2,
+              borderColor: NEUTRAL_COLORS.border,
+              borderRadius: 2,
+              py: 1.5,
+              fontWeight: 600,
+              '&:hover': {
+                borderColor: NEUTRAL_COLORS.accent,
+                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+              }
+            }}
+          >
+            Clear Filters
+          </Button>
+        </Stack>
+
+        {/* Активные фильтры */}
+        {(search || difficulty || categoryId) && (
+          <Stack direction="row" spacing={1} sx={{ mt: 2 }} flexWrap="wrap" gap={1}>
+            {search && (
+              <Chip
+                label={`Search: "${search}"`}
+                size="small"
+                onDelete={() => setSearch('')}
+                sx={{
+                  fontWeight: 600,
+                  backgroundColor: alpha(NEUTRAL_COLORS.warning, 0.1),
+                  color: NEUTRAL_COLORS.warning,
+                  border: `1px solid ${alpha(NEUTRAL_COLORS.warning, 0.3)}`,
+                }}
+              />
+            )}
+            {difficulty && (
+              <Chip
+                label={`Difficulty: ${difficulty}`}
+                size="small"
+                onDelete={() => setDifficulty('')}
+                sx={{
+                  fontWeight: 600,
+                  backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
+                  color: NEUTRAL_COLORS.accent,
+                  border: `1px solid ${alpha(NEUTRAL_COLORS.accent, 0.3)}`,
+                }}
+              />
+            )}
+            {categoryId && (
+              <Chip
+                label={`Category: ${categories.find(c => c.id === categoryId)?.name || 'Unknown'}`}
+                size="small"
+                onDelete={() => setCategoryId('')}
+                sx={{
+                  fontWeight: 600,
+                  backgroundColor: alpha(NEUTRAL_COLORS.info, 0.1),
+                  color: NEUTRAL_COLORS.info,
+                  border: `1px solid ${alpha(NEUTRAL_COLORS.info, 0.3)}`,
+                }}
+              />
+            )}
+          </Stack>
+        )}
+      </Paper>
 
       {/* Error Alert */}
       {error && (
@@ -473,6 +836,7 @@ export const AdminQuestions: React.FC = () => {
           border: `1px solid ${NEUTRAL_COLORS.border}`,
           overflow: 'hidden',
           backgroundColor: NEUTRAL_COLORS.surface,
+          mb: 3,
         }}
       >
         <TableContainer>
@@ -483,9 +847,24 @@ export const AdminQuestions: React.FC = () => {
                   fontWeight: 600, 
                   color: NEUTRAL_COLORS.textPrimary,
                   borderBottom: `2px solid ${NEUTRAL_COLORS.border}`,
-                  py: 2
+                  py: 2,
+                  width: '35%',
                 }}>
-                  Title
+                  <TableSortLabel
+                    active={sortBy === 'title'}
+                    direction={sortBy === 'title' ? (sortDir as 'asc' | 'desc') : 'asc'}
+                    onClick={() => handleSort('title')}
+                    sx={{
+                      '& .MuiTableSortLabel-icon': {
+                        color: `${NEUTRAL_COLORS.accent} !important`,
+                      },
+                      '&:hover': {
+                        color: NEUTRAL_COLORS.accent,
+                      },
+                    }}
+                  >
+                    Title
+                  </TableSortLabel>
                 </TableCell>
                 <TableCell sx={{ 
                   fontWeight: 600, 
@@ -501,7 +880,21 @@ export const AdminQuestions: React.FC = () => {
                   borderBottom: `2px solid ${NEUTRAL_COLORS.border}`,
                   py: 2
                 }}>
-                  Difficulty
+                  <TableSortLabel
+                    active={sortBy === 'difficulty'}
+                    direction={sortBy === 'difficulty' ? (sortDir as 'asc' | 'desc') : 'asc'}
+                    onClick={() => handleSort('difficulty')}
+                    sx={{
+                      '& .MuiTableSortLabel-icon': {
+                        color: `${NEUTRAL_COLORS.accent} !important`,
+                      },
+                      '&:hover': {
+                        color: NEUTRAL_COLORS.accent,
+                      },
+                    }}
+                  >
+                    Difficulty
+                  </TableSortLabel>
                 </TableCell>
                 <TableCell sx={{ 
                   fontWeight: 600, 
@@ -509,7 +902,21 @@ export const AdminQuestions: React.FC = () => {
                   borderBottom: `2px solid ${NEUTRAL_COLORS.border}`,
                   py: 2
                 }}>
-                  Status
+                  <TableSortLabel
+                    active={sortBy === 'is_published'}
+                    direction={sortBy === 'is_published' ? (sortDir as 'asc' | 'desc') : 'asc'}
+                    onClick={() => handleSort('is_published')}
+                    sx={{
+                      '& .MuiTableSortLabel-icon': {
+                        color: `${NEUTRAL_COLORS.accent} !important`,
+                      },
+                      '&:hover': {
+                        color: NEUTRAL_COLORS.accent,
+                      },
+                    }}
+                  >
+                    Status
+                  </TableSortLabel>
                 </TableCell>
                 <TableCell align="center" sx={{ 
                   fontWeight: 600, 
@@ -530,7 +937,7 @@ export const AdminQuestions: React.FC = () => {
               </StyledTableRow>
             </TableHead>
             <TableBody>
-              {questions.map((question) => (
+              {filteredQuestions.map((question) => (
                 <StyledTableRow key={question.id}>
                   <TableCell sx={{ py: 2 }}>
                     <Typography 
@@ -673,7 +1080,7 @@ export const AdminQuestions: React.FC = () => {
           </Table>
         </TableContainer>
         
-        {questions.length === 0 && !isLoading && (
+        {filteredQuestions.length === 0 && !isLoading && (
           <Box sx={{ p: 6, textAlign: 'center' }}>
             <Typography 
               variant="body1" 
@@ -682,18 +1089,79 @@ export const AdminQuestions: React.FC = () => {
                 mb: 2
               }}
             >
-              No questions found
+              {debouncedSearch ? 'No questions found matching your search' : 'No questions found'}
             </Typography>
+            {debouncedSearch && (
+              <StyledButton
+                variant="outlined"
+                onClick={() => {
+                  setSearch('');
+                  setDebouncedSearch('');
+                }}
+                sx={{ mr: 2 }}
+              >
+                Clear Search
+              </StyledButton>
+            )}
             <StyledButton
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => handleOpenDialog()}
             >
-              Create Your First Question
+              Create New Question
             </StyledButton>
           </Box>
         )}
       </Paper>
+
+      {/* Пагинация */}
+      {totalPages > 1 && (
+        <Paper 
+          elevation={0}
+          sx={{ 
+            p: 3,
+            borderRadius: 3,
+            border: `1px solid ${NEUTRAL_COLORS.border}`,
+            backgroundColor: NEUTRAL_COLORS.surface,
+          }}
+        >
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+              Showing {((page - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(page * ITEMS_PER_PAGE, total)} of {total} questions
+            </Typography>
+            <Pagination
+              count={totalPages}
+              page={page}
+              onChange={(_, value) => setPage(value)}
+              color="primary"
+              size="medium"
+              sx={{
+                '& .MuiPaginationItem-root': {
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  color: NEUTRAL_COLORS.textSecondary,
+                  border: `1px solid ${NEUTRAL_COLORS.border}`,
+                  minWidth: 36,
+                  height: 36,
+                  '&:hover': {
+                    backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.08),
+                    borderColor: NEUTRAL_COLORS.accent,
+                    color: NEUTRAL_COLORS.accent,
+                  },
+                  '&.Mui-selected': {
+                    backgroundColor: NEUTRAL_COLORS.accent,
+                    color: NEUTRAL_COLORS.surface,
+                    borderColor: NEUTRAL_COLORS.accent,
+                    '&:hover': {
+                      backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.9),
+                    },
+                  },
+                },
+              }}
+            />
+          </Stack>
+        </Paper>
+      )}
 
       {/* Dialog */}
       <Dialog 

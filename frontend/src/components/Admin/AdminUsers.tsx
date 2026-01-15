@@ -64,7 +64,7 @@ const NEUTRAL_COLORS = {
   purple: '#805AD5',
 };
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 100000;
 
 const StyledButton = ({ 
   children, 

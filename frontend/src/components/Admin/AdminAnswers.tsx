@@ -277,7 +277,7 @@ export const AdminAnswers: React.FC = () => {
   const loadQuestions = useCallback(async () => {
     try {
       setIsLoading(true);
-      const data = await questionService.getQuestions(1, 100);
+      const data = await questionService.getQuestions(1, 1000000);
       setQuestions(data.items);
       setError(null);
     } catch (err) {

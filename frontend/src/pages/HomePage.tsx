@@ -56,6 +56,10 @@ import {
   Psychology as PsychologyIcon,
   School as SchoolIcon,
   Work as WorkIcon,
+  ThumbUp as ThumbUpIcon,
+  AccessTime as AccessTimeIcon,
+  EmojiEvents as TrophyIcon,
+  TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { questionService } from '../services/questionService';
@@ -309,6 +313,7 @@ const CategoryCard = memo(({ category, onClick }: {
 interface QuickStartModalProps {
   open: boolean;
   onClose: () => void;
+  isGuestMode?: boolean;
 }
 
 interface Question {
@@ -324,13 +329,14 @@ interface Answer {
   is_published: boolean;
 }
 
-const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
+const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose, isGuestMode = false }) => {
+  const navigate = useNavigate();
   const [step, setStep] = useState<'level' | 'countdown' | 'questions' | 'results'>('level');
   const [userLevel, setUserLevel] = useState<'beginner' | 'intermediate' | 'expert' | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<string, Answer>>({});
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(600);
+  const [timeLeft, setTimeLeft] = useState(isGuestMode ? 300 : 600);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [expandedQuestions, setExpandedQuestions] = useState<string[]>([]);
@@ -353,6 +359,139 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
     try {
       setIsLoading(true);
       const difficulty = getDifficultyByLevel(level);
+      
+      if (isGuestMode) {
+        // Статичные вопросы для гостей
+        const staticQuestions: Question[] = [
+          {
+            id: 'guest-1',
+            title: 'Что такое замыкание (closure) в JavaScript?',
+            content: [
+              {
+                type: 'paragraph',
+                data: { text: 'Объясните, что такое замыкание в JavaScript и приведите пример его использования.' }
+              },
+              {
+                type: 'info',
+                data: { text: 'Это фундаментальное понятие в JavaScript, которое часто спрашивают на собеседованиях.' }
+              }
+            ],
+            difficulty: 'medium',
+            category_name: 'JavaScript'
+          },
+          {
+            id: 'guest-2',
+            title: 'В чем разница между REST и GraphQL?',
+            content: [
+              {
+                type: 'paragraph',
+                data: { text: 'Опишите основные различия между REST API и GraphQL. В каких случаях лучше использовать каждый из подходов?' }
+              }
+            ],
+            difficulty: 'medium',
+            category_name: 'System Design'
+          },
+          {
+            id: 'guest-3',
+            title: 'Что такое Big O notation?',
+            content: [
+              {
+                type: 'paragraph',
+                data: { text: 'Объясните концепцию Big O notation и приведите примеры O(1), O(n), O(n²).' }
+              }
+            ],
+            difficulty: 'easy',
+            category_name: 'Algorithms'
+          }
+        ];
+        
+        setQuestions(staticQuestions);
+        
+        // Статичные ответы для демо
+        const staticAnswers: Record<string, Answer> = {
+          'guest-1': {
+            content: [
+              {
+                type: 'paragraph',
+                data: { 
+                  text: 'Замыкание (closure) в JavaScript — это функция, которая запоминает переменные из своей внешней области видимости, даже после того, как внешняя функция завершила выполнение.' 
+                }
+              },
+              {
+                type: 'paragraph',
+                data: { 
+                  text: 'Пример использования замыкания для создания приватных переменных:' 
+                }
+              },
+              {
+                type: 'code',
+                data: {
+                  language: 'javascript',
+                  code: `function createCounter() {\n  let count = 0;\n  return function() {\n    count++;\n    return count;\n  };\n}\n\nconst counter = createCounter();\nconsole.log(counter()); // 1\nconsole.log(counter()); // 2\n// Переменная count недоступна извне` 
+                }
+              }
+            ],
+            is_published: true
+          },
+          'guest-2': {
+            content: [
+              {
+                type: 'paragraph',
+                data: { 
+                  text: 'Основные различия между REST и GraphQL:' 
+                }
+              },
+              {
+                type: 'paragraph',
+                data: { 
+                  text: '1. REST имеет фиксированную структуру эндпоинтов, GraphQL использует единую точку входа' 
+                }
+              },
+              {
+                type: 'paragraph',
+                data: { 
+                  text: '2. REST может возвращать лишние данные, GraphQL позволяет запрашивать только нужные поля' 
+                }
+              },
+              {
+                type: 'paragraph',
+                data: { 
+                  text: '3. GraphQL уменьшает количество запросов к серверу' 
+                }
+              }
+            ],
+            is_published: true
+          },
+          'guest-3': {
+            content: [
+              {
+                type: 'paragraph',
+                data: { 
+                  text: 'Big O notation описывает скорость работы алгоритма в худшем случае.' 
+                }
+              },
+              {
+                type: 'paragraph',
+                data: { 
+                  text: 'Примеры:' 
+                }
+              },
+              {
+                type: 'code',
+                data: {
+                  language: 'javascript',
+                  code: `// O(1) - постоянное время\nfunction getFirstElement(arr) {\n  return arr[0];\n}\n\n// O(n) - линейное время\nfunction findElement(arr, target) {\n  for (let i = 0; i < arr.length; i++) {\n    if (arr[i] === target) return i;\n  }\n  return -1;\n}\n\n// O(n²) - квадратичное время\nfunction bubbleSort(arr) {\n  for (let i = 0; i < arr.length; i++) {\n    for (let j = 0; j < arr.length - 1; j++) {\n      if (arr[j] > arr[j + 1]) {\n        [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];\n      }\n    }\n  }\n  return arr;\n}` 
+                }
+              }
+            ],
+            is_published: true
+          }
+        };
+        
+        setAnswers(staticAnswers);
+        setIsLoading(false);
+        return;
+      }
       
       const allQuestions = await questionService.getQuestions(
         1,
@@ -404,7 +543,7 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
       console.error('Failed to load questions:', error);
       setIsLoading(false);
     }
-  }, []);
+  }, [isGuestMode]);
 
   const handleLevelSelect = (level: 'beginner' | 'intermediate' | 'expert') => {
     setUserLevel(level);
@@ -446,7 +585,7 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
     }
     setStep('level');
     setUserLevel(null);
-    setTimeLeft(600);
+    setTimeLeft(isGuestMode ? 300 : 600);
     setIsTimerRunning(false);
     setQuestions([]);
     setAnswers({});
@@ -461,7 +600,7 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
     }
     setStep('level');
     setUserLevel(null);
-    setTimeLeft(600);
+    setTimeLeft(isGuestMode ? 300 : 600);
     setIsTimerRunning(false);
     setQuestions([]);
     setAnswers({});
@@ -643,7 +782,7 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
     if (!content || content.length === 0) {
       return (
         <Typography variant="body2" color={NEUTRAL_COLORS.textSecondary} fontStyle="italic">
-          Ответ не найден
+          {isGuestMode ? 'Зарегистрируйтесь, чтобы увидеть полный ответ' : 'Ответ не найден'}
         </Typography>
       );
     }
@@ -780,11 +919,22 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <BoltIcon />
             <Typography variant="h5" sx={{ fontWeight: 700 }}>
-              {step === 'level' && 'Быстрый старт'}
+              {step === 'level' && (isGuestMode ? 'Демо-режим' : 'Быстрый старт')}
               {step === 'countdown' && 'Приготовьтесь!'}
               {step === 'questions' && 'Вопросы'}
               {step === 'results' && 'Результаты'}
             </Typography>
+            {isGuestMode && (
+              <Chip 
+                label="Гостевой режим" 
+                size="small" 
+                sx={{ 
+                  backgroundColor: 'rgba(255,255,255,0.2)',
+                  color: 'white',
+                  fontWeight: 600 
+                }} 
+              />
+            )}
           </Box>
           <IconButton onClick={handleCloseModal} sx={{ color: 'white' }}>
             <CloseIcon />
@@ -813,7 +963,9 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
         {step === 'level' && (
           <Box sx={{ p: 4 }}>
             <Typography variant="h6" gutterBottom align="center" sx={{ mb: 4, color: NEUTRAL_COLORS.textPrimary }}>
-              Выберите ваш уровень, чтобы получить подходящие вопросы
+              {isGuestMode 
+                ? 'Попробуйте демо-режим. Полный доступ — после регистрации'
+                : 'Выберите ваш уровень, чтобы получить подходящие вопросы'}
             </Typography>
             
             <Grid container spacing={3} justifyContent="center">
@@ -876,7 +1028,6 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
                           >
                             {getLevelTitle(level)}
                           </Typography>
-
                         </Box>
                         
                         <Chip
@@ -909,10 +1060,13 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
                   borderRadius: 2,
                   fontWeight: 600,
                   fontSize: '1rem',
-                  bgcolor: NEUTRAL_COLORS.accent
+                  bgcolor: NEUTRAL_COLORS.accent,
+                  '&:hover': {
+                    bgcolor: alpha(NEUTRAL_COLORS.accent, 0.9),
+                  }
                 }}
               >
-                Продолжить
+                {isGuestMode ? 'Попробовать демо' : 'Продолжить'}
               </Button>
             </Box>
           </Box>
@@ -966,7 +1120,9 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
                   Готовы?
                 </Typography>
                 <Typography variant="body1" color={NEUTRAL_COLORS.textSecondary} sx={{ mb: 4 }}>
-                  У вас есть 10 минут на 5 вопросов уровня
+                  {isGuestMode 
+                    ? 'У вас есть 5 минут на 3 демо-вопроса'
+                    : 'У вас есть 10 минут на 5 вопросов уровня'}
                 </Typography>
                 
                 <Button
@@ -1014,7 +1170,7 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
                   <Chip
                     label={`Вопрос ${currentQuestionIndex + 1} из ${questions.length}`}
                     size="small"
-                    sx={{ fontWeight: 600, color: NEUTRAL_COLORS.accent  }}
+                    sx={{ fontWeight: 600, color: NEUTRAL_COLORS.accent }}
                   />
                 </Box>
                 
@@ -1118,8 +1274,13 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
                 Тест завершен!
               </Typography>
               <Typography variant="body1" color={NEUTRAL_COLORS.textSecondary}>
-                Вы ответили на все вопросы за {formatTime(600 - timeLeft)}
+                Вы ответили на все вопросы за {formatTime((isGuestMode ? 300 : 600) - timeLeft)}
               </Typography>
+              {isGuestMode && (
+                <Typography variant="body2" sx={{ mt: 2, color: NEUTRAL_COLORS.accent, fontWeight: 600 }}>
+                  🔒 Полный доступ к 1156+ вопросам — после регистрации
+                </Typography>
+              )}
             </Box>
 
             <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: NEUTRAL_COLORS.textPrimary }}>
@@ -1199,7 +1360,7 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
                         renderAnswerContent(answers[question.id].content)
                       ) : (
                         <Typography variant="body2" color={NEUTRAL_COLORS.textSecondary} fontStyle="italic">
-                          Ответ не найден в базе данных
+                          Ответ не найден
                         </Typography>
                       )}
                     </Box>
@@ -1216,13 +1377,26 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
               >
                 Пройти еще раз
               </Button>
-              <Button
-                variant="contained"
-                onClick={handleCloseModal}
-                sx={{ fontWeight: 600 }}
-              >
-                Закрыть
-              </Button>
+              {isGuestMode ? (
+                <Button
+                  variant="contained"
+                  onClick={() => {
+                    handleCloseModal();
+                    navigate('/register');
+                  }}
+                  sx={{ fontWeight: 600, bgcolor: NEUTRAL_COLORS.success }}
+                >
+                  Зарегистрироваться для полного доступа
+                </Button>
+              ) : (
+                <Button
+                  variant="contained"
+                  onClick={handleCloseModal}
+                  sx={{ fontWeight: 600 }}
+                >
+                  Закрыть
+                </Button>
+              )}
             </Box>
           </Box>
         )}
@@ -1232,7 +1406,9 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
         <DialogActions sx={{ p: 2, bgcolor: alpha(NEUTRAL_COLORS.background, 0.5) }}>
           <Box sx={{ flex: 1 }} />
           <Typography variant="caption" color={NEUTRAL_COLORS.textSecondary}>
-            Быстрый старт • 5 вопросов • 10 минут
+            {isGuestMode 
+              ? 'Демо-режим • 3 вопроса • 5 минут' 
+              : 'Быстрый старт • 5 вопросов • 10 минут'}
           </Typography>
         </DialogActions>
       )}
@@ -1240,8 +1416,17 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose }) => {
   );
 };
 
-const QuickStartCard = memo(() => {
+const QuickStartCard = memo(({ isAuthenticated }: { isAuthenticated: boolean }) => {
   const [quickStartOpen, setQuickStartOpen] = useState(false);
+  const navigate = useNavigate();
+  
+  const handleClick = () => {
+    if (isAuthenticated) {
+      setQuickStartOpen(true);
+    } else {
+      setQuickStartOpen(true); // Открываем модалку для гостей
+    }
+  };
   
   return (
     <>
@@ -1261,7 +1446,7 @@ const QuickStartCard = memo(() => {
             transition: 'all 0.3s ease',
             cursor: 'pointer',
           }}
-          onClick={() => setQuickStartOpen(true)}
+          onClick={handleClick}
         >
           <CardContent sx={{ p: 4, position: 'relative', zIndex: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -1269,27 +1454,40 @@ const QuickStartCard = memo(() => {
               <Typography variant="h5" sx={{ fontWeight: 700 }}>
                 Быстрый старт
               </Typography>
+              {!isAuthenticated && (
+                <Chip 
+                  label="Для гостей" 
+                  size="small" 
+                  sx={{ 
+                    ml: 2, 
+                    backgroundColor: 'rgba(255,255,255,0.2)',
+                    color: 'white',
+                    fontWeight: 600 
+                  }} 
+                />
+              )}
             </Box>
             
             <Typography variant="body1" sx={{ mb: 3, opacity: 0.95 }}>
-              Ответьте на 5 вопросов за 10 минут и проверьте свои навыки
+              {isAuthenticated 
+                ? 'Ответьте на 5 вопросов за 10 минут и проверьте свои навыки'
+                : 'Попробуйте демо-режим с 3 вопросами. Полный доступ откроется — после регистрации'}
             </Typography>
             
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <Box>
                 <Typography variant="caption" sx={{ opacity: 0.8, display: 'block', mb: 0.5 }}>
                   <TimerIcon sx={{ fontSize: 14, verticalAlign: 'middle', mr: 0.5 }} />
-                  10 минут
+                  {isAuthenticated ? '10 минут' : '5 минут'}
                 </Typography>
                 <Typography variant="caption" sx={{ opacity: 0.8 }}>
                   <QuestionsIcon sx={{ fontSize: 14, verticalAlign: 'middle', mr: 0.5 }} />
-                  5 вопросов
+                  {isAuthenticated ? '5 вопросов' : '3 вопроса'}
                 </Typography>
               </Box>
               
               <Button
                 endIcon={<ChevronRightIcon />}
-                onClick={() => setQuickStartOpen(true)}
                 sx={{
                   backgroundColor: 'white',
                   color: NEUTRAL_COLORS.accent,
@@ -1302,7 +1500,7 @@ const QuickStartCard = memo(() => {
                   }
                 }}
               >
-                Начать сейчас
+                {isAuthenticated ? 'Начать сейчас' : 'Попробовать'}
               </Button>
             </Box>
           </CardContent>
@@ -1312,6 +1510,7 @@ const QuickStartCard = memo(() => {
       <QuickStartModal
         open={quickStartOpen}
         onClose={() => setQuickStartOpen(false)}
+        isGuestMode={!isAuthenticated}
       />
     </>
   );
@@ -1472,7 +1671,6 @@ export const HomePage: React.FC = () => {
         `,
       }
     }}>
-      {isAuthenticated && (
         <Fade in>
           <AppBar 
             position="sticky" 
@@ -1509,43 +1707,55 @@ export const HomePage: React.FC = () => {
                   onClick={() => handleNavigation('/')}
                 >
                   Interview<span style={{ color: NEUTRAL_COLORS.accent }}>Box</span>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    color: NEUTRAL_COLORS.accent,
+                    marginLeft: '6px',
+                    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    alignSelf: 'flex-start',
+                    marginTop: '2px'
+                  }}>
+                    beta
+                  </span>
                 </Typography>
-                
-                <Stack direction="row" spacing={1.5} alignItems="center">                  
-                  {!isMobile && (
-                    <>
-                      <Chip 
-                        label={`${user?.first_name} ${user?.last_name}`}
-                        size="medium"
-                        onClick={() => handleNavigation('/profile')}
-                        sx={{ 
-                          fontWeight: 500,
-                          backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
-                          color: NEUTRAL_COLORS.textPrimary,
-                          cursor: 'pointer',
-                          '& .MuiChip-label': {
-                            px: 1.5,
-                          },
-                          '&:hover': {
-                            backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.2),
-                          }
-                        }}
-                      />
-                      {user?.is_admin && (
+                {isAuthenticated && (
+                  <Stack direction="row" spacing={1.5} alignItems="center">                  
+                    {!isMobile && (
+                      <>
                         <Chip 
-                          label="Admin"
-                          onClick={() => handleNavigation('/admin')}
+                          label={`${user?.first_name} ${user?.last_name}`}
                           size="medium"
+                          onClick={() => handleNavigation('/profile')}
                           sx={{ 
-                            fontWeight: 600,
-                            backgroundColor: alpha(NEUTRAL_COLORS.success, 0.1),
-                            color: NEUTRAL_COLORS.success,
+                            fontWeight: 500,
+                            backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
+                            color: NEUTRAL_COLORS.textPrimary,
+                            cursor: 'pointer',
+                            '& .MuiChip-label': {
+                              px: 1.5,
+                            },
+                            '&:hover': {
+                              backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.2),
+                            }
                           }}
                         />
-                      )}
-                    </>
+                        {user?.is_admin && (
+                          <Chip 
+                            label="Admin"
+                            onClick={() => handleNavigation('/admin')}
+                            size="medium"
+                            sx={{ 
+                              fontWeight: 600,
+                              backgroundColor: alpha(NEUTRAL_COLORS.success, 0.1),
+                              color: NEUTRAL_COLORS.success,
+                            }}
+                          />
+                        )}
+                      </>
                   )}
-                  
                   <IconButton
                     onClick={handleLogout}
                     size="medium"
@@ -1562,11 +1772,11 @@ export const HomePage: React.FC = () => {
                     <LogoutIcon fontSize="small" />
                   </IconButton>
                 </Stack>
+                )}
               </Toolbar>
             </Container>
           </AppBar>
         </Fade>
-      )}
 
       <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
         <Box sx={{ 
@@ -1627,7 +1837,7 @@ export const HomePage: React.FC = () => {
                   fontSize: { xs: '1.125rem', md: '1.5rem' }
                 }}
               >
-                Закрывайте слабые места. Большая база из {stats.questions}+ вопросов с ответами, которые прошли отбор. Ваш прогресс — под контролем.
+                Закрывайте слабые места. Большая база из {stats.questions || 1156}+ вопросов с ответами, которые прошли отбор. Ваш прогресс — под контролем.
               </Typography>
             </Box>
           </Fade>
@@ -1694,6 +1904,29 @@ export const HomePage: React.FC = () => {
               )}
             </Box>
           </Fade>
+
+          {!isAuthenticated && (
+            <Fade in timeout={1500}>
+              <Box sx={{ mt: 4, textAlign: 'center' }}>
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    mb: 2, 
+                    color: NEUTRAL_COLORS.textSecondary,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 1,
+                    flexWrap: 'wrap'
+                  }}
+                >
+                  <CheckIcon fontSize="small" /> Различные вопросы 
+                  <CheckIcon fontSize="small" /> Удобное отслеживание
+                  <CheckIcon fontSize="small" /> Развернутые ответы
+                </Typography>
+              </Box>
+            </Fade>
+          )}
 
           <Fade in timeout={1500}>
             <Box 
@@ -1774,53 +2007,682 @@ export const HomePage: React.FC = () => {
             </Grid>
           </Grid>
 
-          {isAuthenticated && (
-            <Box sx={{ mb: 8 }}>
-              <QuickStartCard />
+          {/* Быстрый старт карточка (для всех) */}
+          <Box sx={{ mb: 8 }}>
+            <QuickStartCard isAuthenticated={isAuthenticated} />
+          </Box>
+
+          {/* Отзывы для неавторизованных - исправленные цвета */}
+          {!isAuthenticated && (
+          <Box sx={{ mb: 12, position: 'relative' }}>
+            {/* Декоративные элементы */}
+            <Box
+              sx={{
+                position: 'absolute',
+                top: -50,
+                left: '10%',
+                width: 100,
+                height: 100,
+                borderRadius: '50%',
+                background: `radial-gradient(circle, ${alpha(NEUTRAL_COLORS.accent, 0.1)} 0%, transparent 70%)`,
+                zIndex: 0,
+              }}
+            />
+            <Box
+              sx={{
+                position: 'absolute',
+                bottom: -30,
+                right: '15%',
+                width: 150,
+                height: 150,
+                borderRadius: '50%',
+                background: `radial-gradient(circle, ${alpha(NEUTRAL_COLORS.purple, 0.05)} 0%, transparent 70%)`,
+                zIndex: 0,
+              }}
+            />
+
+            <Box sx={{ position: 'relative', zIndex: 1 }}>
+              <Fade in timeout={1000}>
+                <Box>
+                  <Typography 
+                    variant="h3" 
+                    sx={{ 
+                      mb: 2, 
+                      fontWeight: 800,
+                      color: NEUTRAL_COLORS.textPrimary,
+                      textAlign: 'center',
+                      fontSize: { xs: '2rem', md: '2.5rem' },
+                      position: 'relative',
+                      '&::after': {
+                        content: '""',
+                        display: 'block',
+                        width: 60,
+                        height: 4,
+                        background: `linear-gradient(90deg, ${NEUTRAL_COLORS.accent}, ${NEUTRAL_COLORS.purple})`,
+                        margin: '16px auto 0',
+                        borderRadius: 2,
+                      }
+                    }}
+                  >
+                    Отзывы от коллег-разработчиков
+                  </Typography>
+                  
+                  <Typography 
+                    variant="h6" 
+                    sx={{ 
+                      mb: 6, 
+                      fontWeight: 400,
+                      color: NEUTRAL_COLORS.textSecondary,
+                      textAlign: 'center',
+                      maxWidth: '600px',
+                      mx: 'auto',
+                      px: { xs: 2, sm: 0 }
+                    }}
+                  >
+                    Присоединяйтесь к разработчикам, которые уже используют платформу
+                  </Typography>
+                </Box>
+              </Fade>
+
+              <Grid container spacing={3} sx={{ mb: 6 }}>
+                <Grid item xs={12} md={4}>
+                  <Grow in timeout={1200}>
+                    <Paper 
+                      elevation={0}
+                      sx={{ 
+                        p: 4, 
+                        height: '100%', 
+                        backgroundColor: NEUTRAL_COLORS.surface,
+                        border: `1px solid ${NEUTRAL_COLORS.border}`,
+                        borderRadius: 3,
+                        position: 'relative',
+                        overflow: 'hidden',
+                        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: '4px',
+                          background: `linear-gradient(90deg, ${NEUTRAL_COLORS.accent}, ${alpha(NEUTRAL_COLORS.accent, 0.5)})`,
+                        },
+                        '&:hover': {
+                          transform: 'translateY(-8px)',
+                          boxShadow: `0 20px 40px ${alpha(NEUTRAL_COLORS.accent, 0.15)}`,
+                          borderColor: NEUTRAL_COLORS.accent,
+                          '& .company-badge': {
+                            transform: 'scale(1.1)',
+                            boxShadow: `0 8px 25px ${alpha(NEUTRAL_COLORS.accent, 0.3)}`,
+                          },
+                          '& .quote-icon': {
+                            opacity: 1,
+                            transform: 'translateY(0)',
+                          }
+                        }
+                      }}
+                    >
+                      {/* Иконка цитаты */}
+                      <Box 
+                        className="quote-icon"
+                        sx={{
+                          position: 'absolute',
+                          top: 20,
+                          right: 20,
+                          opacity: 0.3,
+                          transform: 'translateY(-10px)',
+                          transition: 'all 0.3s ease',
+                        }}
+                      >
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M10 7H6C5.46957 7 4.96086 7.21071 4.58579 7.58579C4.21071 7.96086 4 8.46957 4 9V14C4 14.5304 4.21071 15.0391 4.58579 15.4142C4.96086 15.7893 5.46957 16 6 16H9V19C9 19.5304 9.21071 20.0391 9.58579 20.4142C9.96086 20.7893 10.4696 21 11 21C11.5304 21 12.0391 20.7893 12.4142 20.4142C12.7893 20.0391 13 19.5304 13 19V16C13 15.4696 12.7893 14.9609 12.4142 14.5858C12.0391 14.2107 11.5304 14 11 14H10V7Z" fill={alpha(NEUTRAL_COLORS.accent, 0.2)} />
+                          <path d="M20 7H16C15.4696 7 14.9609 7.21071 14.5858 7.58579C14.2107 7.96086 14 8.46957 14 9V14C14 14.5304 14.2107 15.0391 14.5858 15.4142C14.9609 15.7893 15.4696 16 16 16H19V19C19 19.5304 19.2107 20.0391 19.5858 20.4142C19.9609 20.7893 20.4696 21 21 21C21.5304 21 22.0391 20.7893 22.4142 20.4142C22.7893 20.0391 23 19.5304 23 19V16C23 15.4696 22.7893 14.9609 22.4142 14.5858C22.0391 14.2107 21.5304 14 21 14H20V7Z" fill={alpha(NEUTRAL_COLORS.accent, 0.2)} />
+                        </svg>
+                      </Box>
+
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                        <Box sx={{ 
+                          position: 'relative',
+                          mr: 3,
+                          '&::after': {
+                            content: '""',
+                            position: 'absolute',
+                            bottom: 0,
+                            right: 0,
+                            width: 12,
+                            height: 12,
+                            borderRadius: '50%',
+                            backgroundColor: NEUTRAL_COLORS.accent,
+                            border: `2px solid ${NEUTRAL_COLORS.surface}`,
+                          }
+                        }}>
+                          <Box sx={{ 
+                            width: 56, 
+                            height: 56, 
+                            borderRadius: '50%', 
+                            background: `linear-gradient(135deg, ${NEUTRAL_COLORS.accent}, ${alpha(NEUTRAL_COLORS.accent, 0.7)})`,
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            fontSize: '1.5rem',
+                            fontWeight: 700,
+                            color: 'white',
+                            boxShadow: `0 4px 15px ${alpha(NEUTRAL_COLORS.accent, 0.3)}`,
+                          }}>
+                            А
+                          </Box>
+                        </Box>
+                        
+                        <Box>
+                          <Typography variant="h6" sx={{ fontWeight: 700, color: NEUTRAL_COLORS.textPrimary, mb: 0.5 }}>
+                            Алексей
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <TrendingUpIcon fontSize="small" /> Senior Frontend Developer
+                          </Typography>
+                        </Box>
+                      </Box>
+
+                      <Typography variant="body1" sx={{ 
+                        color: NEUTRAL_COLORS.textPrimary, 
+                        lineHeight: 1.7,
+                        fontStyle: 'italic',
+                        position: 'relative',
+                        pl: 2,
+                        '&::before': {
+                          content: '"❝"',
+                          position: 'absolute',
+                          left: -10,
+                          top: -5,
+                          color: NEUTRAL_COLORS.accent,
+                          fontSize: '1.5rem',
+                          opacity: 0.5
+                        }
+                      }}>
+                        Благодаря InterviewBox вспомнил пару моментов, которые всегда забываются! Спасибо платформе за напоминание такого важного
+                      </Typography>
+                    </Paper>
+                  </Grow>
+                </Grid>
+
+                <Grid item xs={12} md={4}>
+                  <Grow in timeout={1400}>
+                    <Paper 
+                      elevation={0}
+                      sx={{ 
+                        p: 4, 
+                        height: '100%', 
+                        backgroundColor: NEUTRAL_COLORS.surface,
+                        border: `1px solid ${NEUTRAL_COLORS.border}`,
+                        borderRadius: 3,
+                        position: 'relative',
+                        overflow: 'hidden',
+                        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: '4px',
+                          background: `linear-gradient(90deg, ${NEUTRAL_COLORS.success}, ${alpha(NEUTRAL_COLORS.success, 0.5)})`,
+                        },
+                        '&:hover': {
+                          transform: 'translateY(-8px)',
+                          boxShadow: `0 20px 40px ${alpha(NEUTRAL_COLORS.success, 0.15)}`,
+                          borderColor: NEUTRAL_COLORS.success,
+                          '& .company-badge': {
+                            transform: 'scale(1.1)',
+                            boxShadow: `0 8px 25px ${alpha(NEUTRAL_COLORS.success, 0.3)}`,
+                          },
+                          '& .quote-icon': {
+                            opacity: 1,
+                            transform: 'translateY(0)',
+                          }
+                        }
+                      }}
+                    >
+                      <Box 
+                        className="quote-icon"
+                        sx={{
+                          position: 'absolute',
+                          top: 20,
+                          right: 20,
+                          opacity: 0.3,
+                          transform: 'translateY(-10px)',
+                          transition: 'all 0.3s ease',
+                        }}
+                      >
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M10 7H6C5.46957 7 4.96086 7.21071 4.58579 7.58579C4.21071 7.96086 4 8.46957 4 9V14C4 14.5304 4.21071 15.0391 4.58579 15.4142C4.96086 15.7893 5.46957 16 6 16H9V19C9 19.5304 9.21071 20.0391 9.58579 20.4142C9.96086 20.7893 10.4696 21 11 21C11.5304 21 12.0391 20.7893 12.4142 20.4142C12.7893 20.0391 13 19.5304 13 19V16C13 15.4696 12.7893 14.9609 12.4142 14.5858C12.0391 14.2107 11.5304 14 11 14H10V7Z" fill={alpha(NEUTRAL_COLORS.success, 0.2)} />
+                          <path d="M20 7H16C15.4696 7 14.9609 7.21071 14.5858 7.58579C14.2107 7.96086 14 8.46957 14 9V14C14 14.5304 14.2107 15.0391 14.5858 15.4142C14.9609 15.7893 15.4696 16 16 16H19V19C19 19.5304 19.2107 20.0391 19.5858 20.4142C19.9609 20.7893 20.4696 21 21 21C21.5304 21 22.0391 20.7893 22.4142 20.4142C22.7893 20.0391 23 19.5304 23 19V16C23 15.4696 22.7893 14.9609 22.4142 14.5858C22.0391 14.2107 21.5304 14 21 14H20V7Z" fill={alpha(NEUTRAL_COLORS.success, 0.2)} />
+                        </svg>
+                      </Box>
+
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                        <Box sx={{ 
+                          position: 'relative',
+                          mr: 3,
+                          '&::after': {
+                            content: '""',
+                            position: 'absolute',
+                            bottom: 0,
+                            right: 0,
+                            width: 12,
+                            height: 12,
+                            borderRadius: '50%',
+                            backgroundColor: NEUTRAL_COLORS.success,
+                            border: `2px solid ${NEUTRAL_COLORS.surface}`,
+                          }
+                        }}>
+                          <Box sx={{ 
+                            width: 56, 
+                            height: 56, 
+                            borderRadius: '50%', 
+                            background: `linear-gradient(135deg, ${NEUTRAL_COLORS.success}, ${alpha(NEUTRAL_COLORS.success, 0.7)})`,
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            fontSize: '1.5rem',
+                            fontWeight: 700,
+                            color: 'white',
+                            boxShadow: `0 4px 15px ${alpha(NEUTRAL_COLORS.success, 0.3)}`,
+                          }}>
+                            М
+                          </Box>
+                        </Box>
+                        
+                        <Box>
+                          <Typography variant="h6" sx={{ fontWeight: 700, color: NEUTRAL_COLORS.textPrimary, mb: 0.5 }}>
+                            Мария
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <SchoolIcon fontSize="small" /> Junior Backend Developer
+                          </Typography>
+                        </Box>
+                      </Box>
+
+                      <Typography variant="body1" sx={{ 
+                        color: NEUTRAL_COLORS.textPrimary, 
+                        lineHeight: 1.7,
+                        fontStyle: 'italic',
+                        position: 'relative',
+                        pl: 2,
+                        '&::before': {
+                          content: '"❝"',
+                          position: 'absolute',
+                          left: -10,
+                          top: -5,
+                          color: NEUTRAL_COLORS.success,
+                          fontSize: '1.5rem',
+                          opacity: 0.5
+                        }
+                      }}>
+                        Как джуну было сложно понять, что действительно спрашивают на собеседованиях. Здесь нашла всё необходимое для первой работы!
+                      </Typography>
+                    </Paper>
+                  </Grow>
+                </Grid>
+
+                <Grid item xs={12} md={4}>
+                  <Grow in timeout={1600}>
+                    <Paper 
+                      elevation={0}
+                      sx={{ 
+                        p: 4, 
+                        height: '100%', 
+                        backgroundColor: NEUTRAL_COLORS.surface,
+                        border: `1px solid ${NEUTRAL_COLORS.border}`,
+                        borderRadius: 3,
+                        position: 'relative',
+                        overflow: 'hidden',
+                        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: '4px',
+                          background: `linear-gradient(90deg, ${NEUTRAL_COLORS.purple}, ${alpha(NEUTRAL_COLORS.purple, 0.5)})`,
+                        },
+                        '&:hover': {
+                          transform: 'translateY(-8px)',
+                          boxShadow: `0 20px 40px ${alpha(NEUTRAL_COLORS.purple, 0.15)}`,
+                          borderColor: NEUTRAL_COLORS.purple,
+                          '& .company-badge': {
+                            transform: 'scale(1.1)',
+                            boxShadow: `0 8px 25px ${alpha(NEUTRAL_COLORS.purple, 0.3)}`,
+                          },
+                          '& .quote-icon': {
+                            opacity: 1,
+                            transform: 'translateY(0)',
+                          }
+                        }
+                      }}
+                    >
+                      <Box 
+                        className="quote-icon"
+                        sx={{
+                          position: 'absolute',
+                          top: 20,
+                          right: 20,
+                          opacity: 0.3,
+                          transform: 'translateY(-10px)',
+                          transition: 'all 0.3s ease',
+                        }}
+                      >
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M10 7H6C5.46957 7 4.96086 7.21071 4.58579 7.58579C4.21071 7.96086 4 8.46957 4 9V14C4 14.5304 4.21071 15.0391 4.58579 15.4142C4.96086 15.7893 5.46957 16 6 16H9V19C9 19.5304 9.21071 20.0391 9.58579 20.4142C9.96086 20.7893 10.4696 21 11 21C11.5304 21 12.0391 20.7893 12.4142 20.4142C12.7893 20.0391 13 19.5304 13 19V16C13 15.4696 12.7893 14.9609 12.4142 14.5858C12.0391 14.2107 11.5304 14 11 14H10V7Z" fill={alpha(NEUTRAL_COLORS.purple, 0.2)} />
+                          <path d="M20 7H16C15.4696 7 14.9609 7.21071 14.5858 7.58579C14.2107 7.96086 14 8.46957 14 9V14C14 14.5304 14.2107 15.0391 14.5858 15.4142C14.9609 15.7893 15.4696 16 16 16H19V19C19 19.5304 19.2107 20.0391 19.5858 20.4142C19.9609 20.7893 20.4696 21 21 21C21.5304 21 22.0391 20.7893 22.4142 20.4142C22.7893 20.0391 23 19.5304 23 19V16C23 15.4696 22.7893 14.9609 22.4142 14.5858C22.0391 14.2107 21.5304 14 21 14H20V7Z" fill={alpha(NEUTRAL_COLORS.purple, 0.2)} />
+                        </svg>
+                      </Box>
+
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                        <Box sx={{ 
+                          position: 'relative',
+                          mr: 3,
+                          '&::after': {
+                            content: '""',
+                            position: 'absolute',
+                            bottom: 0,
+                            right: 0,
+                            width: 12,
+                            height: 12,
+                            borderRadius: '50%',
+                            backgroundColor: NEUTRAL_COLORS.purple,
+                            border: `2px solid ${NEUTRAL_COLORS.surface}`,
+                          }
+                        }}>
+                          <Box sx={{ 
+                            width: 56, 
+                            height: 56, 
+                            borderRadius: '50%', 
+                            background: `linear-gradient(135deg, ${NEUTRAL_COLORS.purple}, ${alpha(NEUTRAL_COLORS.purple, 0.7)})`,
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            fontSize: '1.5rem',
+                            fontWeight: 700,
+                            color: 'white',
+                            boxShadow: `0 4px 15px ${alpha(NEUTRAL_COLORS.purple, 0.3)}`,
+                          }}>
+                            Д
+                          </Box>
+                        </Box>
+                        
+                        <Box>
+                          <Typography variant="h6" sx={{ fontWeight: 700, color: NEUTRAL_COLORS.textPrimary, mb: 0.5 }}>
+                            Дмитрий
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <WorkIcon fontSize="small" /> Team Lead
+                          </Typography>
+                        </Box>
+                      </Box>
+
+                      <Typography variant="body1" sx={{ 
+                        color: NEUTRAL_COLORS.textPrimary, 
+                        lineHeight: 1.7,
+                        fontStyle: 'italic',
+                        position: 'relative',
+                        pl: 2,
+                        '&::before': {
+                          content: '"❝"',
+                          position: 'absolute',
+                          left: -10,
+                          top: -5,
+                          color: NEUTRAL_COLORS.purple,
+                          fontSize: '1.5rem',
+                          opacity: 0.5
+                        }
+                      }}>
+                        Использую для подготовки своей команды. Качество вопросов и ответов на высшем уровне. Экономим кучу времени на поиск материалов!
+                      </Typography>
+                    </Paper>
+                  </Grow>
+                </Grid>
+              </Grid>
+            </Box>
+          </Box>
+        )}
+
+          {/* Как это работает для неавторизованных - в одну линию */}
+          {!isAuthenticated && (
+            <Box sx={{ mb: 10 }}>
+              <Typography 
+                variant="h4" 
+                sx={{ 
+                  mb: 6, 
+                  fontWeight: 700,
+                  color: NEUTRAL_COLORS.textPrimary,
+                  textAlign: 'center'
+                }}
+              >
+                Чтобы получить оффер надо сделать 3 простых шага
+              </Typography>
+
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: { xs: 'column', md: 'row' },
+                justifyContent: 'center',
+                alignItems: 'stretch',
+                gap: 4,
+                mb: 6
+              }}>
+                {/* Шаг 1 */}
+                <Box sx={{ 
+                  flex: 1,
+                  maxWidth: { md: '350px' },
+                  p: 3,
+                  textAlign: 'center',
+                  backgroundColor: NEUTRAL_COLORS.surface,
+                  border: `1px solid ${NEUTRAL_COLORS.border}`,
+                  borderRadius: 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
+                    transform: 'translateY(-4px)',
+                  }
+                }}>
+                  <Box sx={{ 
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    width: 80,
+                    height: 80,
+                    borderRadius: '50%',
+                    backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
+                    mb: 3,
+                    position: 'relative',
+                    '&::before': {
+                      content: '"1"',
+                      position: 'absolute',
+                      top: -10,
+                      right: -10,
+                      width: 30,
+                      height: 30,
+                      borderRadius: '50%',
+                      backgroundColor: NEUTRAL_COLORS.accent,
+                      color: 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 700,
+                      fontSize: '0.875rem'
+                    }
+                  }}>
+                    <LoginIcon sx={{ fontSize: 40, color: NEUTRAL_COLORS.accent }} />
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: NEUTRAL_COLORS.textPrimary }}>
+                    Зарегистрируйтесь
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary, flex: 1 }}>
+                    Создайте аккаунт за 30 секунд. Это бесплатно и не требует подтверждения.
+                  </Typography>
+                </Box>
+
+                {/* Шаг 2 */}
+                <Box sx={{ 
+                  flex: 1,
+                  maxWidth: { md: '350px' },
+                  p: 3,
+                  textAlign: 'center',
+                  backgroundColor: NEUTRAL_COLORS.surface,
+                  border: `1px solid ${NEUTRAL_COLORS.border}`,
+                  borderRadius: 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
+                    transform: 'translateY(-4px)',
+                  }
+                }}>
+                  <Box sx={{ 
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    width: 80,
+                    height: 80,
+                    borderRadius: '50%',
+                    backgroundColor: alpha(NEUTRAL_COLORS.success, 0.1),
+                    mb: 3,
+                    position: 'relative',
+                    '&::before': {
+                      content: '"2"',
+                      position: 'absolute',
+                      top: -10,
+                      right: -10,
+                      width: 30,
+                      height: 30,
+                      borderRadius: '50%',
+                      backgroundColor: NEUTRAL_COLORS.success,
+                      color: 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 700,
+                      fontSize: '0.875rem'
+                    }
+                  }}>
+                    <CategoryIcon sx={{ fontSize: 40, color: NEUTRAL_COLORS.success }} />
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: NEUTRAL_COLORS.textPrimary }}>
+                    Выберите категории
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary, flex: 1 }}>
+                    Отметьте технологии, которые вам нужны для подготовки.
+                  </Typography>
+                </Box>
+
+                {/* Шаг 3 */}
+                <Box sx={{ 
+                  flex: 1,
+                  maxWidth: { md: '350px' },
+                  p: 3,
+                  textAlign: 'center',
+                  backgroundColor: NEUTRAL_COLORS.surface,
+                  border: `1px solid ${NEUTRAL_COLORS.border}`,
+                  borderRadius: 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
+                    transform: 'translateY(-4px)',
+                  }
+                }}>
+                  <Box sx={{ 
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    width: 80,
+                    height: 80,
+                    borderRadius: '50%',
+                    backgroundColor: alpha(NEUTRAL_COLORS.purple, 0.1),
+                    mb: 3,
+                    position: 'relative',
+                    '&::before': {
+                      content: '"3"',
+                      position: 'absolute',
+                      top: -10,
+                      right: -10,
+                      width: 30,
+                      height: 30,
+                      borderRadius: '50%',
+                      backgroundColor: NEUTRAL_COLORS.purple,
+                      color: 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 700,
+                      fontSize: '0.875rem'
+                    }
+                  }}>
+                    <StartLearningIcon sx={{ fontSize: 40, color: NEUTRAL_COLORS.purple }} />
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: NEUTRAL_COLORS.textPrimary }}>
+                    Начните практиковаться
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary, flex: 1 }}>
+                    Отвечайте на вопросы, проверяйте ответы и отслеживайте прогресс.
+                  </Typography>
+                </Box>
+              </Box>
             </Box>
           )}
 
-          <Box sx={{ mb: 10 }}>
-            <Typography 
-              variant="h5" 
-              sx={{ 
-                mb: 4, 
-                fontWeight: 600,
-                color: NEUTRAL_COLORS.textPrimary,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1
-              }}
-            >
-              <StarIcon sx={{ color: NEUTRAL_COLORS.warning }} />
-              Популярные категории
-            </Typography>
-            
-            {isLoading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                <CircularProgress sx={{ color: NEUTRAL_COLORS.accent }} />
-              </Box>
-            ) : categories.length > 0 ? (
-              <Grid container spacing={2}>
-                {categories.map((category) => (
-                  <Grid item xs={6} sm={4} md={2.4} key={category.id}>
-                    <CategoryCard
-                      category={category}
-                      onClick={() => handleCardClick(category)}
-                    />
-                  </Grid>
-                ))}
-              </Grid>
-            ) : (
+          {isAuthenticated && (
+            <Box sx={{ mb: 10 }}>
               <Typography 
-                color={NEUTRAL_COLORS.textSecondary}
-                textAlign="center"
-                sx={{ py: 4 }}
+                variant="h5" 
+                sx={{ 
+                  mb: 4, 
+                  fontWeight: 600,
+                  color: NEUTRAL_COLORS.textPrimary,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}
               >
-                Категории пока загружаются
+                <StarIcon sx={{ color: NEUTRAL_COLORS.warning }} />
+                Популярные категории
               </Typography>
-            )}
-          </Box>
+              
+              {isLoading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                  <CircularProgress sx={{ color: NEUTRAL_COLORS.accent }} />
+                </Box>
+              ) : categories.length > 0 ? (
+                <Grid container spacing={2}>
+                  {categories.map((category) => (
+                    <Grid item xs={6} sm={4} md={2.4} key={category.id}>
+                      <CategoryCard
+                        category={category}
+                        onClick={() => handleCardClick(category)}
+                      />
+                    </Grid>
+                  ))}
+                </Grid>
+              ) : (
+                <Typography 
+                  sx={{ 
+                    color: NEUTRAL_COLORS.textSecondary,
+                    textAlign: 'center',
+                    py: 4 
+                  }}
+                >
+                  Категории пока загружаются
+                </Typography>
+              )}
+            </Box>
+          )}
         </Box>
       </Container>
 
@@ -1828,7 +2690,7 @@ export const HomePage: React.FC = () => {
         <Box sx={{ 
           py: 6, 
           borderTop: `1px solid ${NEUTRAL_COLORS.border}`,
-          backgroundColor: alpha(NEUTRAL_COLORS.surface, 0.97),
+          backgroundColor: NEUTRAL_COLORS.surface,
           backdropFilter: 'blur(8px)'
         }}>
           <Container maxWidth="lg">
