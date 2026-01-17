@@ -202,7 +202,7 @@ export const LoginPage: React.FC = () => {
     clearError();
 
     if (!email || !password) {
-      setLocalError('Please fill in all fields');
+      setLocalError('Пожалуйста, заполните все поля');
       return;
     }
 
@@ -211,7 +211,7 @@ export const LoginPage: React.FC = () => {
       await login(email, password);
       navigate('/', { replace: true });
     } catch (err: any) {
-      setLocalError(err.response?.data?.detail || 'Login failed. Please check your credentials.');
+      setLocalError(err.response?.data?.detail || 'Вход в систему не удался. Пожалуйста, проверьте свои учетные данные.');
     } finally {
       setIsLoading(false);
     }

@@ -136,7 +136,7 @@ async def refresh_token(
             log.warning("⚠️ Попытка обновления токена без refresh токена")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Refresh token is required",
+                detail="Ошибка авторизации",
             )
         
         # Верифицируем refresh token

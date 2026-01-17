@@ -245,18 +245,18 @@ export const RegisterPage: React.FC = () => {
 
   const validateForm = useCallback((): boolean => {
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
-      setLocalError('Please fill in all required fields');
+      setLocalError('Пожалуйста, заполните все обязательные поля');
       return false;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setLocalError('Passwords do not match');
+      setLocalError('Пароли не совпадают');
       return false;
     }
 
     for (const req of PASSWORD_REQUIREMENTS) {
       if (!req.validator(formData.password)) {
-        setLocalError(`Password must contain: ${req.text}`);
+        setLocalError(`Пароль должен содержать: ${req.text}`);
         return false;
       }
     }
@@ -278,8 +278,8 @@ export const RegisterPage: React.FC = () => {
       await register(formData.email, formData.password, formData.firstName, formData.lastName);
       navigate('/', { replace: true });
     } catch (err: any) {
-      console.error('Registration error:', err);
-      setLocalError(err.response?.data?.detail || 'Registration failed. Please try again.');
+      console.error('Ошибка регистрации:', err);
+      setLocalError(err.response?.data?.detail || 'Регистрация не удалась. Пожалуйста, попробуйте еще раз.');
     } finally {
       setIsLoading(false);
     }
@@ -615,7 +615,7 @@ export const RegisterPage: React.FC = () => {
                                   fontWeight: 600
                                 }}
                               >
-                                Passwords match ✓
+                                Пароли совпадают
                               </Typography>
                             </>
                           ) : (
@@ -628,7 +628,7 @@ export const RegisterPage: React.FC = () => {
                                   fontWeight: 600
                                 }}
                               >
-                                Passwords do not match ✗
+                                Пароли не совпадают
                               </Typography>
                             </>
                           )}
