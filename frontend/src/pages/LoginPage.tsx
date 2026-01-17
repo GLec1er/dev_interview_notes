@@ -258,7 +258,7 @@ export const LoginPage: React.FC = () => {
               fullWidth={false}
               sx={{ mb: 2 }}
             >
-              Back to Home
+              Назад на главную
             </StyledButton>
 
             <Paper 
@@ -294,7 +294,7 @@ export const LoginPage: React.FC = () => {
                     fontSize: { xs: '2rem', sm: '2.5rem' }
                   }}
                 >
-                  Welcome Back
+                  Добро пожаловать
                 </Typography>
                 <Typography 
                   variant="body1" 
@@ -302,8 +302,8 @@ export const LoginPage: React.FC = () => {
                     color: NEUTRAL_COLORS.textSecondary,
                     fontSize: '1.1rem'
                   }}
-                >
-                  Sign in to your InterviewPro account
+                >          
+                Войдите в свою учетную запись InterviewBox
                 </Typography>
               </Box>
 
@@ -334,7 +334,7 @@ export const LoginPage: React.FC = () => {
               <form onSubmit={handleSubmit}>
                 <Stack spacing={3}>
                   <StyledInputField
-                    label="Email Address"
+                    label="Адрес электронной почты"
                     type="email"
                     value={email}
                     onChange={(e: any) => setEmail(e.target.value)}
@@ -343,7 +343,7 @@ export const LoginPage: React.FC = () => {
                   />
 
                   <StyledInputField
-                    label="Password"
+                    label="Пароль"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e: any) => setPassword(e.target.value)}
@@ -373,7 +373,7 @@ export const LoginPage: React.FC = () => {
                         }
                       }}
                     >
-                      Forgot your password?
+                      Забыли пароль?
                     </Link>
                   </Box>
 
@@ -389,7 +389,7 @@ export const LoginPage: React.FC = () => {
                         sx={{ color: 'white' }} 
                       />
                     ) : (
-                      'Sign In'
+                      'Войти'
                     )}
                   </StyledButton>
                 </Stack>
@@ -417,7 +417,7 @@ export const LoginPage: React.FC = () => {
                     transform: 'translateX(-50%)'
                   }}
                 >
-                  Don't have an account?
+                  У вас нет аккаунта?
                 </Typography>
               </Box>
 
@@ -427,10 +427,10 @@ export const LoginPage: React.FC = () => {
                   variant="outlined"
                   onClick={() => navigate('/register')}
                 >
-                  Create New Account
+                  Создать новую учетную запись
                 </StyledButton>
                 
-                <Typography 
+                {/* <Typography 
                   variant="body2" 
                   sx={{ 
                     mt: 3, 
@@ -438,7 +438,7 @@ export const LoginPage: React.FC = () => {
                     fontSize: '0.875rem'
                   }}
                 >
-                  By signing in, you agree to our{' '}
+                  Войти в систему означает ваше согласие с нашимии{' '}
                   <Link 
                     to="/terms" 
                     style={{ 
@@ -447,9 +447,9 @@ export const LoginPage: React.FC = () => {
                       fontWeight: 500 
                     }}
                   >
-                    Terms
+                    Условиями использования
                   </Link>{' '}
-                  and{' '}
+                  и{' '}
                   <Link 
                     to="/privacy" 
                     style={{ 
@@ -458,9 +458,9 @@ export const LoginPage: React.FC = () => {
                       fontWeight: 500 
                     }}
                   >
-                    Privacy Policy
+                    Политикой конфиденциальности
                   </Link>
-                </Typography>
+                </Typography> */}
               </Box>
             </Paper>
 
@@ -475,7 +475,7 @@ export const LoginPage: React.FC = () => {
                 fontSize: '0.75rem'
               }}
             >
-              © {new Date().getFullYear()} InterviewPro. Professional interview preparation platform.
+              © {new Date().getFullYear()} InterviewBox. Платформа для подготовки к собеседованиям..
             </Typography>
           </Box>
         </Fade>

@@ -199,23 +199,23 @@ interface PasswordRequirement {
 
 const PASSWORD_REQUIREMENTS: PasswordRequirement[] = [
   {
-    text: 'At least 8 characters',
+    text: 'Не менее 8 символов',
     validator: (pwd) => pwd.length >= 8,
   },
   {
-    text: 'Contains lowercase letter',
+    text: 'Содержит строчную букву',
     validator: (pwd) => /[a-z]/.test(pwd),
   },
   {
-    text: 'Contains uppercase letter',
+    text: 'Содержит заглавную букву',
     validator: (pwd) => /[A-Z]/.test(pwd),
   },
   {
-    text: 'Contains number',
+    text: 'Содержит номер',
     validator: (pwd) => /[0-9]/.test(pwd),
   },
   {
-    text: 'Contains special character',
+    text: 'Содержит особый символ',
     validator: (pwd) => /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(pwd),
   },
 ];
@@ -348,7 +348,7 @@ export const RegisterPage: React.FC = () => {
               fullWidth={false}
               sx={{ mb: 2 }}
             >
-              Back to Home
+              Назад на главную
             </StyledButton>
 
             <Paper 
@@ -384,7 +384,7 @@ export const RegisterPage: React.FC = () => {
                     fontSize: { xs: '2rem', sm: '2.5rem' }
                   }}
                 >
-                  Create Account
+                  Зарегистрироваться
                 </Typography>
                 <Typography 
                   variant="body1" 
@@ -393,7 +393,7 @@ export const RegisterPage: React.FC = () => {
                     fontSize: '1.1rem'
                   }}
                 >
-                  Join InterviewPro to master your interview skills
+                  Присоединяйтесь к InterviewBox, чтобы отточить свои навыки прохождения собеседований.
                 </Typography>
               </Box>
 
@@ -425,7 +425,7 @@ export const RegisterPage: React.FC = () => {
                 <Stack container spacing={3}>
                   <Stack item xs={12} sm={6}>
                     <StyledInputField
-                      label="First Name"
+                      label="Имя"
                       name="firstName"
                       value={formData.firstName}
                       onChange={handleChange}
@@ -436,7 +436,7 @@ export const RegisterPage: React.FC = () => {
                   
                   <Stack item xs={12} sm={6}>
                     <StyledInputField
-                      label="Last Name"
+                      label="Фамилия"
                       name="lastName"
                       value={formData.lastName}
                       onChange={handleChange}
@@ -447,7 +447,7 @@ export const RegisterPage: React.FC = () => {
 
                   <Stack item xs={12}>
                     <StyledInputField
-                      label="Email Address"
+                      label="Адресс электронной почты"
                       type="email"
                       name="email"
                       value={formData.email}
@@ -459,7 +459,7 @@ export const RegisterPage: React.FC = () => {
 
                   <Stack item xs={12}>
                     <StyledInputField
-                      label="Password"
+                      label="Пароль"
                       type={showPassword ? 'text' : 'password'}
                       name="password"
                       value={formData.password}
@@ -499,7 +499,7 @@ export const RegisterPage: React.FC = () => {
                                   color: NEUTRAL_COLORS.textPrimary
                                 }}
                               >
-                                Password Strength
+                                Надежность пароля
                               </Typography>
                               <Typography 
                                 variant="caption" 
@@ -567,7 +567,7 @@ export const RegisterPage: React.FC = () => {
 
                   <Stack item xs={12}>
                     <StyledInputField
-                      label="Confirm Password"
+                      label="Подтвердите пароль"
                       type={showConfirmPassword ? 'text' : 'password'}
                       name="confirmPassword"
                       value={formData.confirmPassword}
@@ -651,7 +651,7 @@ export const RegisterPage: React.FC = () => {
                         sx={{ color: 'white' }} 
                       />
                     ) : (
-                      'Create Account'
+                      'Зарегистрироваться'
                     )}
                   </StyledButton>
                 </Box>
@@ -679,7 +679,7 @@ export const RegisterPage: React.FC = () => {
                     transform: 'translateX(-50%)'
                   }}
                 >
-                  Already have an account?
+                  У вас уже есть аккаунт?
                 </Typography>
               </Box>
 
@@ -689,19 +689,17 @@ export const RegisterPage: React.FC = () => {
                   variant="outlined"
                   onClick={() => navigate('/login')}
                 >
-                  Sign In to Existing Account
+                  Войти в существующий аккаунт
                 </StyledButton>
-                
-                <Typography 
+                {/* <Typography 
                   variant="body2" 
                   sx={{ 
                     mt: 3, 
                     color: NEUTRAL_COLORS.textSecondary,
-                    fontSize: '0.875rem',
-                    textAlign: 'center'
+                    fontSize: '0.875rem'
                   }}
                 >
-                  By creating an account, you agree to our{' '}
+                  Создавая учетную запись, вы соглашаетесь с нашими условиями{' '}
                   <Link 
                     to="/terms" 
                     style={{ 
@@ -710,9 +708,9 @@ export const RegisterPage: React.FC = () => {
                       fontWeight: 500 
                     }}
                   >
-                    Terms of Service
+                    Условиями использования
                   </Link>{' '}
-                  and{' '}
+                  и{' '}
                   <Link 
                     to="/privacy" 
                     style={{ 
@@ -721,9 +719,9 @@ export const RegisterPage: React.FC = () => {
                       fontWeight: 500 
                     }}
                   >
-                    Privacy Policy
+                    Политикой конфиденциальности
                   </Link>
-                </Typography>
+                </Typography> */}
               </Box>
             </Paper>
 
@@ -738,7 +736,7 @@ export const RegisterPage: React.FC = () => {
                 fontSize: '0.75rem'
               }}
             >
-              © {new Date().getFullYear()} InterviewPro. All rights reserved.
+              © {new Date().getFullYear()} InterviewBox. Все права защищены.
             </Typography>
           </Box>
         </Fade>

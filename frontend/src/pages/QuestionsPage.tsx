@@ -20,6 +20,10 @@ import {
   FormControl,
   Select,
   MenuItem,
+  useMediaQuery,
+  useTheme,
+  Drawer,
+  SwipeableDrawer,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -39,6 +43,8 @@ import {
   Person as PersonIcon,
   CheckCircle as CheckCircleIcon,
   RadioButtonUnchecked as RadioButtonUncheckedIcon,
+  AssignmentRounded as AssignmentRoundedIcon,
+  Menu as MenuIcon,
 } from '@mui/icons-material';
 import { questionService } from '../services/questionService';
 import { categoryService } from '../services/categoryService';
@@ -840,6 +846,540 @@ const FilterButton: React.FC<FilterButtonProps> = ({ active, onClick, children, 
   </Button>
 );
 
+// Компонент панели фильтров для Drawer и Desktop
+const FiltersPanel: React.FC<{
+  search: string;
+  setSearch: (value: string) => void;
+  categoryId: string;
+  setCategoryId: (value: string) => void;
+  difficulty: string;
+  setDifficulty: (value: string) => void;
+  sortBy: string;
+  setSortBy: (value: string) => void;
+  sortDir: string;
+  setSortDir: (value: string) => void;
+  limit: number;
+  setLimit: (value: number) => void;
+  categories: Category[];
+  isLoadingCategories: boolean;
+  handleResetFilters: () => void;
+  getSelectedCategoryName: () => string | null;
+}> = ({
+  search,
+  setSearch,
+  categoryId,
+  setCategoryId,
+  difficulty,
+  setDifficulty,
+  sortBy,
+  setSortBy,
+  sortDir,
+  setSortDir,
+  limit,
+  setLimit,
+  categories,
+  isLoadingCategories,
+  handleResetFilters,
+}) => {
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        p: 3,
+        borderRadius: 3,
+        border: `2px solid ${NEUTRAL_COLORS.border}`,
+        backgroundColor: NEUTRAL_COLORS.surface,
+        height: 'fit-content',
+        width: '100%',
+      }}
+    >
+      <Typography
+        variant="h5"
+        sx={{
+          fontWeight: 800,
+          color: NEUTRAL_COLORS.textPrimary,
+          mb: 3,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+        }}
+      >
+        <FilterIcon />
+        Фильтры
+      </Typography>
+
+      <Stack spacing={3}>
+        {/* Поиск */}
+        <Box>
+          <TextField
+            fullWidth
+            placeholder="Поиск вопросов..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            size="medium"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: NEUTRAL_COLORS.textSecondary }} />
+                </InputAdornment>
+              ),
+              endAdornment: search && (
+                <InputAdornment position="end">
+                  <IconButton
+                    size="small"
+                    onClick={() => setSearch('')}
+                    sx={{ color: NEUTRAL_COLORS.textSecondary }}
+                  >
+                    <ClearIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+                backgroundColor: NEUTRAL_COLORS.background,
+                '&:hover fieldset': {
+                  borderColor: NEUTRAL_COLORS.accent,
+                  borderWidth: 2,
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: NEUTRAL_COLORS.accent,
+                  borderWidth: 2,
+                },
+              },
+              '& .MuiInputBase-input': {
+                color: NEUTRAL_COLORS.textPrimary,
+                fontWeight: 500,
+              },
+            }}
+          />
+        </Box>
+
+        <Divider sx={{ borderColor: alpha(NEUTRAL_COLORS.border, 0.5) }} />
+
+        {/* Категория */}
+        <Box>
+          <Typography
+            variant="subtitle1"
+            sx={{
+              fontWeight: 700,
+              color: NEUTRAL_COLORS.textPrimary,
+              mb: 2,
+            }}
+          >
+            Выберите категорию
+          </Typography>
+          <FormControl fullWidth size="medium">
+            <Select
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              displayEmpty
+              renderValue={(selected) => {
+                if (!selected) {
+                  return (
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <CategoryIcon sx={{ color: NEUTRAL_COLORS.textSecondary, fontSize: '1rem' }} />
+                      <Typography sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+                        Все категории
+                      </Typography>
+                    </Stack>
+                  );
+                }
+                const category = categories.find(c => c.id === selected);
+                if (!category) {
+                  return (
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <CategoryIcon sx={{ color: NEUTRAL_COLORS.info, fontSize: '1rem' }} />
+                      <Typography sx={{ color: NEUTRAL_COLORS.textPrimary }}>
+                        Неизвестная категория
+                      </Typography>
+                    </Stack>
+                  );
+                }
+                return (
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <CategoryIcon sx={{ color: NEUTRAL_COLORS.info, fontSize: '1rem' }} />
+                    <Typography sx={{ color: NEUTRAL_COLORS.textPrimary, fontWeight: 600 }}>
+                      {category.name}
+                    </Typography>
+                    {category.question_count && (
+                      <Chip
+                        label={category.question_count}
+                        size="small"
+                        sx={{
+                          height: 20,
+                          fontSize: '0.7rem',
+                          backgroundColor: alpha(NEUTRAL_COLORS.info, 0.1),
+                          color: NEUTRAL_COLORS.info,
+                        }}
+                      />
+                    )}
+                  </Stack>
+                );
+              }}
+              sx={{
+                borderRadius: 2,
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: NEUTRAL_COLORS.accent,
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: NEUTRAL_COLORS.accent,
+                  borderWidth: 2,
+                },
+                '& .MuiSelect-select': {
+                  display: 'flex',
+                  alignItems: 'center',
+                  minHeight: '24px !important',
+                  padding: '12px 14px',
+                },
+              }}
+            >
+              <MenuItem value="">
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <CategoryIcon sx={{ color: NEUTRAL_COLORS.textSecondary, fontSize: '1rem' }} />
+                  <Typography sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+                    Все категории
+                  </Typography>
+                </Stack>
+              </MenuItem>
+              {categories.map((category) => (
+                <MenuItem key={category.id} value={category.id}>
+                  <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ width: '100%' }}>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <CategoryIcon sx={{ color: NEUTRAL_COLORS.info, fontSize: '1rem' }} />
+                      <Typography>{category.name}</Typography>
+                    </Stack>
+                    {category.question_count && (
+                      <Chip
+                        label={category.question_count}
+                        size="small"
+                        sx={{
+                          height: 20,
+                          fontSize: '0.7rem',
+                          backgroundColor: alpha(NEUTRAL_COLORS.info, 0.1),
+                          color: NEUTRAL_COLORS.info,
+                        }}
+                      />
+                    )}
+                  </Stack>
+                </MenuItem>
+              ))}
+            </Select>
+            {isLoadingCategories && (
+              <CircularProgress 
+                size={20} 
+                sx={{ 
+                  position: 'absolute', 
+                  right: 40, 
+                  top: '50%', 
+                  transform: 'translateY(-50%)' 
+                }} 
+              />
+            )}
+          </FormControl>
+        </Box>
+
+        <Divider sx={{ borderColor: alpha(NEUTRAL_COLORS.border, 0.5) }} />
+
+        {/* Сложность */}
+        <Box>
+          <Typography
+            variant="subtitle1"
+            sx={{
+              fontWeight: 700,
+              color: NEUTRAL_COLORS.textPrimary,
+              mb: 2,
+            }}
+          >
+            Выберите сложность
+          </Typography>
+          <Stack spacing={1}>
+            <FilterButton
+              active={difficulty === 'easy'}
+              onClick={() => setDifficulty('easy')}
+              color={NEUTRAL_COLORS.success}
+            >
+              Easy
+            </FilterButton>
+            <FilterButton
+              active={difficulty === 'medium'}
+              onClick={() => setDifficulty('medium')}
+              color={NEUTRAL_COLORS.warning}
+            >
+              Medium
+            </FilterButton>
+            <FilterButton
+              active={difficulty === 'hard'}
+              onClick={() => setDifficulty('hard')}
+              color={NEUTRAL_COLORS.error}
+            >
+              Hard
+            </FilterButton>
+          </Stack>
+        </Box>
+
+        <Divider sx={{ borderColor: alpha(NEUTRAL_COLORS.border, 0.5) }} />
+
+        {/* Сортировка */}
+        <Box>
+          <Typography
+            variant="subtitle1"
+            sx={{
+              fontWeight: 700,
+              color: NEUTRAL_COLORS.textPrimary,
+              mb: 2,
+            }}
+          >
+            Сортировка
+          </Typography>
+          
+          <Stack spacing={2}>
+            {/* Поле сортировки */}
+            <FormControl fullWidth size="medium">
+              <Select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                displayEmpty
+                renderValue={(selected) => {
+                  if (!selected) {
+                    return (
+                      <Typography sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+                        Выберите поле для сортировки
+                      </Typography>
+                    );
+                  }
+                  return (
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <Box
+                        sx={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          backgroundColor: NEUTRAL_COLORS.accent,
+                          boxShadow: `0 0 8px ${NEUTRAL_COLORS.accent}`,
+                        }}
+                      />
+                      <Typography sx={{ color: NEUTRAL_COLORS.textPrimary, fontWeight: 600 }}>
+                        {getSortLabel(selected)}
+                      </Typography>
+                    </Stack>
+                  );
+                }}
+                sx={{
+                  borderRadius: 2,
+                  border: `2px solid ${alpha(NEUTRAL_COLORS.accent, 0.3)}`,
+                  backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.05),
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: NEUTRAL_COLORS.accent,
+                    borderWidth: 2,
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: NEUTRAL_COLORS.accent,
+                    borderWidth: 2,
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    border: 'none',
+                  },
+                  '& .MuiSelect-select': {
+                    display: 'flex',
+                    alignItems: 'center',
+                    minHeight: '24px !important',
+                    padding: '12px 14px',
+                  },
+                }}
+              >
+                <MenuItem value="updated_at">
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <Box
+                      sx={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        backgroundColor: sortBy === 'updated_at' ? NEUTRAL_COLORS.accent : 'transparent',
+                        border: `2px solid ${sortBy === 'updated_at' ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.border}`,
+                        boxShadow: sortBy === 'updated_at' ? `0 0 6px ${NEUTRAL_COLORS.accent}` : 'none',
+                      }}
+                    />
+                    <Typography sx={{ fontWeight: sortBy === 'updated_at' ? 700 : 400 }}>
+                      По дате обновления
+                    </Typography>
+                  </Stack>
+                </MenuItem>
+                <MenuItem value="created_at">
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <Box
+                      sx={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        backgroundColor: sortBy === 'created_at' ? NEUTRAL_COLORS.accent : 'transparent',
+                        border: `2px solid ${sortBy === 'created_at' ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.border}`,
+                        boxShadow: sortBy === 'created_at' ? `0 0 6px ${NEUTRAL_COLORS.accent}` : 'none',
+                      }}
+                    />
+                    <Typography sx={{ fontWeight: sortBy === 'created_at' ? 700 : 400 }}>
+                      По дате создания
+                    </Typography>
+                  </Stack>
+                </MenuItem>
+                <MenuItem value="title">
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <Box
+                      sx={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        backgroundColor: sortBy === 'title' ? NEUTRAL_COLORS.accent : 'transparent',
+                        border: `2px solid ${sortBy === 'title' ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.border}`,
+                        boxShadow: sortBy === 'title' ? `0 0 6px ${NEUTRAL_COLORS.accent}` : 'none',
+                      }}
+                    />
+                    <Typography sx={{ fontWeight: sortBy === 'title' ? 700 : 400 }}>
+                      По названию
+                    </Typography>
+                  </Stack>
+                </MenuItem>
+                <MenuItem value="difficulty">
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <Box
+                      sx={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        backgroundColor: sortBy === 'difficulty' ? NEUTRAL_COLORS.accent : 'transparent',
+                        border: `2px solid ${sortBy === 'difficulty' ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.border}`,
+                        boxShadow: sortBy === 'difficulty' ? `0 0 6px ${NEUTRAL_COLORS.accent}` : 'none',
+                      }}
+                    />
+                    <Typography sx={{ fontWeight: sortBy === 'difficulty' ? 700 : 400 }}>
+                      По сложности
+                    </Typography>
+                  </Stack>
+                </MenuItem>
+              </Select>
+            </FormControl>
+            
+            {/* Направление сортировки */}
+            <Stack direction="row" spacing={1}>
+              <Button
+                fullWidth
+                variant={sortDir === 'asc' ? 'contained' : 'outlined'}
+                onClick={() => setSortDir('asc')}
+                startIcon={
+                  sortDir === 'asc' ? (
+                    <TrendingFlatIcon sx={{ transform: 'rotate(-90deg)' }} />
+                  ) : null
+                }
+                sx={{
+                  borderWidth: 2,
+                  borderColor: sortDir === 'asc' ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.border,
+                  backgroundColor: sortDir === 'asc' ? NEUTRAL_COLORS.accent : 'transparent',
+                  color: sortDir === 'asc' ? NEUTRAL_COLORS.surface : NEUTRAL_COLORS.textPrimary,
+                  fontWeight: 600,
+                  '&:hover': {
+                    borderColor: sortDir === 'asc' ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.accent,
+                    backgroundColor: sortDir === 'asc' ? alpha(NEUTRAL_COLORS.accent, 0.9) : alpha(NEUTRAL_COLORS.accent, 0.08),
+                  },
+                }}
+              >
+                Возрастание
+              </Button>
+              <Button
+                fullWidth
+                variant={sortDir === 'desc' ? 'contained' : 'outlined'}
+                onClick={() => setSortDir('desc')}
+                startIcon={
+                  sortDir === 'desc' ? (
+                    <TrendingFlatIcon sx={{ transform: 'rotate(90deg)' }} />
+                  ) : null
+                }
+                sx={{
+                  borderWidth: 2,
+                  borderColor: sortDir === 'desc' ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.border,
+                  backgroundColor: sortDir === 'desc' ? NEUTRAL_COLORS.accent : 'transparent',
+                  color: sortDir === 'desc' ? NEUTRAL_COLORS.surface : NEUTRAL_COLORS.textPrimary,
+                  fontWeight: 600,
+                  '&:hover': {
+                    borderColor: sortDir === 'desc' ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.accent,
+                    backgroundColor: sortDir === 'desc' ? alpha(NEUTRAL_COLORS.accent, 0.9) : alpha(NEUTRAL_COLORS.accent, 0.08),
+                  },
+                }}
+              >
+                Убывание
+              </Button>
+            </Stack>
+          </Stack>
+        </Box>
+
+        <Divider sx={{ borderColor: alpha(NEUTRAL_COLORS.border, 0.5) }} />
+
+        {/* Количество на странице */}
+        <Box>
+          <Typography
+            variant="subtitle1"
+            sx={{
+              fontWeight: 700,
+              color: NEUTRAL_COLORS.textPrimary,
+              mb: 2,
+            }}
+          >
+            Показывать на странице
+          </Typography>
+          
+          <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
+            {[5, 10, 20, 50].map((itemLimit) => (
+              <Chip
+                key={itemLimit}
+                label={`${itemLimit}`}
+                onClick={() => setLimit(itemLimit)}
+                color={limit === itemLimit ? 'primary' : 'default'}
+                sx={{
+                  fontWeight: 700,
+                  border: `2px solid ${limit === itemLimit ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.border}`,
+                  backgroundColor: limit === itemLimit ? NEUTRAL_COLORS.accent : 'transparent',
+                  color: limit === itemLimit ? NEUTRAL_COLORS.surface : NEUTRAL_COLORS.textPrimary,
+                  '&:hover': {
+                    borderColor: NEUTRAL_COLORS.accent,
+                    backgroundColor: limit === itemLimit ? NEUTRAL_COLORS.accent : alpha(NEUTRAL_COLORS.accent, 0.08),
+                  },
+                }}
+              />
+            ))}
+          </Stack>
+        </Box>
+
+        <Divider sx={{ borderColor: alpha(NEUTRAL_COLORS.border, 0.5) }} />
+
+        {/* Сброс фильтров */}
+        <Button
+          fullWidth
+          variant="outlined"
+          startIcon={<ClearIcon />}
+          onClick={handleResetFilters}
+          sx={{
+            borderWidth: 2,
+            borderColor: NEUTRAL_COLORS.border,
+            color: NEUTRAL_COLORS.textPrimary,
+            borderRadius: 2,
+            py: 1.5,
+            fontWeight: 700,
+            fontSize: '1rem',
+            '&:hover': {
+              borderColor: NEUTRAL_COLORS.accent,
+              backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+              transform: 'translateY(-1px)',
+            },
+            transition: 'all 0.2s',
+          }}
+        >
+          Очистить все фильтры
+        </Button>
+      </Stack>
+    </Paper>
+  );
+};
+
 export const QuestionsPage: React.FC = () => {
   const navigate = useNavigate();
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -848,6 +1388,10 @@ export const QuestionsPage: React.FC = () => {
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down(1380));
+  const isMobileFilter = useMediaQuery(theme.breakpoints.down(1000));
+  const [mobileOpen, setMobileOpen] = useState(false);
   
   // Пагинация
   const [page, setPage] = useState(1);
@@ -1033,6 +1577,11 @@ export const QuestionsPage: React.FC = () => {
 
   const totalPages = Math.ceil(total / limit);
 
+  // Обработчик открытия/закрытия Drawer
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
   return (
     <Box
       sx={{
@@ -1076,7 +1625,7 @@ export const QuestionsPage: React.FC = () => {
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
-            В главное меню
+            {isMobile ? <AssignmentRoundedIcon /> : 'В главное меню'}
           </Button>
 
           {/* Мобильная кнопка назад */}
@@ -1127,7 +1676,7 @@ export const QuestionsPage: React.FC = () => {
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
-            Мой профиль
+            {isMobile ? <PersonIcon /> : 'Мой профиль'}
           </Button>
 
           {/* Мобильная кнопка профиля */}
@@ -1392,6 +1941,7 @@ export const QuestionsPage: React.FC = () => {
 
           {/* Описание с кнопками быстрого доступа */}
           <Box sx={{ position: 'relative', maxWidth: '600px', mx: 'auto' }}>
+            {!isMobileFilter && (
             <Typography
               variant="h6"
               sx={{
@@ -1404,7 +1954,7 @@ export const QuestionsPage: React.FC = () => {
             >
               Совершенствуйте свои навыки прохождения собеседований с помощью нашей коллекции
             </Typography>
-
+            )}
             {/* Быстрые действия */}
             <Stack direction="row" alignItems="center" justifyContent="center" flexWrap="wrap" gap={1}>
               <Button
@@ -1534,6 +2084,7 @@ export const QuestionsPage: React.FC = () => {
         </Box>
 
         {/* Улучшенная статистика */}
+        {!isMobileFilter && (
         <div id="statistics-section">
           <StatisticsSection
             total={total}
@@ -1544,610 +2095,102 @@ export const QuestionsPage: React.FC = () => {
             activeFilter={difficulty}
           />
         </div>
+        )}
+        {/* Drawer для мобильных фильтров */}
+        <SwipeableDrawer
+          anchor="left"
+          open={mobileOpen}
+          onClose={() => setMobileOpen(false)}
+          onOpen={() => setMobileOpen(true)}
+          disableSwipeToOpen={false}
+          ModalProps={{
+            keepMounted: true,
+          }}
+          sx={{
+            display: { xs: 'block', lg: 'none' },
+            '& .MuiDrawer-paper': {
+              boxSizing: 'border-box',
+              width: '85%',
+              maxWidth: 350,
+              p: 3,
+              backgroundColor: NEUTRAL_COLORS.background,
+            },
+          }}
+        >
+          <FiltersPanel
+            search={search}
+            setSearch={setSearch}
+            categoryId={categoryId}
+            setCategoryId={setCategoryId}
+            difficulty={difficulty}
+            setDifficulty={setDifficulty}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            sortDir={sortDir}
+            setSortDir={setSortDir}
+            limit={limit}
+            setLimit={setLimit}
+            categories={categories}
+            isLoadingCategories={isLoadingCategories}
+            handleResetFilters={handleResetFilters}
+            getSelectedCategoryName={getSelectedCategoryName}
+          />
+        </SwipeableDrawer>
 
         {/* Основной контент - новая структура */}
         <Box sx={{ display: 'flex', gap: 3 }}>
           {/* Левая колонка - фильтры (фиксированная ширина) */}
-          <Box className="filters-column" sx={{ width: 320, flexShrink: 0 }}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 3,
-                borderRadius: 3,
-                border: `2px solid ${NEUTRAL_COLORS.border}`,
-                backgroundColor: NEUTRAL_COLORS.surface,
-                position: 'sticky',
-                top: 20,
-                height: 'fit-content',
-              }}
-            >
-              <Typography
-                variant="h5"
-                sx={{
-                  fontWeight: 800,
-                  color: NEUTRAL_COLORS.textPrimary,
-                  mb: 3,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1,
-                }}
-              >
-                <FilterIcon />
-                Фильтры
-              </Typography>
-
-              <Stack spacing={3}>
-                {/* Поиск */}
-                <Box>
-                  <TextField
-                    fullWidth
-                    placeholder="Поиск вопросов..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    size="medium"
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchIcon sx={{ color: NEUTRAL_COLORS.textSecondary }} />
-                        </InputAdornment>
-                      ),
-                      endAdornment: search && (
-                        <InputAdornment position="end">
-                          <IconButton
-                            size="small"
-                            onClick={() => setSearch('')}
-                            sx={{ color: NEUTRAL_COLORS.textSecondary }}
-                          >
-                            <ClearIcon fontSize="small" />
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        backgroundColor: NEUTRAL_COLORS.background,
-                        '&:hover fieldset': {
-                          borderColor: NEUTRAL_COLORS.accent,
-                          borderWidth: 2,
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: NEUTRAL_COLORS.accent,
-                          borderWidth: 2,
-                        },
-                      },
-                      '& .MuiInputBase-input': {
-                        color: NEUTRAL_COLORS.textPrimary,
-                        fontWeight: 500,
-                      },
-                    }}
-                  />
-                </Box>
-
-                <Divider sx={{ borderColor: alpha(NEUTRAL_COLORS.border, 0.5) }} />
-
-                {/* Категория */}
-                <Box>
-                  <Typography
-                    variant="subtitle1"
-                    sx={{
-                      fontWeight: 700,
-                      color: NEUTRAL_COLORS.textPrimary,
-                      mb: 2,
-                    }}
-                  >
-                    Выберите категорию
-                  </Typography>
-                  <FormControl fullWidth size="medium">
-                    <Select
-                      value={categoryId}
-                      onChange={(e) => {
-                        setCategoryId(e.target.value);
-                        setPage(1);
-                      }}
-                      displayEmpty
-                      renderValue={(selected) => {
-                        if (!selected) {
-                          return (
-                            <Stack direction="row" alignItems="center" spacing={1}>
-                              <CategoryIcon sx={{ color: NEUTRAL_COLORS.textSecondary, fontSize: '1rem' }} />
-                              <Typography sx={{ color: NEUTRAL_COLORS.textSecondary }}>
-                                Все категории
-                              </Typography>
-                            </Stack>
-                          );
-                        }
-                        const category = categories.find(c => c.id === selected);
-                        if (!category) {
-                          return (
-                            <Stack direction="row" alignItems="center" spacing={1}>
-                              <CategoryIcon sx={{ color: NEUTRAL_COLORS.info, fontSize: '1rem' }} />
-                              <Typography sx={{ color: NEUTRAL_COLORS.textPrimary }}>
-                                Неизвестная категория
-                              </Typography>
-                            </Stack>
-                          );
-                        }
-                        return (
-                          <Stack direction="row" alignItems="center" spacing={1}>
-                            <CategoryIcon sx={{ color: NEUTRAL_COLORS.info, fontSize: '1rem' }} />
-                            <Typography sx={{ color: NEUTRAL_COLORS.textPrimary, fontWeight: 600 }}>
-                              {category.name}
-                            </Typography>
-                            {category.question_count && (
-                              <Chip
-                                label={category.question_count}
-                                size="small"
-                                sx={{
-                                  height: 20,
-                                  fontSize: '0.7rem',
-                                  backgroundColor: alpha(NEUTRAL_COLORS.info, 0.1),
-                                  color: NEUTRAL_COLORS.info,
-                                }}
-                              />
-                            )}
-                          </Stack>
-                        );
-                      }}
-                      sx={{
-                        borderRadius: 2,
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: NEUTRAL_COLORS.accent,
-                        },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: NEUTRAL_COLORS.accent,
-                          borderWidth: 2,
-                        },
-                        '& .MuiSelect-select': {
-                          display: 'flex',
-                          alignItems: 'center',
-                          minHeight: '24px !important',
-                          padding: '12px 14px',
-                        },
-                      }}
-                    >
-                      <MenuItem value="">
-                        <Stack direction="row" alignItems="center" spacing={1}>
-                          <CategoryIcon sx={{ color: NEUTRAL_COLORS.textSecondary, fontSize: '1rem' }} />
-                          <Typography sx={{ color: NEUTRAL_COLORS.textSecondary }}>
-                            Все категории
-                          </Typography>
-                        </Stack>
-                      </MenuItem>
-                      {categories.map((category) => (
-                        <MenuItem key={category.id} value={category.id}>
-                          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ width: '100%' }}>
-                            <Stack direction="row" alignItems="center" spacing={1}>
-                              <CategoryIcon sx={{ color: NEUTRAL_COLORS.info, fontSize: '1rem' }} />
-                              <Typography>{category.name}</Typography>
-                            </Stack>
-                            {category.question_count && (
-                              <Chip
-                                label={category.question_count}
-                                size="small"
-                                sx={{
-                                  height: 20,
-                                  fontSize: '0.7rem',
-                                  backgroundColor: alpha(NEUTRAL_COLORS.info, 0.1),
-                                  color: NEUTRAL_COLORS.info,
-                                }}
-                              />
-                            )}
-                          </Stack>
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    {isLoadingCategories && (
-                      <CircularProgress 
-                        size={20} 
-                        sx={{ 
-                          position: 'absolute', 
-                          right: 40, 
-                          top: '50%', 
-                          transform: 'translateY(-50%)' 
-                        }} 
-                      />
-                    )}
-                  </FormControl>
-                </Box>
-
-                <Divider sx={{ borderColor: alpha(NEUTRAL_COLORS.border, 0.5) }} />
-
-                {/* Сложность */}
-                <Box>
-                  <Typography
-                    variant="subtitle1"
-                    sx={{
-                      fontWeight: 700,
-                      color: NEUTRAL_COLORS.textPrimary,
-                      mb: 2,
-                    }}
-                  >
-                    Выберите сложность
-                  </Typography>
-                  <Stack spacing={1}>
-                    <FilterButton
-                      active={difficulty === 'easy'}
-                      onClick={() => {
-                        setDifficulty('easy');
-                        setPage(1);
-                      }}
-                      color={NEUTRAL_COLORS.success}
-                    >
-                      Easy
-                    </FilterButton>
-                    <FilterButton
-                      active={difficulty === 'medium'}
-                      onClick={() => {
-                        setDifficulty('medium');
-                        setPage(1);
-                      }}
-                      color={NEUTRAL_COLORS.warning}
-                    >
-                      Medium
-                    </FilterButton>
-                    <FilterButton
-                      active={difficulty === 'hard'}
-                      onClick={() => {
-                        setDifficulty('hard');
-                        setPage(1);
-                      }}
-                      color={NEUTRAL_COLORS.error}
-                    >
-                      Hard
-                    </FilterButton>
-                  </Stack>
-                </Box>
-
-                <Divider sx={{ borderColor: alpha(NEUTRAL_COLORS.border, 0.5) }} />
-
-                {/* Сортировка */}
-                <Box>
-                  <Typography
-                    variant="subtitle1"
-                    sx={{
-                      fontWeight: 700,
-                      color: NEUTRAL_COLORS.textPrimary,
-                      mb: 2,
-                    }}
-                  >
-                    Сортировка
-                  </Typography>
-                  
-                  <Stack spacing={2}>
-                    {/* Поле сортировки */}
-                    <FormControl fullWidth size="medium">
-                      <Select
-                        value={sortBy}
-                        onChange={(e) => {
-                          setSortBy(e.target.value);
-                          setPage(1);
-                        }}
-                        displayEmpty
-                        renderValue={(selected) => {
-                          if (!selected) {
-                            return (
-                              <Typography sx={{ color: NEUTRAL_COLORS.textSecondary }}>
-                                Выберите поле для сортировки
-                              </Typography>
-                            );
-                          }
-                          return (
-                            <Stack direction="row" alignItems="center" spacing={1}>
-                              <Box
-                                sx={{
-                                  width: 6,
-                                  height: 6,
-                                  borderRadius: '50%',
-                                  backgroundColor: NEUTRAL_COLORS.accent,
-                                  boxShadow: `0 0 8px ${NEUTRAL_COLORS.accent}`,
-                                }}
-                              />
-                              <Typography sx={{ color: NEUTRAL_COLORS.textPrimary, fontWeight: 600 }}>
-                                {getSortLabel(selected)}
-                              </Typography>
-                            </Stack>
-                          );
-                        }}
-                        sx={{
-                          borderRadius: 2,
-                          border: `2px solid ${alpha(NEUTRAL_COLORS.accent, 0.3)}`,
-                          backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.05),
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: NEUTRAL_COLORS.accent,
-                            borderWidth: 2,
-                          },
-                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            borderColor: NEUTRAL_COLORS.accent,
-                            borderWidth: 2,
-                          },
-                          '& .MuiOutlinedInput-notchedOutline': {
-                            border: 'none',
-                          },
-                          '& .MuiSelect-select': {
-                            display: 'flex',
-                            alignItems: 'center',
-                            minHeight: '24px !important',
-                            padding: '12px 14px',
-                          },
-                          position: 'relative',
-                          overflow: 'hidden',
-                          '&::before': {
-                            content: '""',
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            borderRadius: '6px',
-                            border: `2px solid ${NEUTRAL_COLORS.accent}`,
-                            animation: 'pulse 2s infinite',
-                            pointerEvents: 'none',
-                          },
-                          '@keyframes pulse': {
-                            '0%': {
-                              boxShadow: `0 0 0 0 ${alpha(NEUTRAL_COLORS.accent, 0.7)}`,
-                            },
-                            '70%': {
-                              boxShadow: `0 0 0 6px ${alpha(NEUTRAL_COLORS.accent, 0)}`,
-                            },
-                            '100%': {
-                              boxShadow: `0 0 0 0 ${alpha(NEUTRAL_COLORS.accent, 0)}`,
-                            },
-                          },
-                        }}
-                      >
-                        <MenuItem value="updated_at">
-                          <Stack direction="row" alignItems="center" spacing={1}>
-                            <Box
-                              sx={{
-                                width: 6,
-                                height: 6,
-                                borderRadius: '50%',
-                                backgroundColor: sortBy === 'updated_at' ? NEUTRAL_COLORS.accent : 'transparent',
-                                border: `2px solid ${sortBy === 'updated_at' ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.border}`,
-                                boxShadow: sortBy === 'updated_at' ? `0 0 6px ${NEUTRAL_COLORS.accent}` : 'none',
-                              }}
-                            />
-                            <Typography sx={{ fontWeight: sortBy === 'updated_at' ? 700 : 400 }}>
-                              По дате обновления
-                            </Typography>
-                          </Stack>
-                        </MenuItem>
-                        <MenuItem value="created_at">
-                          <Stack direction="row" alignItems="center" spacing={1}>
-                            <Box
-                              sx={{
-                                width: 6,
-                                height: 6,
-                                borderRadius: '50%',
-                                backgroundColor: sortBy === 'created_at' ? NEUTRAL_COLORS.accent : 'transparent',
-                                border: `2px solid ${sortBy === 'created_at' ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.border}`,
-                                boxShadow: sortBy === 'created_at' ? `0 0 6px ${NEUTRAL_COLORS.accent}` : 'none',
-                              }}
-                            />
-                            <Typography sx={{ fontWeight: sortBy === 'created_at' ? 700 : 400 }}>
-                              По дате создания
-                            </Typography>
-                          </Stack>
-                        </MenuItem>
-                        <MenuItem value="title">
-                          <Stack direction="row" alignItems="center" spacing={1}>
-                            <Box
-                              sx={{
-                                width: 6,
-                                height: 6,
-                                borderRadius: '50%',
-                                backgroundColor: sortBy === 'title' ? NEUTRAL_COLORS.accent : 'transparent',
-                                border: `2px solid ${sortBy === 'title' ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.border}`,
-                                boxShadow: sortBy === 'title' ? `0 0 6px ${NEUTRAL_COLORS.accent}` : 'none',
-                              }}
-                            />
-                            <Typography sx={{ fontWeight: sortBy === 'title' ? 700 : 400 }}>
-                              По названию
-                            </Typography>
-                          </Stack>
-                        </MenuItem>
-                        <MenuItem value="difficulty">
-                          <Stack direction="row" alignItems="center" spacing={1}>
-                            <Box
-                              sx={{
-                                width: 6,
-                                height: 6,
-                                borderRadius: '50%',
-                                backgroundColor: sortBy === 'difficulty' ? NEUTRAL_COLORS.accent : 'transparent',
-                                border: `2px solid ${sortBy === 'difficulty' ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.border}`,
-                                boxShadow: sortBy === 'difficulty' ? `0 0 6px ${NEUTRAL_COLORS.accent}` : 'none',
-                              }}
-                            />
-                            <Typography sx={{ fontWeight: sortBy === 'difficulty' ? 700 : 400 }}>
-                              По сложности
-                            </Typography>
-                          </Stack>
-                        </MenuItem>
-                      </Select>
-                    </FormControl>
-                    
-                    {/* Направление сортировки */}
-                    <Stack direction="row" spacing={1}>
-                      <Button
-                        fullWidth
-                        variant={sortDir === 'asc' ? 'contained' : 'outlined'}
-                        onClick={() => {
-                          setSortDir('asc');
-                          setPage(1);
-                        }}
-                        startIcon={
-                          sortDir === 'asc' ? (
-                            <TrendingFlatIcon sx={{ transform: 'rotate(-90deg)' }} />
-                          ) : null
-                        }
-                        sx={{
-                          borderWidth: 2,
-                          borderColor: sortDir === 'asc' ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.border,
-                          backgroundColor: sortDir === 'asc' ? NEUTRAL_COLORS.accent : 'transparent',
-                          color: sortDir === 'asc' ? NEUTRAL_COLORS.surface : NEUTRAL_COLORS.textPrimary,
-                          fontWeight: 600,
-                          position: 'relative',
-                          overflow: 'hidden',
-                          '&::before': sortDir === 'asc' ? {
-                            content: '""',
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            borderRadius: '4px',
-                            border: `2px solid ${NEUTRAL_COLORS.accent}`,
-                            animation: 'pulse 2s infinite',
-                            pointerEvents: 'none',
-                          } : {},
-                          '&:hover': {
-                            borderColor: sortDir === 'asc' ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.accent,
-                            backgroundColor: sortDir === 'asc' ? alpha(NEUTRAL_COLORS.accent, 0.9) : alpha(NEUTRAL_COLORS.accent, 0.08),
-                          },
-                        }}
-                      >
-                        Возрастание
-                      </Button>
-                      <Button
-                        fullWidth
-                        variant={sortDir === 'desc' ? 'contained' : 'outlined'}
-                        onClick={() => {
-                          setSortDir('desc');
-                          setPage(1);
-                        }}
-                        startIcon={
-                          sortDir === 'desc' ? (
-                            <TrendingFlatIcon sx={{ transform: 'rotate(90deg)' }} />
-                          ) : null
-                        }
-                        sx={{
-                          borderWidth: 2,
-                          borderColor: sortDir === 'desc' ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.border,
-                          backgroundColor: sortDir === 'desc' ? NEUTRAL_COLORS.accent : 'transparent',
-                          color: sortDir === 'desc' ? NEUTRAL_COLORS.surface : NEUTRAL_COLORS.textPrimary,
-                          fontWeight: 600,
-                          position: 'relative',
-                          overflow: 'hidden',
-                          '&::before': sortDir === 'desc' ? {
-                            content: '""',
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            borderRadius: '4px',
-                            border: `2px solid ${NEUTRAL_COLORS.accent}`,
-                            animation: 'pulse 2s infinite',
-                            pointerEvents: 'none',
-                          } : {},
-                          '&:hover': {
-                            borderColor: sortDir === 'desc' ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.accent,
-                            backgroundColor: sortDir === 'desc' ? alpha(NEUTRAL_COLORS.accent, 0.9) : alpha(NEUTRAL_COLORS.accent, 0.08),
-                          },
-                        }}
-                      >
-                        Убывание
-                      </Button>
-                    </Stack>
-                  </Stack>
-                </Box>
-
-                <Divider sx={{ borderColor: alpha(NEUTRAL_COLORS.border, 0.5) }} />
-
-                {/* Количество на странице */}
-                <Box>
-                  <Typography
-                    variant="subtitle1"
-                    sx={{
-                      fontWeight: 700,
-                      color: NEUTRAL_COLORS.textPrimary,
-                      mb: 2,
-                    }}
-                  >
-                    Показывать на странице
-                  </Typography>
-                  
-                  <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
-                    {[5, 10, 20, 50].map((itemLimit) => (
-                      <Chip
-                        key={itemLimit}
-                        label={`${itemLimit}`}
-                        onClick={() => {
-                          setLimit(itemLimit);
-                          setPage(1);
-                        }}
-                        color={limit === itemLimit ? 'primary' : 'default'}
-                        sx={{
-                          fontWeight: 700,
-                          border: `2px solid ${limit === itemLimit ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.border}`,
-                          backgroundColor: limit === itemLimit ? NEUTRAL_COLORS.accent : 'transparent',
-                          color: limit === itemLimit ? NEUTRAL_COLORS.surface : NEUTRAL_COLORS.textPrimary,
-                          '&:hover': {
-                            borderColor: NEUTRAL_COLORS.accent,
-                            backgroundColor: limit === itemLimit ? NEUTRAL_COLORS.accent : alpha(NEUTRAL_COLORS.accent, 0.08),
-                          },
-                        }}
-                      />
-                    ))}
-                  </Stack>
-                </Box>
-
-                <Divider sx={{ borderColor: alpha(NEUTRAL_COLORS.border, 0.5) }} />
-
-                {/* Сброс фильтров */}
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  startIcon={<ClearIcon />}
-                  onClick={() => {
-                    if (search || difficulty || categoryId || sortBy !== 'updated_at' || sortDir !== 'desc' || limit !== 10) {
-                      handleResetFilters();
-                      setLimit(10);
-                    }
-                  }}
-                  sx={{
-                    borderWidth: 2,
-                    borderColor: NEUTRAL_COLORS.border,
-                    color: NEUTRAL_COLORS.textPrimary,
-                    borderRadius: 2,
-                    py: 1.5,
-                    fontWeight: 700,
-                    fontSize: '1rem',
-                    '&:hover': {
-                      ...((search || difficulty || categoryId || sortBy !== 'updated_at' || sortDir !== 'desc' || limit !== 10) && {
-                        borderColor: NEUTRAL_COLORS.accent,
-                        backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
-                        transform: 'translateY(-1px)',
-                      }),
-                      ...(!search && !difficulty && !categoryId && sortBy === 'updated_at' && sortDir === 'desc' && limit === 10 && {
-                        cursor: 'not-allowed',
-                        borderColor: alpha(NEUTRAL_COLORS.border, 0.5),
-                        backgroundColor: 'transparent',
-                      }),
-                    },
-                    ...((search || difficulty || categoryId || sortBy !== 'updated_at' || sortDir !== 'desc' || limit !== 10) && {
-                      borderColor: NEUTRAL_COLORS.border,
-                      color: NEUTRAL_COLORS.textPrimary,
-                    }),
-                    ...(!search && !difficulty && !categoryId && sortBy === 'updated_at' && sortDir === 'desc' && limit === 10 && {
-                      color: NEUTRAL_COLORS.textSecondary,
-                      borderColor: alpha(NEUTRAL_COLORS.border, 0.5),
-                      backgroundColor: alpha(NEUTRAL_COLORS.background, 0.5),
-                      cursor: 'not-allowed',
-                    }),
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  Очистить все фильтры
-                </Button>
-              </Stack>
-            </Paper>
-          </Box>
+          {!isMobileFilter && (
+            <Box className="filters-column" sx={{ width: 320, flexShrink: 0 }}>
+              <FiltersPanel
+                search={search}
+                setSearch={setSearch}
+                categoryId={categoryId}
+                setCategoryId={setCategoryId}
+                difficulty={difficulty}
+                setDifficulty={setDifficulty}
+                sortBy={sortBy}
+                setSortBy={setSortBy}
+                sortDir={sortDir}
+                setSortDir={setSortDir}
+                limit={limit}
+                setLimit={setLimit}
+                categories={categories}
+                isLoadingCategories={isLoadingCategories}
+                handleResetFilters={handleResetFilters}
+                getSelectedCategoryName={getSelectedCategoryName}
+              />
+            </Box>
+          )}
 
           {/* Правая колонка - вопросы (растягивается до фильтров) */}
           <Box sx={{ flex: 1, minWidth: 0 }}>
+            {/* Кнопка открытия фильтров на мобильных */}
+            {isMobileFilter && (
+              <Box sx={{ mb: 3 }}>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<FilterIcon />}
+                  onClick={handleDrawerToggle}
+                  sx={{
+                    borderWidth: 2,
+                    borderColor: NEUTRAL_COLORS.accent,
+                    color: NEUTRAL_COLORS.accent,
+                    fontWeight: 700,
+                    py: 1.5,
+                    fontSize: '1rem',
+                    borderRadius: 3,
+                    '&:hover': {
+                      backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.08),
+                    },
+                  }}
+                >
+                  Открыть фильтры
+                </Button>
+              </Box>
+            )}
+
             {isLoading ? (
               <Box display="flex" justifyContent="center" alignItems="center" sx={{ py: 12 }}>
                 <CircularProgress size={64} sx={{ color: NEUTRAL_COLORS.accent }} />
@@ -2204,7 +2247,7 @@ export const QuestionsPage: React.FC = () => {
                       transition: 'all 0.2s',
                     }}
                   >
-                    Clear Search
+                    Очистить поиск
                   </Button>
                 )}
               </Paper>
