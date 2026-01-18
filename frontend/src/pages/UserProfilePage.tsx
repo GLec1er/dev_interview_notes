@@ -48,6 +48,7 @@ import {
   Whatshot as FireIcon,
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
+  Favorite as FavoriteIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { questionCompletionService } from '../services/questionCompletionService';
@@ -930,7 +931,7 @@ export const UserProfilePage: React.FC = () => {
             gap: 2,
             alignItems: 'center'
           }}
-        >        
+        >
           <Button
             startIcon={<ArrowBackIcon />}
             onClick={() => navigate('/questions')}
@@ -951,6 +952,31 @@ export const UserProfilePage: React.FC = () => {
             variant="contained"
           >
             К вопросам
+          </Button>
+          
+          {/* НОВАЯ КНОПКА - переход к избранным вопросам */}
+          <Button
+            startIcon={<FavoriteIcon />}
+            onClick={() => navigate('/favorites')}
+            sx={{
+              borderRadius: 2,
+              backgroundColor: alpha(NEUTRAL_COLORS.warning, 0.1),
+              color: NEUTRAL_COLORS.warning,
+              border: `2px solid ${alpha(NEUTRAL_COLORS.warning, 0.3)}`,
+              px: 3,
+              py: 1,
+              fontWeight: 600,
+              '&:hover': {
+                backgroundColor: alpha(NEUTRAL_COLORS.warning, 0.2),
+                borderColor: alpha(NEUTRAL_COLORS.warning, 0.6),
+                transform: 'translateY(-1px)',
+                boxShadow: `0 4px 12px ${alpha(NEUTRAL_COLORS.warning, 0.2)}`,
+              },
+              transition: 'all 0.2s',
+            }}
+            variant="outlined"
+          >
+            Избранные вопросы
           </Button>
         </Stack>
 

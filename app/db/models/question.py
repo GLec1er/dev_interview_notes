@@ -135,10 +135,23 @@ class Question(Base):
         cascade="all, delete-orphan",
         lazy="dynamic"
     )
+
+    favorites: Mapped[list["QuestionFavorite"]] = relationship(
+        "QuestionFavorite",
+        back_populates="question",
+        cascade="all, delete-orphan",
+        lazy="dynamic"
+    )
     
     # Association proxy для прямого доступа к пользователям
     completed_by_users = association_proxy(
         'completions', 
+        'user'
+    )
+
+    # Association proxy для прямого доступа к пользователям
+    favorited_by_users = association_proxy(
+        'favorites', 
         'user'
     )
 
@@ -384,5 +397,82 @@ class QuestionCompletion(Base):
             'user_id',
             'question_id',
             postgresql_where=user_id.is_not(None)
+        ),
+    )
+
+
+class QuestionFavorite(Base):
+    """Модель добавления вопросов в избранное пользователями."""
+
+    __tablename__ = "question_favorites"
+
+    ############# Main fields #############
+    id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4,
+        comment="Уникальный идентификатор записи"
+    )
+    user_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+        comment="ID пользователя"
+    )
+    question_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("questions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+        comment="ID вопроса"
+    )
+    
+    ############# Metadata #############
+    added_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+        index=True,
+        comment="Дата и время добавления в избранное"
+    )
+    
+    ############# Relationships #############
+    user: Mapped["User"] = relationship(
+        "User",
+        back_populates="favorite_questions",
+        lazy="joined"
+    )
+    question: Mapped["Question"] = relationship(
+        "Question",
+        back_populates="favorites",
+        lazy="joined"
+    )
+
+    __table_args__ = (
+        # Уникальная комбинация пользователь-вопрос
+        UniqueConstraint(
+            'user_id', 
+            'question_id', 
+            name='uq_user_question_favorite'
+        ),
+        # Индекс для быстрого поиска по пользователю
+        Index(
+            'idx_favorites_user_added_at',
+            'user_id',
+            'added_at'
+        ),
+        # Индекс для быстрого подсчета избранных вопросов
+        Index(
+            'idx_favorites_question_count',
+            'question_id',
+            'added_at'
+        ),
+        # Комбинированный индекс для частых запросов
+        Index(
+            'idx_favorites_user_question',
+            'user_id',
+            'question_id',
+            unique=True  # Дублирует UniqueConstraint, но улучшает производительность
         ),
     )

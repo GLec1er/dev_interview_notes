@@ -12,6 +12,7 @@ import { QuestionsPage } from './pages/QuestionsPage';
 import { QuestionDetailPage } from './pages/QuestionDetailPage';
 import { AdminPage } from './pages/AdminPage';
 import { UserProfilePage } from './pages/UserProfilePage';
+import { FavoritesPage } from './pages/FavoritesPage';
 
 const theme = createTheme({
   palette: {
@@ -173,6 +174,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <UserProfilePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/favorites"
+                  element={
+                    <ProtectedRoute>
+                      <FavoritesPage />
                     </ProtectedRoute>
                   }
                 />

@@ -18,6 +18,7 @@ from app.routers.category import router as category_router
 from app.routers.auth import router as auth_router
 from app.routers.users import router as users_router
 from app.routers.question_completion import router as question_completion_router
+from app.routers.question_favorite import router as question_favorite_router
 
 
 @asynccontextmanager
@@ -54,6 +55,7 @@ app.include_router(question_router)
 app.include_router(answer_router)
 app.include_router(category_router)
 app.include_router(question_completion_router)
+app.include_router(question_favorite_router)
 app.include_router(auth_router)
 app.include_router(users_router)
 

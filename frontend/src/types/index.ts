@@ -161,3 +161,18 @@ export interface QuestionSort {
   sort_by?: string;
   order?: 'asc' | 'desc';
 }
+
+
+export interface FavoriteItem {
+  favorite_id: string;
+  question_id: string;
+  question_title: string;
+  question_difficulty: string;
+  user_id: string;
+  added_at: string;
+}
+
+export interface FavoritesResponse {
+  items: FavoriteItem[];
+  total: number;
+}

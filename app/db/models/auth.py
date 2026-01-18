@@ -16,7 +16,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime
 from enum import Enum
 
-from app.db.models.question import Base, QuestionCompletion
+from app.db.models.question import Base, QuestionCompletion, QuestionFavorite
 
 
 class UserRole(str, Enum):
@@ -118,8 +118,20 @@ class User(Base):
         lazy="dynamic"  # Для пагинации
     )
 
+    favorite_questions: Mapped[list["QuestionFavorite"]] = relationship(
+        "QuestionFavorite",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="dynamic", # Для пагинации
+    )
+
     # Association proxy для прямого доступа к вопросам
     completed_question_objects = association_proxy(
         'completed_questions', 
-        'question'
+        'question',
+    )
+
+    favorite_question_objects = association_proxy(
+        'favorite_questions', 
+        'question',
     )

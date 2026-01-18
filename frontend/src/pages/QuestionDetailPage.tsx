@@ -38,6 +38,7 @@ import { questionService } from '../services/questionService';
 import { answerService } from '../services/answerService';
 import { categoryService } from '../services/categoryService';
 import { questionCompletionService } from '../services/questionCompletionService';
+import { favoriteService } from '../services/favoriteService';
 import { ContentRenderer } from '../components/ContentRenderer';
 import type { Question, Answer, Category } from '../types';
 
@@ -375,22 +376,29 @@ export const QuestionDetailPage: React.FC = () => {
     );
   };
 
-  const handleBookmarkToggle = () => {
-    const bookmarks = JSON.parse(localStorage.getItem('questionBookmarks') || '[]');
-    let newBookmarks;
+  const handleBookmarkToggle = async () => {
+    if (!questionId) return;
+
+    try {
+      let response;
+      if (isBookmarked) {
+        response = await favoriteService.removeFromFavorites(questionId);
+        setIsBookmarked(false);
+        setShowCopyNotification('Удалено из избранного');
+      } else {
+        response = await favoriteService.addToFavorites(questionId);
+        setIsBookmarked(true);
+        setShowCopyNotification('Добавлено в избранное');
+      }
     
-    if (isBookmarked) {
-      newBookmarks = bookmarks.filter((id: string) => id !== questionId);
-    } else {
-      newBookmarks = [...bookmarks, questionId];
+      setIsBookmarked(!isBookmarked);
+      
+      setTimeout(() => setShowCopyNotification(null), 2000);
+    } catch (err) {
+      console.error('Failed to toggle favorite:', err);
+      setShowCopyNotification('Ошибка при обновлении избранного');
+      setTimeout(() => setShowCopyNotification(null), 2000);
     }
-    
-    localStorage.setItem('questionBookmarks', JSON.stringify(newBookmarks));
-    setIsBookmarked(!isBookmarked);
-    
-    // Показываем уведомление
-    setShowCopyNotification(isBookmarked ? 'Удалено из закладок' : 'Добавлено в закладки');
-    setTimeout(() => setShowCopyNotification(null), 2000);
   };
 
   const handleShareQuestion = () => {
@@ -431,12 +439,16 @@ export const QuestionDetailPage: React.FC = () => {
     }
   };
 
-  // Загружаем статус выполнения при загрузке вопроса
+  // Загружаем статус выполнения и избранного при загрузке вопроса
   useEffect(() => {
     if (questionId) {
       questionCompletionService.isQuestionCompleted(questionId)
         .then(result => setIsCompleted(result.is_completed))
         .catch(err => console.error('Failed to check completion status:', err));
+
+      favoriteService.isFavorite(questionId)
+        .then(result => setIsBookmarked(result.is_favorited))
+        .catch(err => console.error('Failed to check favorite status:', err));
     }
   }, [questionId]);
 

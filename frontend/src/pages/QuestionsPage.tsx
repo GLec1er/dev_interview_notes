@@ -112,6 +112,7 @@ const EnhancedStatCard: React.FC<EnhancedStatCardProps> = ({
       elevation={0}
       onClick={onClick}
       sx={{
+        minWidth: 250,
         p: 3,
         borderRadius: 3,
         border: `2px solid ${alpha(color, isActive ? 0.6 : 0.2)}`,
