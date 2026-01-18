@@ -8,12 +8,11 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.db.models.question import Category, Question
+from app.db.models.question import Question
 from app.core.loggers import log
 from app.repositories.base import BaseRepository
-from app.repositories.category import CategoryRepository
 from app.schemas.base import PaginationParams
-from app.schemas.question import QuestionCreate, QuestionResponse,QuestionUpdate, QuestionFilterParams, QuestionSortParams
+from app.schemas.question import QuestionCreate,QuestionUpdate, QuestionFilterParams, QuestionSortParams
 
 
 class QuestionRepository(

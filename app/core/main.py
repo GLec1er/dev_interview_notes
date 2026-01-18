@@ -9,7 +9,7 @@ from sqlalchemy import text
 
 from app.core.configs import settings
 from app.core.middleware import CookieAuthMiddleware
-from app.db.models.question import Base
+from app.db.models.base import Base
 from app.db.database import engine
 from app.core.loggers import log
 from app.routers.questions import router as question_router

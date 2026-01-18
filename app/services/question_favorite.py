@@ -5,7 +5,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.question import QuestionFavorite
+from app.db.models.question_utils import QuestionFavorite
 from app.repositories.question_favorite import QuestionFavoriteRepository
 from app.schemas.base import PaginationParams
 from app.core.loggers import log

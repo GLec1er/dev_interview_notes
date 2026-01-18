@@ -8,7 +8,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.db.models.question import QuestionFavorite, Question
+from app.db.models.question_utils import QuestionFavorite
 from app.core.loggers import log
 from app.repositories.base import BaseRepository
 from app.schemas.base import PaginationParams

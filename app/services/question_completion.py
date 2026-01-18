@@ -5,7 +5,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.question import QuestionCompletion
+from app.db.models.question_utils import QuestionCompletion
 from app.repositories.question_completion import QuestionCompletionRepository
 from app.schemas.base import PaginationParams
 from app.core.loggers import log

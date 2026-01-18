@@ -4,7 +4,10 @@ from sqlalchemy import (
     TIMESTAMP, 
     Boolean,
     DateTime,
-    Integer, 
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric, 
     String, 
     Text, 
     func,
@@ -16,7 +19,8 @@ from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime
 from enum import Enum
 
-from app.db.models.question import Base, QuestionCompletion, QuestionFavorite
+from app.db.models.base import Base
+from app.db.models.question_utils import QuestionCompletion, QuestionFavorite
 
 
 class UserRole(str, Enum):

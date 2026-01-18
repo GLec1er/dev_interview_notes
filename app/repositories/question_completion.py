@@ -8,7 +8,8 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.db.models.question import QuestionCompletion, Question, Category
+from app.db.models.question import Question, Category
+from app.db.models.question_utils import QuestionCompletion
 from app.core.loggers import log
 from app.repositories.base import BaseRepository
 from app.schemas.base import PaginationParams
