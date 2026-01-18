@@ -23,6 +23,7 @@ python-jose = "^3.5.0"
 pydantic = "^2.12.5"
 email-validator = "^2.3.0"
 slowapi = "^0.1.9"
+aiosmtplib = "^3.0.0"
 
 [build-system]
 requires = ["poetry-core"]

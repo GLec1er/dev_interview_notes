@@ -17,9 +17,11 @@ from app.schemas.user import (
     UserLogin,
     UserMe,
     UserUpdate,
+    ForgotPasswordRequest,
+    ForgotPasswordResponse,
 )
 from app.core.loggers import log
-from app.core.configs.init import settings
+from app.core.configs import settings
 from app.services.auth import set_cookies, CurrentActiveUser
 from app.services.user import AuthService
 
@@ -311,4 +313,42 @@ async def update_profile(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Profile update failed",
+        )
+
+
+@router.post(
+    "/forgot-password",
+    status_code=status.HTTP_200_OK,
+    response_model=ForgotPasswordResponse,
+    summary="Восстановление пароля",
+    description="Отправляет новый пароль на указанный email адрес",
+)
+@limiter.limit("3/minute")  # 3 попытки в минуту
+async def forgot_password(
+    forgot_data: ForgotPasswordRequest,
+    session: SessionDep,
+    request: Request,
+):
+    """
+    Восстановление пароля по email.
+    """
+    try:
+        service = AuthService.from_session(session)
+        result = await service.forgot_password(forgot_data.email)
+        
+        log.info(f"✅ Запрос восстановления пароля для: {forgot_data.email[:10]}...")
+        
+        return result
+        
+    except ValueError as e:
+        log.warning(f"⚠️ Ошибка при восстановлении пароля: {str(e)[:50]}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+    except Exception as e:
+        log.error(f"❌ Неожиданная ошибка восстановления пароля: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Password recovery failed",
         )

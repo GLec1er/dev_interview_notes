@@ -6,7 +6,7 @@ from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer, HTTPBearer
 from fastapi import HTTPException, status
 
-from app.core.configs.init import settings
+from app.core.configs import settings
 from app.schemas.user import Token
 
 # Конфигурация

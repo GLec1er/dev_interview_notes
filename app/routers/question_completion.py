@@ -11,7 +11,7 @@ from app.schemas.question_completion import CategoryCompletionStats, CategoryCom
 from app.services.auth import CurrentActiveUser
 from app.services.question_completion import QuestionCompletionService
 from app.core.loggers import log
-from app.core.configs.init import settings
+from app.core.configs import settings
 
 
 router = APIRouter(

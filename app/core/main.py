@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from app.core.configs.init import settings
+from app.core.configs import settings
 from app.core.middleware import CookieAuthMiddleware
 from app.db.models.question import Base
 from app.db.database import engine

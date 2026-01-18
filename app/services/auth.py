@@ -5,7 +5,7 @@ from app.db.database import SessionDep
 from app.db.models.auth import User
 from app.core.auth import oauth2_scheme, security
 from app.repositories.user import UserRepository
-from app.core.configs.init import settings
+from app.core.configs import settings
 
 
 async def set_cookies(

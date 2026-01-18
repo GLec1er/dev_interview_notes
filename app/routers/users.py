@@ -11,7 +11,7 @@ from app.schemas.base import PaginationParams
 from app.schemas.user import UserAdminBase, UserUpdate, UserBase, UserUpdateAdminBase
 from app.services.auth import CurrentActiveUser
 from app.core.loggers import log
-from app.core.configs.init import settings
+from app.core.configs import settings
 
 
 router = APIRouter(

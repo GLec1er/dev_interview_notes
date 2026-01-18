@@ -17,7 +17,7 @@ from app.schemas.answer import (
     AnswerUpdateResponse,
 )
 from app.core.loggers import log
-from app.core.configs.init import settings
+from app.core.configs import settings
 
 
 router = APIRouter(

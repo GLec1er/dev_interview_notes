@@ -10,7 +10,7 @@ from app.db.models.auth import User
 from app.schemas.user import UserCreate, UserUpdate
 from app.repositories.base import BaseRepository
 from app.core.loggers import log
-from app.core.configs.init import settings
+from app.core.configs import settings
 
 
 class UserRepository(
@@ -186,4 +186,34 @@ class UserRepository(
             
         except SQLAlchemyError as e:
             log.error(f"❌ Ошибка при обновлении времени входа: {e}")
+            raise
+    
+    async def update_password(self, user_id: UUID, hashed_password: str) -> None:
+        """
+        Обновить пароль пользователя.
+        
+        Args:
+            user_id: ID пользователя
+            hashed_password: Хешированный пароль
+        """
+        try:
+            stmt = (
+                update(User)
+                .where(User.id == user_id)
+                .values(
+                    password=hashed_password,
+                    updated_at=func.now(),
+                    # Сбрасываем попытки входа при изменении пароля
+                    failed_login_attempts=0,
+                    locked_until=None,
+                )
+            )
+            await self.session.execute(stmt)
+            await self.session.flush()
+            await self.session.commit()
+            log.info(f"✅ Пароль обновлен для пользователя: {user_id}")
+            
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            log.error(f"❌ Ошибка при обновлении пароля: {e}")
             raise

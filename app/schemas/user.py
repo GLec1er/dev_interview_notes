@@ -3,7 +3,7 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import ClassVar, Optional
 from uuid import UUID
 
-from app.core.configs.init import settings
+from app.core.configs import settings
 from app.db.models.auth import UserRole
 
 
@@ -260,4 +260,25 @@ class UserUpdateAdminBase(BaseModel):
     email_verified: bool = Field(
         False, 
         description="Подтвержден ли email",
+    )
+
+
+# ==================== Forgot Password Schema ====================
+class ForgotPasswordRequest(BaseModel):
+    """Схема для запроса восстановления пароля."""
+    email: EmailStr = Field(
+        ...,
+        description="Email пользователя для восстановления пароля"
+    )
+
+
+class ForgotPasswordResponse(BaseModel):
+    """Схема для ответа восстановления пароля."""
+    message: str = Field(
+        ...,
+        description="Сообщение об операции"
+    )
+    email: str = Field(
+        ...,
+        description="Email, на который было отправлено письмо"
     )

@@ -16,7 +16,7 @@ from app.schemas.question import (
     QuestionResponse,
 )
 from app.core.loggers import log
-from app.core.configs.init import settings
+from app.core.configs import settings
 
 
 router = APIRouter(

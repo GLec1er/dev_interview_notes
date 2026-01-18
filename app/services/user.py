@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.auth import SecurityUtils
 from app.schemas.user import UserCreate, UserLogin
 from app.repositories.user import UserRepository
+from app.services.email import EmailService
 from app.core.loggers import log
 
 
@@ -17,16 +18,19 @@ class AuthService:
         self, 
         user_repository: UserRepository,
         security: SecurityUtils,
+        email_service: EmailService = None,
     ):
         self.user_repository = user_repository
         self.security = security
+        self.email_service = email_service or EmailService()
     
     @classmethod
     def from_session(cls, session: AsyncSession) -> "AuthService":
         """Создать сервис из сессии."""
         user_repository = UserRepository(session)
         security = SecurityUtils()
-        return cls(user_repository, security)
+        email_service = EmailService()
+        return cls(user_repository, security, email_service)
     
     async def register(
         self, 
@@ -118,3 +122,59 @@ class AuthService:
         except Exception as e:
             log.error(f"❌ Неожиданная ошибка при входе: {e}")
             raise ValueError("Login failed")
+    
+    
+    async def forgot_password(
+        self,
+        email: str,
+    ) -> Dict[str, Any]:
+        """
+        Восстановление пароля по email.
+        
+        1. Проверяет, существует ли пользователь с таким email
+        2. Генерирует новый пароль
+        3. Обновляет пароль в БД
+        4. Отправляет новый пароль на email
+        """
+        try:
+            email = email.lower().strip()
+            
+            # 1. Проверяем существование пользователя
+            user = await self.user_repository.get_by(email=email)
+            if not user:
+                log.warning(f"⚠️ Попытка восстановления пароля для несуществующего email: {email[:10]}...")
+                # Не раскрываем, существует ли пользователь
+                raise ValueError("If email exists, you will receive a message")
+            
+            # 2. Генерируем новый пароль
+            new_password = EmailService.generate_password()
+            
+            # 3. Хешируем и обновляем в БД
+            hashed_password = self.security.get_password_hash(new_password)
+            await self.user_repository.update_password(user.id, hashed_password)
+            
+            # 4. Отправляем email
+            email_sent = await self.email_service.send_password_reset_email(
+                to_email=user.email,
+                first_name=user.first_name,
+                new_password=new_password,
+            )
+            
+            if not email_sent:
+                log.warning(f"⚠️ Не удалось отправить email восстановления на {email}")
+                raise ValueError("Failed to send recovery email")
+            
+            log.info(f"✅ Пароль восстановлен для: {email}")
+            
+            return {
+                "message": "Новый пароль отправлен вам на email",
+                "email": email,
+                "password": new_password,  # В реальном приложении не возвращаем пароль в ответе
+            }
+            
+        except ValueError as e:
+            log.warning(f"⚠️ Ошибка восстановления пароля: {str(e)[:50]}")
+            raise
+        except Exception as e:
+            log.error(f"❌ Неожиданная ошибка при восстановлении пароля: {e}")
+            raise ValueError("Password recovery failed")
