@@ -41,6 +41,23 @@ services:
       - .:/app
     command: uvicorn app.core.main:app --host 0.0.0.0 --port 8888 --reload
 
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: frontend
+    ports:
+      - "5173:5173"
+    networks:
+      - interview_network
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8888/api/v1
+
+    command: yarn dev --host 0.0.0.0
+
   # api_migrations:
   #   container_name: interview_notes_api_migrations
   #   build:
