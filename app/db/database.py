@@ -2,7 +2,6 @@
 
 from typing import Annotated, AsyncIterator
 from contextlib import asynccontextmanager
-
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import (
     create_async_engine,
