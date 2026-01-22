@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
       POSTGRES_DB: ${DB_NAME:-interview_notes}
     ports:
-      - "5454:5432"
+      - "5454:5432"  # Оставляем для доступа извне, убрать в продакшене
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -30,8 +30,8 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
       DB_NAME: ${DB_NAME:-interview_notes}
       PYTHONUNBUFFERED: 1
-    ports:
-      - "8888:8888"
+    expose:
+      - "8888"  # Делаем порт доступным только внутри сети
     depends_on:
       db:
         condition: service_healthy
@@ -46,16 +46,15 @@ services:
       context: .
       dockerfile: Dockerfile.frontend
     container_name: frontend
-    ports:
-      - "5173:5173"
+    expose:
+      - "5173"  # Делаем порт доступным только внутри сети
     networks:
       - interview_network
     volumes:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      - VITE_API_URL=http://localhost:8888/api/v1
-
+      - VITE_API_URL=/api/v1
     command: yarn dev --host 0.0.0.0
 
   # api_migrations:
@@ -67,6 +66,23 @@ services:
   #   depends_on:
   #     db:
   #       condition: service_healthy
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"  # Для HTTPS
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/ssl:/etc/nginx/ssl  # Для SSL сертификатов
+      - ./nginx/logs:/var/log/nginx
+    depends_on:
+      - api
+      - frontend
+    networks:
+      - interview_network
 
 volumes:
   postgres_data:
