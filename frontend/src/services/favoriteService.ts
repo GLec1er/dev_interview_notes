@@ -23,7 +23,7 @@ export const favoriteService = {
     sortBy: string = 'added_at',
     sortDir: string = 'desc',
   ): Promise<FavoritesResponse> {
-    const response = await api.get('/questions/favorites/list/', {
+    const response = await api.get('/questions/favorites/list', {
       params: {
         page_number: pageNumber,
         limit: limit,
