@@ -945,6 +945,18 @@ pycryptodome = ["pycryptodome (>=3.3.1,<4.0.0)"]
 test = ["pytest", "pytest-cov"]
 
 [[package]]
+name = "python-multipart"
+version = "0.0.21"
+description = "A streaming multipart parser for Python"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "python_multipart-0.0.21-py3-none-any.whl", hash = "sha256:cf7a6713e01c87aa35387f4774e812c4361150938d20d232800f75ffcf266090"},
+    {file = "python_multipart-0.0.21.tar.gz", hash = "sha256:7137ebd4d3bbf70ea1622998f902b97a29434a9e8dc40eb203bbcf7c2a2cba92"},
+]
+
+[[package]]
 name = "python-slugify"
 version = "8.0.4"
 description = "A Python slugify application that also handles Unicode"
@@ -1740,4 +1752,4 @@ dev = ["pytest", "setuptools"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "41425315a9192de5704434142629b9f17c75bf583029d40b25763fef405cbf84"
+content-hash = "88aff0aa874117148f2b3163b76615090b72285563938711c5e41423471bd100"

@@ -162,43 +162,9 @@ class EmailService:
             </html>
             """
             
-            # Текстовая версия письма (для клиентов без поддержки HTML)
-            text_content = f"""
-            ВОССТАНОВЛЕНИЕ ПАРОЛЯ - INTERVIEWBOX
-            {'=' * 50}
-
-            Привет, {first_name}!
-
-            Был выполнен запрос на восстановление пароля для вашего аккаунта.
-            Используйте новый пароль ниже для входа в систему.
-
-            {'=' * 50}
-            ВАШ НОВЫЙ ПАРОЛЬ:
-            {new_password}
-            {'=' * 50}
-
-            ВАЖНО:
-            После входа в систему рекомендуется сменить пароль в разделе 
-            «Настройки профиля» на более запоминающийся.
-
-            Ссылка для входа: {self.email_settings.frontend_base_url}/login
-
-            {'=' * 50}
-
-            Не вы запрашивали восстановление?
-            Пожалуйста, проигнорируйте это письмо или свяжитесь с нашей службой поддержки.
-
-            {'=' * 50}
-
-            InterviewBox — платформа для подготовки к собеседованиям
-            © {datetime.now().year} InterviewBox. Все права защищены.
-            """
-            
             # Добавляем обе версии
-            part1 = MIMEText(text_content, "plain")
-            part2 = MIMEText(html_content, "html")
-            message.attach(part1)
-            message.attach(part2)
+            part = MIMEText(html_content, "html")
+            message.attach(part)
 
             # Создаем SSL контекст без проверки сертификатов
             ssl_context = ssl.create_default_context()

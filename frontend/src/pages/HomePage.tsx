@@ -249,6 +249,7 @@ const CategoryCard = memo(({ category, onClick }: {
       <Card
         sx={{
           height: '100%',
+          minWidth: 180,
           background: NEUTRAL_COLORS.surface,
           border: `1px solid ${NEUTRAL_COLORS.border}`,
           borderRadius: 2,
@@ -342,7 +343,7 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose, isGues
   const [expandedQuestions, setExpandedQuestions] = useState<string[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const getDifficultyByLevel = (level: 'beginner' | 'intermediate' | 'expert') => {
+  const getDifficultyByLevel = (level: 'beginner' | 'intermediate' | 'expert'): string => {
     switch (level) {
       case 'beginner':
         return 'easy';
@@ -356,194 +357,548 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose, isGues
   };
 
   const loadRandomQuestions = useCallback(async (level: 'beginner' | 'intermediate' | 'expert') => {
-    try {
-      setIsLoading(true);
-      const difficulty = getDifficultyByLevel(level);
-      
-      if (isGuestMode) {
-        // Статичные вопросы для гостей
-        const staticQuestions: Question[] = [
+  try {
+    setIsLoading(true);
+    const difficulty = getDifficultyByLevel(level);
+    
+    if (isGuestMode) {
+      // Статичные вопросы для гостей - ОТДЕЛЬНО ДЛЯ КАЖДОГО УРОВНЯ
+      const allStaticQuestions: Record<string, Question[]> = {
+        // EASY - Python (для beginner)
+        easy: [
           {
-            id: 'guest-1',
-            title: 'Что такое замыкание (closure) в JavaScript?',
+            id: 'python-easy-1',
+            title: 'В чем разница между списком (list) и кортежем (tuple) в Python?',
             content: [
               {
                 type: 'paragraph',
-                data: { text: 'Объясните, что такое замыкание в JavaScript и приведите пример его использования.' }
-              },
-              {
-                type: 'info',
-                data: { text: 'Это фундаментальное понятие в JavaScript, которое часто спрашивают на собеседованиях.' }
-              }
-            ],
-            difficulty: 'medium',
-            category_name: 'JavaScript'
-          },
-          {
-            id: 'guest-2',
-            title: 'В чем разница между REST и GraphQL?',
-            content: [
-              {
-                type: 'paragraph',
-                data: { text: 'Опишите основные различия между REST API и GraphQL. В каких случаях лучше использовать каждый из подходов?' }
-              }
-            ],
-            difficulty: 'medium',
-            category_name: 'System Design'
-          },
-          {
-            id: 'guest-3',
-            title: 'Что такое Big O notation?',
-            content: [
-              {
-                type: 'paragraph',
-                data: { text: 'Объясните концепцию Big O notation и приведите примеры O(1), O(n), O(n²).' }
+                data: { 
+                  text: 'Опишите основные различия между списками и кортежами в Python. Когда следует использовать каждый из них?' 
+                }
               }
             ],
             difficulty: 'easy',
-            category_name: 'Algorithms'
-          }
-        ];
-        
-        setQuestions(staticQuestions);
-        
-        // Статичные ответы для демо
-        const staticAnswers: Record<string, Answer> = {
-          'guest-1': {
-            content: [
-              {
-                type: 'paragraph',
-                data: { 
-                  text: 'Замыкание (closure) в JavaScript — это функция, которая запоминает переменные из своей внешней области видимости, даже после того, как внешняя функция завершила выполнение.' 
-                }
-              },
-              {
-                type: 'paragraph',
-                data: { 
-                  text: 'Пример использования замыкания для создания приватных переменных:' 
-                }
-              },
-              {
-                type: 'code',
-                data: {
-                  language: 'javascript',
-                  code: `function createCounter() {\n  let count = 0;\n  return function() {\n    count++;\n    return count;\n  };\n}\n\nconst counter = createCounter();\nconsole.log(counter()); // 1\nconsole.log(counter()); // 2\n// Переменная count недоступна извне` 
-                }
-              }
-            ],
-            is_published: true
+            category_name: 'Python'
           },
-          'guest-2': {
+          {
+            id: 'python-easy-2',
+            title: 'Что такое список (list comprehension) и как его использовать?',
             content: [
               {
                 type: 'paragraph',
                 data: { 
-                  text: 'Основные различия между REST и GraphQL:' 
-                }
-              },
-              {
-                type: 'paragraph',
-                data: { 
-                  text: '1. REST имеет фиксированную структуру эндпоинтов, GraphQL использует единую точку входа' 
-                }
-              },
-              {
-                type: 'paragraph',
-                data: { 
-                  text: '2. REST может возвращать лишние данные, GraphQL позволяет запрашивать только нужные поля' 
-                }
-              },
-              {
-                type: 'paragraph',
-                data: { 
-                  text: '3. GraphQL уменьшает количество запросов к серверу' 
+                  text: 'Объясните концепцию list comprehension в Python и приведите пример создания нового списка с его помощью.' 
                 }
               }
             ],
-            is_published: true
+            difficulty: 'easy',
+            category_name: 'Python'
           },
-          'guest-3': {
+          {
+            id: 'python-easy-3',
+            title: 'Как работает оператор "with" в Python?',
             content: [
               {
                 type: 'paragraph',
                 data: { 
-                  text: 'Big O notation описывает скорость работы алгоритма в худшем случае.' 
-                }
-              },
-              {
-                type: 'paragraph',
-                data: { 
-                  text: 'Примеры:' 
-                }
-              },
-              {
-                type: 'code',
-                data: {
-                  language: 'javascript',
-                  code: `// O(1) - постоянное время\nfunction getFirstElement(arr) {\n  return arr[0];\n}\n\n// O(n) - линейное время\nfunction findElement(arr, target) {\n  for (let i = 0; i < arr.length; i++) {\n    if (arr[i] === target) return i;\n  }\n  return -1;\n}\n\n// O(n²) - квадратичное время\nfunction bubbleSort(arr) {\n  for (let i = 0; i < arr.length; i++) {\n    for (let j = 0; j < arr.length - 1; j++) {\n      if (arr[j] > arr[j + 1]) {\n        [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];\n      }\n    }\n  }\n  return arr;\n}` 
+                  text: 'Что такое контекстные менеджеры в Python и как оператор "with" помогает в работе с ресурсами?' 
                 }
               }
             ],
-            is_published: true
+            difficulty: 'easy',
+            category_name: 'Python'
           }
-        };
+        ],
         
-        setAnswers(staticAnswers);
-        setIsLoading(false);
-        return;
-      }
+        // MEDIUM - Python (для intermediate)
+        medium: [
+          {
+            id: 'python-medium-1',
+            title: 'Что такое декораторы в Python и как они работают?',
+            content: [
+              {
+                type: 'paragraph',
+                data: { 
+                  text: 'Объясните концепцию декораторов в Python. Как создать собственный декоратор и для чего они используются?' 
+                }
+              }
+            ],
+            difficulty: 'medium',
+            category_name: 'Python'
+          },
+          {
+            id: 'python-medium-2',
+            title: 'В чем разница между @staticmethod, @classmethod и обычными методами?',
+            content: [
+              {
+                type: 'paragraph',
+                data: { 
+                  text: 'Опишите различия между статическими методами, методами класса и обычными методами в классах Python.' 
+                }
+              }
+            ],
+            difficulty: 'medium',
+            category_name: 'Python'
+          },
+          {
+            id: 'python-medium-3',
+            title: 'Что такое GIL (Global Interpreter Lock) в Python?',
+            content: [
+              {
+                type: 'paragraph',
+                data: { 
+                  text: 'Объясните, что такое Global Interpreter Lock, как он влияет на многопоточность в Python и какие есть способы обхода его ограничений.' 
+                }
+              }
+            ],
+            difficulty: 'medium',
+            category_name: 'Python'
+          }
+        ],
+        
+        // HARD - Python (для expert)
+        hard: [
+          {
+            id: 'python-hard-1',
+            title: 'Как работает garbage collection в Python?',
+            content: [
+              {
+                type: 'paragraph',
+                data: { 
+                  text: 'Опишите механизм сборки мусора в Python. Как работает алгоритм подсчета ссылок и циклический сборщик мусора?' 
+                }
+              }
+            ],
+            difficulty: 'hard',
+            category_name: 'Python'
+          },
+          {
+            id: 'python-hard-2',
+            title: 'Что такое метаклассы в Python и когда их использовать?',
+            content: [
+              {
+                type: 'paragraph',
+                data: { 
+                  text: 'Объясните концепцию метаклассов в Python. Как они работают и в каких реальных сценариях их применение оправдано?' 
+                }
+              }
+            ],
+            difficulty: 'hard',
+            category_name: 'Python'
+          },
+          {
+            id: 'python-hard-3',
+            title: 'Как реализованы словари (dict) в Python на низком уровне?',
+            content: [
+              {
+                type: 'paragraph',
+                data: { 
+                  text: 'Опишите внутреннюю реализацию словарей в CPython. Как работает хеширование, разрешение коллизий и почему словари так эффективны?' 
+                }
+              }
+            ],
+            difficulty: 'hard',
+            category_name: 'Python'
+          }
+        ]
+      };
       
-      const allQuestions = await questionService.getQuestions(
-        1,
-        100,
-        true,
-        difficulty,
-        undefined,
-        undefined,
-        undefined,
-        true,
-      );
+      // Берем только вопросы нужной сложности
+      const questionsForLevel = allStaticQuestions[difficulty] || [];
+      setQuestions(questionsForLevel);
       
-      if (allQuestions.items.length === 0) {
-        throw new Error(`No ${difficulty} questions available`);
-      }
-      
-      const shuffled = [...allQuestions.items].sort(() => Math.random() - 0.5);
-      const selectedQuestions = shuffled.slice(0, 5).map(q => ({
-        id: q.id,
-        title: q.title,
-        content: q.content || [],
-        difficulty: q.difficulty,
-      }));
-      
-      setQuestions(selectedQuestions);
-      
-      const answersData: Record<string, Answer> = {};
-      for (const question of selectedQuestions) {
-        try {
-          const answerResponse = await answerService.getAnswers(question.id);
-          if (answerResponse && answerResponse.length > 0) {
-            const publishedAnswer = answerResponse.find(a => a.is_published);
-            if (publishedAnswer) {
-              answersData[question.id] = {
-                content: publishedAnswer.content || [],
-                is_published: true,
-              };
+      // Статичные ответы для демо - все в одном объекте
+      const allStaticAnswers: Record<string, Answer> = {
+        // EASY - Python ответы
+        'python-easy-1': {
+          content: [
+            {
+              type: 'paragraph',
+              data: { 
+                text: 'Основные различия между списком и кортежем в Python:' 
+              }
+            },
+            {
+              type: 'paragraph',
+              data: { 
+                text: '1. **Мутабельность**: Списки изменяемы (mutable), кортежи неизменяемы (immutable)' 
+              }
+            },
+            {
+              type: 'paragraph',
+              data: { 
+                text: '2. **Синтаксис**: Списки используют квадратные скобки [], кортежи - круглые ()' 
+              }
+            },
+            {
+              type: 'code',
+              data: {
+                language: 'python',
+                code: `# Список (изменяемый)
+my_list = [1, 2, 3]
+my_list[0] = 10  # ОК
+
+# Кортеж (неизменяемый)
+my_tuple = (1, 2, 3)
+# my_tuple[0] = 10  # Ошибка!` 
+              }
             }
-          }
-        } catch (err) {
-          console.error(`Failed to load answer for question ${question.id}:`, err);
+          ],
+          is_published: true
+        },
+
+        'python-easy-2': {
+          content: [
+            {
+              type: 'paragraph',
+              data: { 
+                text: 'List comprehension - это лаконичный способ создания списков в Python.' 
+              }
+            },
+            {
+              type: 'code',
+              data: {
+                language: 'python',
+                code: `# Обычный способ
+squares = []
+for x in range(10):
+    squares.append(x**2)
+
+# List comprehension
+squares = [x**2 for x in range(10)]
+
+# С условием
+even_squares = [x**2 for x in range(10) if x % 2 == 0]
+
+# Вложенные циклы
+pairs = [(x, y) for x in range(3) for y in range(3)]` 
+              }
+            }
+          ],
+          is_published: true
+        },
+
+        'python-easy-3': {
+          content: [
+            {
+              type: 'paragraph',
+              data: { 
+                text: 'Оператор "with" используется для работы с контекстными менеджерами, которые обеспечивают корректное управление ресурсами.' 
+              }
+            },
+            {
+              type: 'code',
+              data: {
+                language: 'python',
+                code: `# Пример с файлом
+with open('file.txt', 'r') as f:
+    content = f.read()
+# Файл автоматически закрывается
+
+# Эквивалент без "with"
+f = open('file.txt', 'r')
+try:
+    content = f.read()
+finally:
+    f.close()` 
+              }
+            }
+          ],
+          is_published: true
+        },
+
+        // MEDIUM - Python ответы
+        'python-medium-1': {
+          content: [
+            {
+              type: 'paragraph',
+              data: { 
+                text: 'Декораторы - это функции, которые принимают другую функцию и расширяют ее поведение без изменения исходного кода.' 
+              }
+            },
+            {
+              type: 'code',
+              data: {
+                language: 'python',
+                code: `# Простой декоратор
+def timer_decorator(func):
+    def wrapper(*args, **kwargs):
+        import time
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        print(f"Функция {func.__name__} выполнена за {end-start:.2f} сек")
+        return result
+    return wrapper
+
+@timer_decorator
+def slow_function():
+    import time
+    time.sleep(1)
+    return "Готово"
+
+# Использование с синтаксическим сахаром
+slow_function()` 
+              }
+            }
+          ],
+          is_published: true
+        },
+
+        'python-medium-2': {
+          content: [
+            {
+              type: 'paragraph',
+              data: { 
+                text: 'Различия между типами методов в классах Python:' 
+              }
+            },
+            {
+              type: 'code',
+              data: {
+                language: 'python',
+                code: `class MyClass:
+    def instance_method(self):
+        # Работает с экземпляром
+        return f"instance: {self}"
+    
+    @classmethod
+    def class_method(cls):
+        # Работает с классом, а не экземпляром
+        return f"class: {cls}"
+    
+    @staticmethod
+    def static_method():
+        # Не получает ни self, ни cls
+        return "static method"
+
+# Использование
+obj = MyClass()
+obj.instance_method()  # ОК
+MyClass.class_method()  # ОК
+MyClass.static_method()  # ОК` 
+              }
+            }
+          ],
+          is_published: true
+        },
+
+        'python-medium-3': {
+          content: [
+            {
+              type: 'paragraph',
+              data: { 
+                text: 'GIL (Global Interpreter Lock) - это мьютекс, который защищает доступ к объектам Python, предотвращая одновременное выполнение байткода несколькими нативными потоками.' 
+              }
+            },
+            {
+              type: 'paragraph',
+              data: { 
+                text: '**Влияние на многопоточность:**' 
+              }
+            },
+            {
+              type: 'paragraph',
+              data: { 
+                text: '1. В CPU-bound задачах многопоточность не дает прироста производительности' 
+              }
+            },
+            {
+              type: 'paragraph',
+              data: { 
+                text: '2. В IO-bound задачах многопоточность все еще эффективна' 
+              }
+            },
+            {
+              type: 'code',
+              data: {
+                language: 'python',
+                code: `# Способы обхода GIL:
+# 1. Мультипроцессинг
+from multiprocessing import Pool
+
+# 2. Использование C-расширений (numpy, pandas)
+# 3. Использование asyncio для IO-bound задач
+# 4. Использование PyPy или других интерпретаторов` 
+              }
+            }
+          ],
+          is_published: true
+        },
+
+        // HARD - Python ответы
+        'python-hard-1': {
+          content: [
+            {
+              type: 'paragraph',
+              data: { 
+                text: 'В Python используется комбинированный подход к сборке мусора:' 
+              }
+            },
+            {
+              type: 'paragraph',
+              data: { 
+                text: '1. **Reference counting (подсчет ссылок)**: Основной механизм, работает в реальном времени' 
+              }
+            },
+            {
+              type: 'code',
+              data: {
+                language: 'python',
+                code: `import sys
+
+x = []
+print(sys.getrefcount(x))  # Количество ссылок
+
+y = x  # Еще одна ссылка
+print(sys.getrefcount(x))  # Увеличится на 1` 
+              }
+            },
+            {
+              type: 'paragraph',
+              data: { 
+                text: '2. **Generational garbage collector (циклический сборщик)**: Обнаруживает и удаляет циклические ссылки' 
+              }
+            }
+          ],
+          is_published: true
+        },
+
+        'python-hard-2': {
+          content: [
+            {
+              type: 'paragraph',
+              data: { 
+                text: 'Метаклассы - это "классы классов", которые определяют поведение других классов.' 
+              }
+            },
+            {
+              type: 'code',
+              data: {
+                language: 'python',
+                code: `# Создание метакласса
+class SingletonMeta(type):
+    _instances = {}
+    
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super().__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+class Singleton(metaclass=SingletonMeta):
+    pass
+
+# Реальные сценарии использования:
+# 1. Регистрация классов
+# 2. Валидация атрибутов
+# 3. ORM (как в Django)
+# 4. Создание API` 
+              }
+            }
+          ],
+          is_published: true
+        },
+
+        'python-hard-3': {
+          content: [
+            {
+              type: 'paragraph',
+              data: { 
+                text: 'Словари в CPython реализованы как хеш-таблицы:' 
+              }
+            },
+            {
+              type: 'code',
+              data: {
+                language: 'python',
+                code: `# Внутренняя структура словаря (упрощенно)
+# До Python 3.6: массив записей
+# С Python 3.6: компактное представление:
+# - Индексированный массив entries (хранит hash, key, value)
+# - Массив индексов (хранит индексы в entries)
+
+# Хеширование
+print(hash("hello"))  # Хеш-значение ключа
+
+# Разрешение коллизий: открытая адресация
+# При коллизии ищется следующий свободный слот
+
+# Оптимизации:
+# 1. Быстрые lookups (в среднем O(1))
+# 2. Компактное хранение с Python 3.6+
+# 3. Сохранение порядка вставки с Python 3.7+` 
+              }
+            }
+          ],
+          is_published: true
         }
-      }
+      };
       
-      setAnswers(answersData);
-      setIsLoading(false);
+      // Фильтруем ответы, оставляя только для выбранных вопросов
+      const filteredAnswers: Record<string, Answer> = {};
+      questionsForLevel.forEach(question => {
+        if (allStaticAnswers[question.id]) {
+          filteredAnswers[question.id] = allStaticAnswers[question.id];
+        }
+      });
       
-    } catch (error) {
-      console.error('Failed to load questions:', error);
+      setAnswers(filteredAnswers);
       setIsLoading(false);
+      return;
     }
-  }, [isGuestMode]);
+    
+    // Остальной код для авторизованных пользователей остается без изменений
+    const allQuestions = await questionService.getQuestions(
+      1,
+      100,
+      true,
+      difficulty,
+      undefined,
+      undefined,
+      undefined,
+      true,
+    );
+    
+    if (allQuestions.items.length === 0) {
+      throw new Error(`No ${difficulty} questions available`);
+    }
+    
+    const shuffled = [...allQuestions.items].sort(() => Math.random() - 0.5);
+    const selectedQuestions = shuffled.slice(0, 5).map(q => ({
+      id: q.id,
+      title: q.title,
+      content: q.content || [],
+      difficulty: q.difficulty,
+    }));
+    
+    setQuestions(selectedQuestions);
+    
+    const answersData: Record<string, Answer> = {};
+    for (const question of selectedQuestions) {
+      try {
+        const answerResponse = await answerService.getAnswers(question.id);
+        if (answerResponse && answerResponse.length > 0) {
+          const publishedAnswer = answerResponse.find(a => a.is_published);
+          if (publishedAnswer) {
+            answersData[question.id] = {
+              content: publishedAnswer.content || [],
+              is_published: true,
+            };
+          }
+        }
+      } catch (err) {
+        console.error(`Failed to load answer for question ${question.id}:`, err);
+      }
+    }
+    
+    setAnswers(answersData);
+    setIsLoading(false);
+    
+  } catch (error) {
+    console.error('Failed to load questions:', error);
+    setIsLoading(false);
+  }
+}, [isGuestMode]);
 
   const handleLevelSelect = (level: 'beginner' | 'intermediate' | 'expert') => {
     setUserLevel(level);
@@ -1142,7 +1497,7 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose, isGues
                     }
                   }}
                 >
-                  Начать тест
+                  Вперед
                 </Button>
               </>
             )}
@@ -1989,7 +2344,7 @@ export const HomePage: React.FC = () => {
               <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                 <StatCard
                   title="Пользователей"
-                  value={users.length || "135"}
+                  value={users.length + 56 || "135"}
                   color={NEUTRAL_COLORS.warning}
                   icon={<PeopleIcon sx={{ fontSize: 32 }} />}
                 />
@@ -2665,7 +3020,6 @@ export const HomePage: React.FC = () => {
                     <Grid item xs={6} sm={4} md={2.4} key={category.id}>
                       <CategoryCard
                         category={category}
-                        onClick={() => handleCardClick(category)}
                       />
                     </Grid>
                   ))}

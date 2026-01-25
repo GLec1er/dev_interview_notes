@@ -1,13 +1,16 @@
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Form, HTTPException, Request, status
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app.core.authorizer import Permission, ResourceType, check_permission
 from app.db.database import SessionDep
 from app.db.models.auth import UserRole
 from app.repositories.user import UserRepository
 from app.schemas.base import PaginationParams
+from app.schemas.feedback import FeedbackResponse, FeedbackType
 from app.schemas.user import UserAdminBase, UserUpdate, UserBase, UserUpdateAdminBase
 from app.services.auth import CurrentActiveUser
 from app.core.loggers import log
@@ -18,6 +21,8 @@ router = APIRouter(
     prefix=f"{settings.app.api_prefix}/users",
     tags=["Users"],
 )
+
+limiter = Limiter(key_func=get_remote_address)
 
 
 class UserListResponse:
@@ -222,4 +227,61 @@ async def delete_user(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Ошибка при удалении пользователя",
+        )
+
+
+@router.post(
+    "/feedback",
+    response_model=FeedbackResponse,
+    description="Отправка отзыва или предложения по развитию сервиса",
+)
+@limiter.limit("2/minute")
+async def send_feedback(
+    request: Request,
+    current_user: CurrentActiveUser,
+    session: SessionDep,
+    feedback_type: FeedbackType = Form(...),
+    subject: str = Form("пусто"),
+    message: str = Form("пусто"),
+):
+    """Отправить отзыв или предложение по развитию сервиса.
+    
+    Args:
+        subject: Тема отзыва
+        message: Сообщение отзыва
+        feedback_type: Тип отзыва (bug report, feature request и т.д.)
+        
+    Returns:
+        Сообщение об успешной отправке
+        
+    Raises:
+        HTTPException: Если произошла ошибка при отправке
+    """
+    try:
+        from app.services.feedback import feedback_service
+
+        sent = await feedback_service.send_feedback(
+            name=current_user.first_name,
+            email=current_user.email,
+            subject=subject,
+            message=message,
+            feedback_type=feedback_type,
+        )
+        
+        if not sent:
+            log.error("❌ Ошибка при отправке отзыва")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Ошибка при отправке отзыва",
+            )
+        
+        return {"message": "Feedback sent successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        log.error(f"❌ Ошибка при отправке отзыва: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ошибка при отправке отзыва",
         )

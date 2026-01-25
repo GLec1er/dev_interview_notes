@@ -49,6 +49,7 @@ import {
 import { questionService } from '../services/questionService';
 import { categoryService } from '../services/categoryService';
 import { questionCompletionService } from '../services/questionCompletionService';
+import { FeedbackFab } from '../components/FeedbackFab';
 import type { Question, Category } from '../types';
 
 // Нейтральная цветовая палитра
@@ -2412,6 +2413,9 @@ export const QuestionsPage: React.FC = () => {
           </Box>
         </Box>
       </Container>
+
+      {/* Плавающая кнопка обратной связи */}
+      <FeedbackFab />
     </Box>
   );
 };
