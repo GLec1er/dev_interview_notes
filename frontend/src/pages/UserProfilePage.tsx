@@ -39,13 +39,10 @@ import {
   Speed as SpeedIcon,
   EmojiEvents as EmojiEventsIcon,
   Star as StarIcon,
-  StarBorder as StarBorderIcon,
   School as SchoolIcon,
   WorkspacePremium as TrophyIcon,
   AutoAwesome as SparklesIcon,
-  MilitaryTech as MedalIcon,
   Psychology as BrainIcon,
-  Whatshot as FireIcon,
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
   Favorite as FavoriteIcon,
@@ -71,7 +68,7 @@ const NEUTRAL_COLORS = {
   medium: '#D69E2E',
   hard: '#E53E3E',
   gold: '#D4AF37',
-  silver: '#C0C0C0',
+  silver: '#6b6b6bff',
   bronze: '#CD7F32',
 };
 
@@ -86,7 +83,7 @@ interface Achievement {
   target: number;
   unlocked: boolean;
   unlockedAt?: Date;
-  category?: 'progress' | 'category' | 'difficulty' | 'special';
+  category?: 'progress' | 'category' | 'difficulty';
 }
 
 // Компонент ачивки с фиксированной высотой
@@ -94,46 +91,28 @@ const AchievementCard: React.FC<{ achievement: Achievement }> = ({ achievement }
   <Paper
     elevation={0}
     sx={{
-      p: 2.5,
-      borderRadius: 3,
-      border: `2px solid ${achievement.unlocked ? alpha(achievement.color, 0.6) : alpha(NEUTRAL_COLORS.border, 0.3)}`,
-      backgroundColor: achievement.unlocked ? alpha(achievement.color, 0.05) : alpha(NEUTRAL_COLORS.background, 0.3),
+      p: 1.5,
+      borderRadius: 2,
+      border: `1.5px solid ${achievement.unlocked ? alpha(achievement.color, 0.5) : alpha(NEUTRAL_COLORS.border, 0.3)}`,
+      backgroundColor: achievement.unlocked ? alpha(achievement.color, 0.04) : alpha(NEUTRAL_COLORS.background, 0.3),
       position: 'relative',
       overflow: 'hidden',
       height: '100%',
-      minHeight: 280, // Фиксированная минимальная высота
+      minHeight: 180, // Уменьшенная высота
       display: 'flex',
       flexDirection: 'column',
-      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      transition: 'all 0.2s ease',
       '&:hover': {
-        transform: 'translateY(-4px)',
-        boxShadow: `0 12px 32px ${alpha(achievement.unlocked ? achievement.color : NEUTRAL_COLORS.accent, 0.15)}`,
-        borderColor: achievement.unlocked ? alpha(achievement.color, 0.8) : alpha(NEUTRAL_COLORS.accent, 0.4),
+        transform: 'translateY(-2px)',
+        boxShadow: `0 4px 12px ${alpha(achievement.unlocked ? achievement.color : NEUTRAL_COLORS.accent, 0.1)}`,
       },
     }}
   >
-    {/* Эффект свечения для разблокированных */}
-    {achievement.unlocked && (
-      <Box
-        sx={{
-          position: 'absolute',
-          top: -20,
-          right: -20,
-          width: 60,
-          height: 60,
-          borderRadius: '50%',
-          backgroundColor: alpha(achievement.color, 0.2),
-          filter: 'blur(10px)',
-          zIndex: 0,
-        }}
-      />
-    )}
-
-    {/* Иконка ачивки */}
+    {/* Иконка ачивки - уменьшенная */}
     <Box
       sx={{
         position: 'relative',
-        mb: 2,
+        mb: 1.5,
         display: 'flex',
         justifyContent: 'center',
         flexShrink: 0,
@@ -141,109 +120,106 @@ const AchievementCard: React.FC<{ achievement: Achievement }> = ({ achievement }
     >
       <Box
         sx={{
-          width: 64,
-          height: 64,
+          width: 48,
+          height: 48,
           borderRadius: '50%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: achievement.unlocked 
-            ? alpha(achievement.color, 0.15) 
-            : alpha(NEUTRAL_COLORS.textSecondary, 0.1),
-          border: `3px solid ${achievement.unlocked ? achievement.color : alpha(NEUTRAL_COLORS.textSecondary, 0.3)}`,
+          backgroundColor: achievement.unlocked
+            ? alpha(achievement.color, 0.1)
+            : alpha(NEUTRAL_COLORS.textSecondary, 0.08),
+          border: `2px solid ${achievement.unlocked ? achievement.color : alpha(NEUTRAL_COLORS.textSecondary, 0.3)}`,
           position: 'relative',
-          overflow: 'visible', // Изменено с hidden на visible
         }}
       >
         <Box
           sx={{
-            fontSize: 32,
+            fontSize: 22,
             color: achievement.unlocked ? achievement.color : NEUTRAL_COLORS.textSecondary,
-            filter: achievement.unlocked ? 'none' : 'grayscale(100%)',
           }}
         >
           {achievement.icon}
         </Box>
-        
-        {/* Индикатор разблокировки - исправленное позиционирование */}
+
+        {/* Индикатор разблокировки - уменьшенный */}
         {achievement.unlocked && (
           <Box
             sx={{
               position: 'absolute',
-              top: -6, // Смещено внутрь круга
-              right: -6, // Смещено внутрь круга
-              width: 28,
-              height: 28,
+              top: -4,
+              right: -4,
+              width: 20,
+              height: 20,
               borderRadius: '50%',
               backgroundColor: NEUTRAL_COLORS.gold,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              border: `3px solid ${achievement.unlocked ? alpha(achievement.color, 0.15) : alpha(NEUTRAL_COLORS.textSecondary, 0.1)}`,
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+              border: `2px solid ${alpha(achievement.color, 0.1)}`,
+              boxShadow: '0 1px 4px rgba(0, 0, 0, 0.15)',
               zIndex: 2,
             }}
           >
-            <StarIcon sx={{ fontSize: 14, color: NEUTRAL_COLORS.surface }} />
+            <StarIcon sx={{ fontSize: 10, color: NEUTRAL_COLORS.surface }} />
           </Box>
         )}
       </Box>
     </Box>
 
-    {/* Название и описание - фиксированная высота */}
-    <Box sx={{ flex: 1, minHeight: 80, display: 'flex', flexDirection: 'column' }}>
+    {/* Название и описание - уменьшенные */}
+    <Box sx={{ flex: 1, mb: 1.5 }}>
       <Typography
-        variant="h6"
+        variant="subtitle2"
         sx={{
-          fontWeight: 700,
+          fontWeight: 600,
           color: achievement.unlocked ? NEUTRAL_COLORS.textPrimary : NEUTRAL_COLORS.textSecondary,
           textAlign: 'center',
-          mb: 1,
-          fontSize: '1rem',
-          lineHeight: 1.3,
+          mb: 0.5,
+          fontSize: '0.85rem',
+          lineHeight: 1.2,
         }}
       >
         {achievement.title}
       </Typography>
 
       <Typography
-        variant="body2"
+        variant="caption"
         sx={{
-          color: achievement.unlocked ? alpha(NEUTRAL_COLORS.textSecondary, 0.9) : alpha(NEUTRAL_COLORS.textSecondary, 0.6),
+          color: achievement.unlocked ? alpha(NEUTRAL_COLORS.textSecondary, 0.8) : alpha(NEUTRAL_COLORS.textSecondary, 0.6),
           textAlign: 'center',
-          mb: 2,
-          fontSize: '0.85rem',
-          lineHeight: 1.4,
-          flex: 1,
+          display: 'block',
+          fontSize: '0.7rem',
+          lineHeight: 1.3,
         }}
       >
         {achievement.description}
       </Typography>
     </Box>
 
-    {/* Прогресс - фиксированная позиция внизу */}
-    <Box sx={{ mt: 'auto', pt: 2 }}>
-      <Box sx={{ mb: 1 }}>
+    {/* Прогресс - компактный */}
+    <Box sx={{ mt: 'auto' }}>
+      <Box sx={{ mb: 0.75 }}>
         <Typography
           variant="caption"
           sx={{
-            color: NEUTRAL_COLORS.textSecondary,
-            fontWeight: 600,
+            color: achievement.unlocked ? achievement.color : NEUTRAL_COLORS.textSecondary,
+            fontWeight: 500,
             display: 'block',
             textAlign: 'center',
-            fontSize: '0.75rem',
+            fontSize: '0.65rem',
           }}
         >
-          {achievement.unlocked ? 'Разблокировано!' : `Прогресс: ${achievement.progress}/${achievement.target}`}
+          {achievement.unlocked ? 'Разблокировано!' : `${achievement.progress}/${achievement.target}`}
         </Typography>
       </Box>
-      
+
       <Box sx={{ position: 'relative' }}>
         <Box
           sx={{
-            height: 6,
-            borderRadius: 3,
-            backgroundColor: alpha(NEUTRAL_COLORS.border, 0.3),
+            height: 4,
+            borderRadius: 2,
+            backgroundColor: alpha(NEUTRAL_COLORS.border, 0.2),
             overflow: 'hidden',
           }}
         >
@@ -251,29 +227,12 @@ const AchievementCard: React.FC<{ achievement: Achievement }> = ({ achievement }
             sx={{
               width: `${(achievement.progress / achievement.target) * 100}%`,
               height: '100%',
-              borderRadius: 3,
+              borderRadius: 2,
               backgroundColor: achievement.unlocked ? achievement.color : NEUTRAL_COLORS.accent,
-              backgroundImage: `linear-gradient(90deg, ${achievement.unlocked ? achievement.color : NEUTRAL_COLORS.accent} 0%, ${alpha(achievement.unlocked ? achievement.color : NEUTRAL_COLORS.accent, 0.8)} 100%)`,
-              transition: 'width 1s ease-out',
+              transition: 'width 0.6s ease-out',
             }}
           />
         </Box>
-        
-        {achievement.unlocked && achievement.unlockedAt && (
-          <Typography
-            variant="caption"
-            sx={{
-              color: achievement.color,
-              fontWeight: 600,
-              display: 'block',
-              textAlign: 'center',
-              mt: 1,
-              fontSize: '0.7rem',
-            }}
-          >
-            Получено: {achievement.unlockedAt.toLocaleDateString('ru-RU')}
-          </Typography>
-        )}
       </Box>
     </Box>
   </Paper>
@@ -619,7 +578,7 @@ export const UserProfilePage: React.FC = () => {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [totalAchievements, setTotalAchievements] = useState(0);
   const [unlockedAchievements, setUnlockedAchievements] = useState(0);
-  const [isAchievementsExpanded, setIsAchievementsExpanded] = useState(true);
+  const [isAchievementsVisible, setIsAchievementsVisible] = useState(false);
 
   // Функция для создания ачивок на основе статистики
   const createAchievements = useCallback((stats: any, categoryStats: any[]) => {
@@ -632,7 +591,7 @@ export const UserProfilePage: React.FC = () => {
       title: 'Новичок',
       description: 'Выполните 25% всех вопросов',
       icon: <SchoolIcon />,
-      color: NEUTRAL_COLORS.bronze,
+      color: NEUTRAL_COLORS.accent,
       progress: Math.min(stats.overall_percentage, 25),
       target: 25,
       unlocked: stats.overall_percentage >= 25,
@@ -645,7 +604,7 @@ export const UserProfilePage: React.FC = () => {
       title: 'Знаток',
       description: 'Выполните 50% всех вопросов',
       icon: <BrainIcon />,
-      color: NEUTRAL_COLORS.silver,
+      color: NEUTRAL_COLORS.bronze,
       progress: Math.min(stats.overall_percentage, 50),
       target: 50,
       unlocked: stats.overall_percentage >= 50,
@@ -658,7 +617,7 @@ export const UserProfilePage: React.FC = () => {
       title: 'Эксперт',
       description: 'Выполните 75% всех вопросов',
       icon: <TrophyIcon />,
-      color: NEUTRAL_COLORS.gold,
+      color: NEUTRAL_COLORS.silver,
       progress: Math.min(stats.overall_percentage, 75),
       target: 75,
       unlocked: stats.overall_percentage >= 75,
@@ -669,9 +628,9 @@ export const UserProfilePage: React.FC = () => {
     newAchievements.push({
       id: 'progress_100',
       title: 'Мастер',
-      description: 'Выполните все вопросы',
+      description: 'Выполните 100% всех вопросов',
       icon: <SparklesIcon />,
-      color: NEUTRAL_COLORS.accent,
+      color: NEUTRAL_COLORS.gold,
       progress: Math.min(stats.overall_percentage, 100),
       target: 100,
       unlocked: stats.overall_percentage >= 100,
@@ -725,69 +684,50 @@ export const UserProfilePage: React.FC = () => {
       });
     }
 
-    // Специальные ачивки
-    if (stats.total_completed >= 10) {
-      newAchievements.push({
-        id: 'first_10',
-        title: 'Первые 10',
-        description: 'Выполните 10 вопросов',
-        icon: <StarIcon />,
-        color: NEUTRAL_COLORS.bronze,
-        progress: Math.min(stats.total_completed, 10),
-        target: 10,
-        unlocked: stats.total_completed >= 10,
-        unlockedAt: stats.total_completed >= 10 ? now : undefined,
-        category: 'special',
-      });
-    }
-
-    if (stats.total_completed >= 50) {
-      newAchievements.push({
-        id: 'half_century',
-        title: 'Полсотни',
-        description: 'Выполните 50 вопросов',
-        icon: <MedalIcon />,
-        color: NEUTRAL_COLORS.silver,
-        progress: Math.min(stats.total_completed, 50),
-        target: 50,
-        unlocked: stats.total_completed >= 50,
-        unlockedAt: stats.total_completed >= 50 ? now : undefined,
-        category: 'special',
-      });
-    }
-
-    if (stats.total_completed >= 100) {
-      newAchievements.push({
-        id: 'century',
-        title: 'Сотня',
-        description: 'Выполните 100 вопросов',
-        icon: <FireIcon />,
-        color: NEUTRAL_COLORS.gold,
-        progress: Math.min(stats.total_completed, 100),
-        target: 100,
-        unlocked: stats.total_completed >= 100,
-        unlockedAt: stats.total_completed >= 100 ? now : undefined,
-        category: 'special',
-      });
-    }
-
-    // Ачивки по категориям (первые 3 категории с наилучшим прогрессом)
+    // Ачивки по категориям (первые 5 категорий с наилучшим прогрессом)
     const topCategories = [...categoryStats]
       .sort((a, b) => b.percentage - a.percentage)
-      .slice(0, 3);
+      .slice(0, 5); // Изменено с 3 на 5
 
     topCategories.forEach((category, index) => {
       if (category.total_count > 0) {
+        // Определяем цвета для 5 категорий
+        const categoryColors = [
+          NEUTRAL_COLORS.gold,     // 1-е место
+          NEUTRAL_COLORS.silver,   // 2-е место
+          NEUTRAL_COLORS.bronze,   // 3-е место
+          '#2b55c1ff',               // 4-е место (сине-серый)
+          '#d23d6fff',               // 5-е место (фиолетовый)
+        ];
+        
+        // Определяем иконки для разных позиций
+        const categoryIcons = [
+          <TrophyIcon />,           // 1-е место
+          <EmojiEventsIcon />,      // 2-е место
+          <StarIcon />,             // 3-е место
+          <CategoryIcon />,         // 4-е место
+          <CategoryIcon />,         // 5-е место
+        ];
+        
+        // Определяем названия для ачивок
+        const achievementTitles = [
+          `${category.category_name}`,    // 1-е место
+          `${category.category_name}`,  // 2-е место
+          `${category.category_name}`, // 3-е место
+          `${category.category_name}`, // 4-е место
+          `${category.category_name}`,  // 5-е место
+        ];
+        
         newAchievements.push({
           id: `category_top_${index + 1}`,
-          title: `Лучший в ${category.category_name}`,
-          description: `Достигните 90% в категории "${category.category_name}"`,
-          icon: <CategoryIcon />,
-          color: [NEUTRAL_COLORS.gold, NEUTRAL_COLORS.silver, NEUTRAL_COLORS.bronze][index],
+          title: achievementTitles[index] || `Топ ${index + 1} в ${category.category_name}`,
+          description: `Достигните 100% в категории`,
+          icon: categoryIcons[index] || <CategoryIcon />,
+          color: categoryColors[index] || NEUTRAL_COLORS.secondary,
           progress: category.percentage,
           target: 90,
-          unlocked: category.percentage >= 90,
-          unlockedAt: category.percentage >= 90 ? now : undefined,
+          unlocked: category.percentage >= 100,
+          unlockedAt: category.percentage >= 100 ? now : undefined,
           category: 'category',
         });
       }
@@ -954,23 +894,23 @@ export const UserProfilePage: React.FC = () => {
             К вопросам
           </Button>
           
-          {/* НОВАЯ КНОПКА - переход к избранным вопросам */}
+          {/* Кнопка перехода к избранным вопросам */}
           <Button
             startIcon={<FavoriteIcon />}
             onClick={() => navigate('/favorites')}
             sx={{
               borderRadius: 2,
-              backgroundColor: alpha(NEUTRAL_COLORS.warning, 0.1),
-              color: NEUTRAL_COLORS.warning,
-              border: `2px solid ${alpha(NEUTRAL_COLORS.warning, 0.3)}`,
+              backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
+              color: NEUTRAL_COLORS.accent,
+              border: `2px solid ${alpha(NEUTRAL_COLORS.accent, 0.3)}`,
               px: 3,
               py: 1,
               fontWeight: 600,
               '&:hover': {
-                backgroundColor: alpha(NEUTRAL_COLORS.warning, 0.2),
-                borderColor: alpha(NEUTRAL_COLORS.warning, 0.6),
+                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.2),
+                borderColor: alpha(NEUTRAL_COLORS.accent, 0.6),
                 transform: 'translateY(-1px)',
-                boxShadow: `0 4px 12px ${alpha(NEUTRAL_COLORS.warning, 0.2)}`,
+                boxShadow: `0 4px 12px ${alpha(NEUTRAL_COLORS.accent, 0.2)}`,
               },
               transition: 'all 0.2s',
             }}
@@ -1016,254 +956,328 @@ export const UserProfilePage: React.FC = () => {
           </Fade>
         )}
 
-        {/* Блок ачивок */}
+        {/* Кнопка для просмотра ачивок - привлекательная и мотивирующая */}
         {!isLoadingStats && achievements.length > 0 && (
           <Paper
             elevation={0}
             sx={{
-              p: { xs: 3, md: 4 },
+              p: 3,
               borderRadius: 3,
-              border: `1px solid ${NEUTRAL_COLORS.border}`,
-              backgroundColor: NEUTRAL_COLORS.surface,
-              mb: 4,
+              border: `2px solid ${alpha(NEUTRAL_COLORS.gold, 0.3)}`,
+              backgroundColor: alpha(NEUTRAL_COLORS.gold, 0.05),
+              mb: 3,
               position: 'relative',
               overflow: 'hidden',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: `0 8px 25px ${alpha(NEUTRAL_COLORS.gold, 0.15)}`,
+                borderColor: alpha(NEUTRAL_COLORS.gold, 0.5),
+                backgroundColor: alpha(NEUTRAL_COLORS.gold, 0.08),
+              },
             }}
+            onClick={() => setIsAchievementsVisible(!isAchievementsVisible)}
           >
-            {/* Фоновые элементы */}
+            {/* Анимированные элементы фона */}
             <Box
               sx={{
                 position: 'absolute',
-                top: -100,
-                right: -100,
-                width: 200,
-                height: 200,
-                borderRadius: '50%',
-                backgroundColor: alpha(NEUTRAL_COLORS.gold, 0.05),
-                zIndex: 0,
-              }}
-            />
-            <Box
-              sx={{
-                position: 'absolute',
-                bottom: -80,
-                left: -80,
-                width: 160,
-                height: 160,
-                borderRadius: '50%',
-                backgroundColor: alpha(NEUTRAL_COLORS.silver, 0.05),
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: `radial-gradient(circle at 30% 50%, ${alpha(NEUTRAL_COLORS.gold, 0.1)} 0%, transparent 50%),
+                            radial-gradient(circle at 70% 20%, ${alpha(NEUTRAL_COLORS.silver, 0.08)} 0%, transparent 50%),
+                            radial-gradient(circle at 20% 80%, ${alpha(NEUTRAL_COLORS.bronze, 0.08)} 0%, transparent 50%)`,
                 zIndex: 0,
               }}
             />
 
-            {/* Заголовок с прогрессом ачивок */}
-            <Box 
-              sx={{ 
-                position: 'relative', 
-                zIndex: 1, 
-                mb: isAchievementsExpanded ? 4 : 0,
-                cursor: 'pointer',
-              }}
-              onClick={() => setIsAchievementsExpanded(!isAchievementsExpanded)}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+            <Box sx={{ position: 'relative', zIndex: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Box
                     sx={{
                       p: 1.5,
                       borderRadius: '50%',
-                      backgroundColor: alpha(NEUTRAL_COLORS.gold, 0.1),
+                      backgroundColor: alpha(NEUTRAL_COLORS.gold, 0.2),
                       color: NEUTRAL_COLORS.gold,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
+                      border: `2px solid ${alpha(NEUTRAL_COLORS.gold, 0.3)}`,
+                      boxShadow: `0 0 20px ${alpha(NEUTRAL_COLORS.gold, 0.3)}`,
+                      animation: 'pulse 2s infinite',
+                      '@keyframes pulse': {
+                        '0%': { transform: 'scale(1)', boxShadow: `0 0 0 0 ${alpha(NEUTRAL_COLORS.gold, 0.7)}` },
+                        '70%': { transform: 'scale(1.05)', boxShadow: `0 0 0 10px ${alpha(NEUTRAL_COLORS.gold, 0)}` },
+                        '100%': { transform: 'scale(1)', boxShadow: `0 0 0 0 ${alpha(NEUTRAL_COLORS.gold, 0)}` },
+                      },
                     }}
                   >
-                    <TrophyIcon sx={{ fontSize: 32 }} />
+                    <TrophyIcon sx={{ fontSize: 28 }} />
                   </Box>
                   <Box>
                     <Typography
-                      variant="h4"
+                      variant="h5"
                       sx={{
                         fontWeight: 800,
                         color: NEUTRAL_COLORS.textPrimary,
-                        fontSize: { xs: '1.75rem', md: '2.25rem' },
+                        background: `linear-gradient(90deg, ${NEUTRAL_COLORS.gold} 0%, ${NEUTRAL_COLORS.silver} 50%, ${NEUTRAL_COLORS.bronze} 100%)`,
+                        backgroundClip: 'text',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        fontSize: { xs: '1.4rem', md: '1.6rem' },
                       }}
                     >
-                      Ваши достижения
+                      {isAchievementsVisible ? 'Скрыть достижения' : 'Показать мои достижения'}
                     </Typography>
                     <Typography
                       variant="body2"
                       sx={{
                         color: NEUTRAL_COLORS.textSecondary,
                         mt: 0.5,
+                        fontWeight: 500,
                       }}
                     >
-                      Разблокируйте ачивки, выполняя вопросы
+                      {isAchievementsVisible 
+                        ? 'Нажмите, чтобы скрыть' 
+                        : `У вас разблокировано ${unlockedAchievements} из ${totalAchievements} достижений!`}
                     </Typography>
                   </Box>
                 </Box>
 
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  {/* Прогресс ачивок */}
+                  {/* Индикатор прогресса */}
                   <Box
                     sx={{
-                      p: 2,
-                      borderRadius: 3,
-                      backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.05),
-                      border: `1px solid ${alpha(NEUTRAL_COLORS.accent, 0.2)}`,
-                      textAlign: 'center',
-                      minWidth: 120,
+                      position: 'relative',
+                      width: 60,
+                      height: 60,
+                      borderRadius: '50%',
+                      backgroundColor: alpha(NEUTRAL_COLORS.background, 0.8),
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: `2px solid ${alpha(NEUTRAL_COLORS.gold, 0.3)}`,
                     }}
                   >
                     <Typography
-                      variant="h3"
+                      variant="h6"
                       sx={{
                         fontWeight: 800,
-                        color: NEUTRAL_COLORS.accent,
-                        mb: 0.5,
-                        fontSize: '2rem',
+                        color: NEUTRAL_COLORS.gold,
+                        fontSize: '1.1rem',
                       }}
                     >
-                      {unlockedAchievements}/{totalAchievements}
+                      {Math.round((unlockedAchievements / totalAchievements) * 100)}%
                     </Typography>
-                    <Typography
-                      variant="caption"
+                    <CircularProgress
+                      variant="determinate"
+                      value={(unlockedAchievements / totalAchievements) * 100}
+                      size={64}
+                      thickness={4}
                       sx={{
-                        color: NEUTRAL_COLORS.textSecondary,
-                        fontWeight: 600,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
+                        position: 'absolute',
+                        color: NEUTRAL_COLORS.gold,
+                        top: -2,
+                        left: -2,
                       }}
-                    >
-                      Ачивок
-                    </Typography>
+                    />
                   </Box>
 
-                  {/* Кнопка сворачивания */}
+                  {/* Иконка стрелки */}
                   <IconButton
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsAchievementsExpanded(!isAchievementsExpanded);
-                    }}
                     sx={{
-                      backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
-                      color: NEUTRAL_COLORS.accent,
+                      backgroundColor: alpha(NEUTRAL_COLORS.gold, 0.2),
+                      color: NEUTRAL_COLORS.gold,
                       '&:hover': {
-                        backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.2),
+                        backgroundColor: alpha(NEUTRAL_COLORS.gold, 0.3),
+                        transform: 'scale(1.1)',
                       },
+                      transition: 'all 0.2s ease',
                     }}
                   >
-                    {isAchievementsExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                    {isAchievementsVisible ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                   </IconButton>
                 </Box>
               </Box>
-
-              {/* Прогресс-бар ачивок */}
-              <Box sx={{ position: 'relative' }}>
-                <Box
-                  sx={{
-                    height: 12,
-                    borderRadius: 6,
-                    backgroundColor: alpha(NEUTRAL_COLORS.border, 0.3),
-                    overflow: 'hidden',
-                    position: 'relative',
-                  }}
-                >
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      height: '100%',
-                      width: `${(unlockedAchievements / totalAchievements) * 100}%`,
-                      background: `linear-gradient(90deg, ${NEUTRAL_COLORS.bronze} 0%, ${NEUTRAL_COLORS.silver} 50%, ${NEUTRAL_COLORS.gold} 100%)`,
-                      borderRadius: 6,
-                      transition: 'width 1s ease-out',
-                    }}
-                  />
-                </Box>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: NEUTRAL_COLORS.textSecondary,
-                    fontWeight: 600,
-                    display: 'block',
-                    textAlign: 'right',
-                    mt: 1,
-                  }}
-                >
-                  {Math.round((unlockedAchievements / totalAchievements) * 100)}% выполнено
-                </Typography>
-              </Box>
             </Box>
-
-            {/* Сворачиваемая секция с ачивками */}
-            <Collapse in={isAchievementsExpanded}>
-              {/* Фильтры ачивок */}
-              <Box sx={{ position: 'relative', zIndex: 1, mb: 4, mt: 2 }}>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 700,
-                    color: NEUTRAL_COLORS.textPrimary,
-                    mb: 2,
-                  }}
-                >
-                  Все ачивки
-                </Typography>
-              </Box>
-
-              {/* Сетка ачивок */}
-              <Grid 
-                container 
-                spacing={3} 
-                sx={{ 
-                  position: 'relative', 
-                  zIndex: 1,
-                }}
-              >
-                {achievements.map((achievement) => (
-                  <Grid 
-                    item 
-                    xs={12} 
-                    sm={6} 
-                    md={4} 
-                    lg={3} 
-                    key={achievement.id}
-                    sx={{
-                      display: 'flex',
-                    }}
-                  >
-                    <AchievementCard achievement={achievement} />
-                  </Grid>
-                ))}
-              </Grid>
-
-              {/* Пояснение */}
-              <Box
-                sx={{
-                  mt: 4,
-                  pt: 3,
-                  borderTop: `1px solid ${alpha(NEUTRAL_COLORS.border, 0.3)}`,
-                  position: 'relative',
-                  zIndex: 1,
-                }}
-              >
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: NEUTRAL_COLORS.textSecondary,
-                    textAlign: 'center',
-                    fontStyle: 'italic',
-                  }}
-                >
-                  Продолжайте выполнять вопросы, чтобы разблокировать новые ачивки!
-                </Typography>
-              </Box>
-            </Collapse>
           </Paper>
         )}
+
+        {/* Основной блок ачивок (скрыт по умолчанию) */}
+        <Collapse in={isAchievementsVisible}>
+          {!isLoadingStats && achievements.length > 0 && (
+            <Paper
+              elevation={0}
+              sx={{
+                p: { xs: 2, md: 3 },
+                borderRadius: 3,
+                border: `1px solid ${NEUTRAL_COLORS.border}`,
+                backgroundColor: NEUTRAL_COLORS.surface,
+                mb: 3,
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+            >
+              {/* Фоновые элементы */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: -60,
+                  right: -60,
+                  width: 120,
+                  height: 120,
+                  borderRadius: '50%',
+                  backgroundColor: alpha(NEUTRAL_COLORS.gold, 0.03),
+                  zIndex: 0,
+                }}
+              />
+
+              {/* Заголовок с прогрессом ачивок */}
+              <Box sx={{ position: 'relative', zIndex: 1, mb: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Box
+                      sx={{
+                        p: 1,
+                        borderRadius: '50%',
+                        backgroundColor: alpha(NEUTRAL_COLORS.gold, 0.1),
+                        color: NEUTRAL_COLORS.gold,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <TrophyIcon sx={{ fontSize: 24 }} />
+                    </Box>
+                    <Box>
+                      <Typography
+                        variant="h5"
+                        sx={{
+                          fontWeight: 700,
+                          color: NEUTRAL_COLORS.textPrimary,
+                          fontSize: { xs: '1.25rem', md: '1.5rem' },
+                        }}
+                      >
+                        {unlockedAchievements} из {totalAchievements} разблокировано
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+
+                {/* Прогресс-бар */}
+                <Box sx={{ position: 'relative' }}>
+                  <Box
+                    sx={{
+                      height: 6,
+                      borderRadius: 3,
+                      backgroundColor: alpha(NEUTRAL_COLORS.border, 0.2),
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: `${(unlockedAchievements / totalAchievements) * 100}%`,
+                        height: '100%',
+                        borderRadius: 3,
+                        background: `linear-gradient(90deg, ${NEUTRAL_COLORS.bronze} 0%, ${NEUTRAL_COLORS.silver} 50%, ${NEUTRAL_COLORS.gold} 100%)`,
+                        transition: 'width 1s ease-out',
+                      }}
+                    />
+                  </Box>
+                </Box>
+              </Box>
+
+              {/* Группировка ачивок по категориям */}
+              {Object.entries(
+                achievements.reduce((acc, achievement) => {
+                  const category = achievement.category || 'other';
+                  if (!acc[category]) acc[category] = [];
+                  acc[category].push(achievement);
+                  return acc;
+                }, {} as Record<string, Achievement[]>)
+              ).map(([category, categoryAchievements]) => {
+                const categoryInfo = {
+                  progress: { title: 'Общий прогресс', icon: <TrendingUpIcon />, color: NEUTRAL_COLORS.success },
+                  category: { title: 'По категориям - достигните 100% в каждой категории', icon: <CategoryIcon />, color: NEUTRAL_COLORS.info },
+                  difficulty: { title: 'По сложности', icon: <SpeedIcon />, color: NEUTRAL_COLORS.warning },
+                  other: { title: 'Другие', icon: <EmojiEventsIcon />, color: NEUTRAL_COLORS.secondary },
+                }[category] || { title: category, icon: <EmojiEventsIcon />, color: NEUTRAL_COLORS.secondary };
+
+                return (
+                  <Box key={category} sx={{ mb: 3 }}>
+                    {/* Заголовок категории */}
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1.5,
+                        mb: 1.5,
+                        p: 1,
+                        borderRadius: 1,
+                        backgroundColor: alpha(categoryInfo.color, 0.05),
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          p: 0.75,
+                          borderRadius: '50%',
+                          backgroundColor: alpha(categoryInfo.color, 0.1),
+                          color: categoryInfo.color,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        {categoryInfo.icon}
+                      </Box>
+                      <Typography
+                        variant="subtitle1"
+                        sx={{
+                          fontWeight: 600,
+                          color: NEUTRAL_COLORS.textPrimary,
+                        }}
+                      >
+                        {categoryInfo.title}
+                      </Typography>
+                      <Chip
+                        label={categoryAchievements.length}
+                        size="small"
+                        sx={{
+                          backgroundColor: alpha(categoryInfo.color, 0.1),
+                          color: categoryInfo.color,
+                          fontWeight: 600,
+                          height: 20,
+                          fontSize: '0.7rem',
+                        }}
+                      />
+                    </Box>
+
+                    {/* Сетка ачивок категории */}
+                    {/* Сетка ачивок категории - настройка для 5 элементов */}
+                    <Grid container spacing={2}>
+                      {categoryAchievements.map((achievement) => (
+                        <Grid 
+                          item 
+                          xs={6} 
+                          sm={4} 
+                          md={2.4} // Было 2.4 для 3 категорий, для 5 лучше использовать 2.4
+                          lg={2.4} 
+                          key={achievement.id}
+                        >
+                          <AchievementCard achievement={achievement} />
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Box>
+                );
+              })}
+            </Paper>
+          )}
+        </Collapse>
 
         {/* Основная карточка профиля */}
         <Paper
@@ -1556,15 +1570,15 @@ export const UserProfilePage: React.FC = () => {
                 startIcon={<PersonIcon sx={{ color: NEUTRAL_COLORS.textSecondary }} />}
               />
 
-              <StyledInputField
+              {/* <StyledInputField
                 label="URL аватара (опционально)"
                 type="url"
                 value={avatarUrl}
                 onChange={(e: any) => setAvatarUrl(e.target.value)}
                 disabled={isSaving}
                 startIcon={<ImageIcon sx={{ color: NEUTRAL_COLORS.textSecondary }} />}
-                helperText="Введите полный URL изображения (например, https://example.com/avatar.jpg  )"
-              />
+                helperText="Введите полный URL изображения (например, https://example.com/avatar.jpg)"
+              /> */}
 
               {/* Кнопки действий */}
               <Box sx={{ display: 'flex', gap: 2, pt: 2 }}>

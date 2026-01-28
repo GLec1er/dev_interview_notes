@@ -42,6 +42,7 @@ export interface Question {
   category_id?: string; // ID категории
   category?: Category;
   exclude_inactive_categories?: boolean,
+  is_completed?: boolean;
 }
 
 export interface QuestionCreate {

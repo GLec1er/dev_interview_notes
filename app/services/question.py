@@ -62,6 +62,7 @@ class QuestionService:
 
     async def get_many(
         self,
+        current_user_id: UUID,
         filters: QuestionFilterParams,
         sort: QuestionSortParams,
         pagination: PaginationParams,
@@ -77,6 +78,7 @@ class QuestionService:
         """
         try:
             question_list, total = await self.repository.get_questions_list(
+                current_user_id=current_user_id,
                 filters=filters,
                 sort=sort,
                 pagination=pagination,

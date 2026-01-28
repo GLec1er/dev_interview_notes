@@ -89,6 +89,7 @@ async def get_questions(
     try:
         service = QuestionService.from_session(session)
         question_list, total = await service.get_many(
+            current_user_id=current_user.id,
             filters=filters, 
             sort=sort, 
             pagination=pagination,

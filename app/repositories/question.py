@@ -30,13 +30,14 @@ class QuestionRepository(
     async def count_filtered(
         self,
         filters: Optional[Dict[str, Any]] = None,
+        current_user_id: UUID = None,
     ) -> int:
         """Посчитать количество отфильтрованных записей."""
         try:
             query = select(func.count()).select_from(self.model)
             
             if filters:
-                query = await self._apply_filters(query, filters)
+                query = await self._apply_filters(query, filters, current_user_id)
             
             result = await self.session.execute(query)
             return result.scalar_one()
@@ -47,6 +48,7 @@ class QuestionRepository(
 
     async def get_questions_list(
         self,
+        current_user_id: UUID,
         filters: QuestionFilterParams,
         sort: QuestionSortParams,
         pagination: PaginationParams,
@@ -60,6 +62,7 @@ class QuestionRepository(
                 query = await self._apply_filters(
                     query, 
                     filters.get_filters(),
+                    current_user_id=current_user_id,
                 )
             
             # Применяем сортировку
@@ -80,7 +83,7 @@ class QuestionRepository(
             log.error(f"❌ Ошибка при фильтрации {self.model.__name__}: {e}")
             raise
         
-        total = await self.count_filtered(filters=filters.get_filters())
+        total = await self.count_filtered(filters=filters.get_filters(), current_user_id=current_user_id)
         
         return question_list, total
 

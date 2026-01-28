@@ -22,7 +22,6 @@ import {
   MenuItem,
   useMediaQuery,
   useTheme,
-  Drawer,
   SwipeableDrawer,
 } from '@mui/material';
 import {
@@ -96,6 +95,7 @@ interface EnhancedStatCardProps {
   percentage: number;
   isActive: boolean;
   onClick: () => void;
+  isCompletionFilter?: boolean;
 }
 
 const EnhancedStatCard: React.FC<EnhancedStatCardProps> = ({ 
@@ -106,8 +106,143 @@ const EnhancedStatCard: React.FC<EnhancedStatCardProps> = ({
   total,
   percentage,
   isActive,
-  onClick
+  onClick,
+  isCompletionFilter = false
 }) => {
+  // Специальный стиль для фильтра по выполненным
+  if (isCompletionFilter) {
+    return (
+      <Paper
+        elevation={0}
+        onClick={onClick}
+        sx={{
+          minWidth: 250,
+          p: 3,
+          borderRadius: 3,
+          border: `2px solid ${isActive ? NEUTRAL_COLORS.success : alpha(NEUTRAL_COLORS.border, 0.3)}`,
+          backgroundColor: isActive ? alpha(NEUTRAL_COLORS.success, 0.1) : alpha(NEUTRAL_COLORS.background, 0.5),
+          height: '100%',
+          transition: 'all 0.3s',
+          cursor: 'pointer',
+          position: 'relative',
+          overflow: 'hidden',
+          '&:hover': {
+            borderColor: isActive ? NEUTRAL_COLORS.success : NEUTRAL_COLORS.accent,
+            backgroundColor: isActive ? alpha(NEUTRAL_COLORS.success, 0.15) : alpha(NEUTRAL_COLORS.background, 0.8),
+            transform: 'translateY(-4px)',
+          },
+        }}
+      >
+        <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 52,
+              height: 52,
+              borderRadius: '16px',
+              backgroundColor: isActive ? alpha(NEUTRAL_COLORS.success, 0.2) : alpha(NEUTRAL_COLORS.success, 0.1),
+              color: isActive ? NEUTRAL_COLORS.success : alpha(NEUTRAL_COLORS.success, 0.7),
+              flexShrink: 0,
+            }}
+          >
+            {icon}
+          </Box>
+          <Box sx={{ flex: 1 }}>
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 800,
+                color: isActive ? NEUTRAL_COLORS.success : NEUTRAL_COLORS.textPrimary,
+                fontSize: '1.1rem',
+                lineHeight: 1.2,
+              }}
+            >
+              {title}
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{
+                color: isActive ? alpha(NEUTRAL_COLORS.success, 0.8) : NEUTRAL_COLORS.textSecondary,
+                fontWeight: 500,
+                display: 'block',
+                mt: 0.5,
+              }}
+            >
+              {isActive ? 'Фильтр активен' : 'Показать выполненные'}
+            </Typography>
+          </Box>
+        </Stack>
+        
+        <Typography
+          variant="h1"
+          sx={{
+            fontWeight: 900,
+            color: isActive ? NEUTRAL_COLORS.success : NEUTRAL_COLORS.textSecondary,
+            fontSize: '3rem',
+            lineHeight: 1,
+            textAlign: 'center',
+            mb: 2,
+          }}
+        >
+          {value}%
+        </Typography>
+        
+        <Box sx={{ position: 'relative' }}>
+          <Box
+            sx={{
+              height: 6,
+              borderRadius: 3,
+              backgroundColor: alpha(NEUTRAL_COLORS.border, 0.3),
+              overflow: 'hidden',
+            }}
+          >
+            <Box
+              sx={{
+                width: `${Math.min(percentage, 100)}%`,
+                height: '100%',
+                borderRadius: 3,
+                backgroundColor: NEUTRAL_COLORS.success,
+                transition: 'width 1s ease-out',
+              }}
+            />
+          </Box>
+          <Typography
+            variant="caption"
+            sx={{
+              color: NEUTRAL_COLORS.textSecondary,
+              fontWeight: 600,
+              display: 'block',
+              mt: 1,
+              textAlign: 'right',
+              fontSize: '0.75rem',
+            }}
+          >
+            {percentage.toFixed(1)}% выполнено
+          </Typography>
+        </Box>
+        
+        {/* Иконка активности */}
+        {isActive && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 12,
+              right: 12,
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              backgroundColor: NEUTRAL_COLORS.success,
+              boxShadow: `0 0 8px ${NEUTRAL_COLORS.success}`,
+            }}
+          />
+        )}
+      </Paper>
+    );
+  }
+
+  // Обычный стиль для других карточек
   return (
     <Paper
       elevation={0}
@@ -283,8 +418,11 @@ const StatisticsSection: React.FC<{
   medium: number;
   hard: number;
   onFilterSelect: (filter: string) => void;
+  onCompletionFilterSelect: (filter: boolean | undefined) => void;
   activeFilter: string;
-}> = ({ total, easy, medium, hard, onFilterSelect, activeFilter }) => {
+  activeCompletionFilter?: boolean;
+  completionPercentage: number;
+}> = ({ total, easy, medium, hard, onFilterSelect, onCompletionFilterSelect, activeFilter, activeCompletionFilter, completionPercentage }) => {
   const stats = [
     {
       title: 'Всего вопросов',
@@ -318,7 +456,30 @@ const StatisticsSection: React.FC<{
       filter: 'hard',
       percentage: total > 0 ? (hard / total) * 100 : 0,
     },
+    {
+      title: 'Выполнено',
+      value: Math.round(completionPercentage),
+      icon: <CheckCircleIcon sx={{ fontSize: 28 }} />,
+      color: NEUTRAL_COLORS.success,
+      filter: 'completed',
+      percentage: completionPercentage,
+      isCompletionFilter: true,
+    },
   ];
+
+  const handleCardClick = (stat: any) => {
+    if (stat.isCompletionFilter) {
+      if (activeCompletionFilter === true) {
+        // Если уже активен фильтр "Выполнено", сбрасываем его
+        onCompletionFilterSelect(undefined);
+      } else {
+        // Иначе включаем фильтр "Выполнено"
+        onCompletionFilterSelect(true);
+      }
+    } else {
+      onFilterSelect(stat.filter);
+    }
+  };
 
   return (
     <Fade in={true}>
@@ -350,6 +511,18 @@ const StatisticsSection: React.FC<{
               }}
             >
               Обзор сложности и распределения вопросов
+              {activeCompletionFilter !== undefined && (
+                <Chip
+                  label={activeCompletionFilter ? 'Только выполненные' : 'Только невыполненные'}
+                  size="small"
+                  sx={{
+                    ml: 2,
+                    backgroundColor: alpha(NEUTRAL_COLORS.success, 0.1),
+                    color: NEUTRAL_COLORS.success,
+                    fontWeight: 600,
+                  }}
+                />
+              )}
             </Typography>
           </Box>
           <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
@@ -369,7 +542,7 @@ const StatisticsSection: React.FC<{
         {/* Карточки статистики - теперь на всю ширину */}
         <Grid container spacing={3} sx={{ mb: 3 }}>
           {stats.map((stat) => (
-            <Grid key={stat.title} sx={{ xs: 12, sm: 6, lg: 3 }}>
+            <Grid item xs={12} sm={6} lg={stat.isCompletionFilter ? 3 : 2.25} key={stat.title}>
               <EnhancedStatCard
                 title={stat.title}
                 value={stat.value}
@@ -377,8 +550,13 @@ const StatisticsSection: React.FC<{
                 color={stat.color}
                 total={total}
                 percentage={stat.percentage}
-                isActive={activeFilter === stat.filter}
-                onClick={() => onFilterSelect(stat.filter)}
+                isActive={
+                  stat.isCompletionFilter 
+                    ? activeCompletionFilter === true 
+                    : activeFilter === stat.filter
+                }
+                onClick={() => handleCardClick(stat)}
+                isCompletionFilter={stat.isCompletionFilter}
               />
             </Grid>
           ))}
@@ -866,6 +1044,8 @@ const FiltersPanel: React.FC<{
   isLoadingCategories: boolean;
   handleResetFilters: () => void;
   getSelectedCategoryName: () => string | null;
+  isCompletedFilter?: boolean;
+  setIsCompletedFilter?: (value: boolean | undefined) => void;
 }> = ({
   search,
   setSearch,
@@ -882,6 +1062,9 @@ const FiltersPanel: React.FC<{
   categories,
   isLoadingCategories,
   handleResetFilters,
+  getSelectedCategoryName,
+  isCompletedFilter,
+  setIsCompletedFilter,
 }) => {
   return (
     <Paper
@@ -956,6 +1139,19 @@ const FiltersPanel: React.FC<{
               },
             }}
           />
+        </Box>
+
+        <Divider sx={{ borderColor: alpha(NEUTRAL_COLORS.border, 0.5) }} />
+        
+        <Box>
+          <Stack spacing={1}>            
+            <FilterButton
+              active={isCompletedFilter === false}
+              onClick={() => setIsCompletedFilter?.(isCompletedFilter === false ? undefined : false)}
+            >
+              Показать невыполненные
+            </FilterButton>
+          </Stack>
         </Box>
 
         <Divider sx={{ borderColor: alpha(NEUTRAL_COLORS.border, 0.5) }} />
@@ -1405,6 +1601,9 @@ export const QuestionsPage: React.FC = () => {
   const [categoryId, setCategoryId] = useState<string>('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   
+  // Новый фильтр по выполненным вопросам
+  const [isCompletedFilter, setIsCompletedFilter] = useState<boolean | undefined>(undefined);
+  
   // Сортировка
   const [sortBy, setSortBy] = useState<string>('updated_at');
   const [sortDir, setSortDir] = useState<string>('desc');
@@ -1461,6 +1660,7 @@ export const QuestionsPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, [search]);
 
+  // Загрузка вопросов
   const loadQuestions = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -1482,6 +1682,7 @@ export const QuestionsPage: React.FC = () => {
           sortDir,
           categoryId || undefined,
           true,
+          isCompletedFilter,
         );
         const filtered = data.items.filter((q) =>
           q.title.toLowerCase().includes(actualSearch.toLowerCase())
@@ -1505,6 +1706,7 @@ export const QuestionsPage: React.FC = () => {
           sortDir,
           categoryId || undefined,
           true,
+          isCompletedFilter,
         );
         setQuestions(data.items);
         setTotal(data.total);
@@ -1519,6 +1721,7 @@ export const QuestionsPage: React.FC = () => {
           sortDir,
           categoryId || undefined,
           true,
+          isCompletedFilter,
         );
         setTotalCounts({
           easy: statsData.items.filter((q) => q.difficulty === 'easy').length,
@@ -1531,7 +1734,7 @@ export const QuestionsPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [page, limit, difficulty, categoryId, debouncedSearch, sortBy, sortDir]);
+  }, [page, limit, difficulty, categoryId, debouncedSearch, sortBy, sortDir, isCompletedFilter]);
 
   useEffect(() => {
     loadCategories();
@@ -1551,11 +1754,18 @@ export const QuestionsPage: React.FC = () => {
     }
   }, [questions, page, debouncedSearch, limit]);
 
+  // Обработчик для фильтра по выполненным вопросам
+  const handleCompletionFilterSelect = useCallback((filter: boolean | undefined) => {
+    setIsCompletedFilter(filter);
+    setPage(1);
+  }, []);
+
   const handleResetFilters = useCallback(() => {
     setSearch('');
     setDebouncedSearch('');
     setDifficulty('');
     setCategoryId('');
+    setIsCompletedFilter(undefined);
     setPage(1);
     setSortBy('updated_at');
     setSortDir('desc');
@@ -1837,108 +2047,66 @@ export const QuestionsPage: React.FC = () => {
               }
             }}
           >
-<Typography
-  variant="h1"
-  sx={{
-    fontWeight: 900,
-    color: NEUTRAL_COLORS.textPrimary,
-    letterSpacing: '-0.025em',
-    mb: 3,
-    fontSize: { xs: '2.5rem', sm: '3rem', md: '3.5rem' },
-    background: `linear-gradient(135deg, ${NEUTRAL_COLORS.textPrimary} 0%, ${NEUTRAL_COLORS.accent} 100%)`,
-    backgroundClip: 'text',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    position: 'relative',
-    display: 'inline-block',
-    mr: 2,
-    ml: 5
-  }}
->
-  InterviewBox
-  <Box
-    component="span"
-    sx={{
-      fontSize: { xs: '0.7rem', sm: '0.9rem' },
-      fontWeight: 700,
-      marginLeft: '10px',
-      padding: { xs: '2px 10px', sm: '3px 12px' },
-      borderRadius: '12px',
-      verticalAlign: 'middle',
-      animation: 'pulse 2s infinite',
-      '@keyframes pulse': {
-        '0%': {
-          boxShadow: `0 0 0 0 ${NEUTRAL_COLORS.accent}80`
-        },
-        '70%': {
-          boxShadow: `0 0 0 6px ${NEUTRAL_COLORS.accent}00`
-        },
-        '100%': {
-          boxShadow: `0 0 0 0 ${NEUTRAL_COLORS.accent}00`
-        }
-      }
-    }}
-  >
-    BETA
-  </Box>
-  
-  {/* Подчеркивание-прогресс бар */}
-  <Box
-    className="progress-bar"
-    sx={{
-      position: 'absolute',
-      bottom: -10,
-      left: 0,
-      width: '60%',
-      height: 4,
-      borderRadius: 2,
-      background: `linear-gradient(90deg, ${NEUTRAL_COLORS.accent} 0%, ${NEUTRAL_COLORS.success} 100%)`,
-      transition: 'width 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
-    }}
-  />
-</Typography>
-
-
-            {/* Статистика изучения */}
-            <Paper
-              elevation={0}
+            <Typography
+              variant="h1"
               sx={{
-                position: 'absolute',
-                right: { xs: 0, sm: -200 },
-                top: '50%',
-                transform: 'translateY(-50%)',
-                p: 2,
-                borderRadius: 3,
-                border: `2px solid ${alpha(NEUTRAL_COLORS.accent, 0.2)}`,
-                backgroundColor: alpha(NEUTRAL_COLORS.surface, 0.9),
-                backdropFilter: 'blur(10px)',
-                display: { xs: 'none', lg: 'block' },
-                minWidth: 180,
+                fontWeight: 900,
+                color: NEUTRAL_COLORS.textPrimary,
+                letterSpacing: '-0.025em',
+                mb: 3,
+                fontSize: { xs: '2.5rem', sm: '3rem', md: '3.5rem' },
+                background: `linear-gradient(135deg, ${NEUTRAL_COLORS.textPrimary} 0%, ${NEUTRAL_COLORS.accent} 100%)`,
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                position: 'relative',
+                display: 'inline-block',
+                mr: 2,
+                ml: 5
               }}
             >
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <CircularProgress
-                  variant="determinate"
-                  value={overallPercentage}
-                  size={40}
-                  thickness={4}
-                  sx={{
-                    color: NEUTRAL_COLORS.success,
-                    '& .MuiCircularProgress-circle': {
-                      strokeLinecap: 'round',
+              InterviewBox
+              <Box
+                component="span"
+                sx={{
+                  fontSize: { xs: '0.7rem', sm: '1.0rem' },
+                  fontWeight: 700,
+                  marginLeft: '10px',
+                  padding: { xs: '2px 10px', sm: '3px 12px' },
+                  borderRadius: '12px',
+                  verticalAlign: 'middle',
+                  animation: 'pulse 2s infinite',
+                  '@keyframes pulse': {
+                    '0%': {
+                      boxShadow: `0 0 0 0 ${NEUTRAL_COLORS.accent}80`
                     },
-                  }}
-                />
-                <Box>
-                  <Typography variant="caption" sx={{ color: NEUTRAL_COLORS.textSecondary, fontWeight: 600 }}>
-                    Ваш прогресс
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textPrimary, fontWeight: 700 }}>
-                    {overallPercentage}% закрыто
-                  </Typography>
-                </Box>
-              </Stack>
-            </Paper>
+                    '70%': {
+                      boxShadow: `0 0 0 6px ${NEUTRAL_COLORS.accent}00`
+                    },
+                    '100%': {
+                      boxShadow: `0 0 0 0 ${NEUTRAL_COLORS.accent}00`
+                    }
+                  }
+                }}
+              >
+                BETA
+              </Box>
+              
+              {/* Подчеркивание-прогресс бар */}
+              <Box
+                className="progress-bar"
+                sx={{
+                  position: 'absolute',
+                  bottom: -10,
+                  left: 0,
+                  width: '60%',
+                  height: 4,
+                  borderRadius: 2,
+                  background: `linear-gradient(90deg, ${NEUTRAL_COLORS.accent} 0%, ${NEUTRAL_COLORS.success} 100%)`,
+                  transition: 'width 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+              />
+            </Typography>
           </Box>
 
           {/* Описание с кнопками быстрого доступа */}
@@ -2043,7 +2211,7 @@ export const QuestionsPage: React.FC = () => {
             </Stack>
 
             {/* Индикатор активности фильтров */}
-            {(difficulty || categoryId || debouncedSearch || sortBy !== 'updated_at' || sortDir !== 'desc' || limit !== 10) && (
+            {(difficulty || categoryId || debouncedSearch || isCompletedFilter !== undefined || sortBy !== 'updated_at' || sortDir !== 'desc' || limit !== 10) && (
               <Fade in>
                 <Paper
                   elevation={0}
@@ -2094,7 +2262,10 @@ export const QuestionsPage: React.FC = () => {
             medium={totalCounts.medium}
             hard={totalCounts.hard}
             onFilterSelect={handleStatFilterSelect}
+            onCompletionFilterSelect={handleCompletionFilterSelect}
             activeFilter={difficulty}
+            activeCompletionFilter={isCompletedFilter}
+            completionPercentage={overallPercentage}
           />
         </div>
         )}
@@ -2136,6 +2307,8 @@ export const QuestionsPage: React.FC = () => {
             isLoadingCategories={isLoadingCategories}
             handleResetFilters={handleResetFilters}
             getSelectedCategoryName={getSelectedCategoryName}
+            isCompletedFilter={isCompletedFilter}
+            setIsCompletedFilter={setIsCompletedFilter}
           />
         </SwipeableDrawer>
 
@@ -2161,6 +2334,8 @@ export const QuestionsPage: React.FC = () => {
                 isLoadingCategories={isLoadingCategories}
                 handleResetFilters={handleResetFilters}
                 getSelectedCategoryName={getSelectedCategoryName}
+                isCompletedFilter={isCompletedFilter}
+                setIsCompletedFilter={setIsCompletedFilter}
               />
             </Box>
           )}
@@ -2267,7 +2442,7 @@ export const QuestionsPage: React.FC = () => {
                   >
                     {total} Вопроса
                   </Typography>
-                  {(difficulty || categoryId || debouncedSearch || sortBy !== 'updated_at' || sortDir !== 'desc' || limit !== 10) && (
+                  {(difficulty || categoryId || debouncedSearch || isCompletedFilter !== undefined || sortBy !== 'updated_at' || sortDir !== 'desc' || limit !== 10) && (
                     <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
                       {difficulty && (
                         <Chip
@@ -2311,6 +2486,25 @@ export const QuestionsPage: React.FC = () => {
                             backgroundColor: alpha(NEUTRAL_COLORS.warning, 0.1),
                             color: NEUTRAL_COLORS.warning,
                             border: `2px solid ${alpha(NEUTRAL_COLORS.warning, 0.3)}`,
+                            fontSize: '0.875rem',
+                          }}
+                        />
+                      )}
+                      {isCompletedFilter !== undefined && (
+                        <Chip
+                          label={`Выполнено: ${isCompletedFilter ? 'да' : 'нет'}`}
+                          size="medium"
+                          onDelete={() => setIsCompletedFilter(undefined)}
+                          icon={isCompletedFilter ? <CheckCircleIcon /> : <RadioButtonUncheckedIcon />}
+                          sx={{
+                            fontWeight: 700,
+                            backgroundColor: isCompletedFilter 
+                              ? alpha(NEUTRAL_COLORS.success, 0.1) 
+                              : alpha(NEUTRAL_COLORS.warning, 0.1),
+                            color: isCompletedFilter ? NEUTRAL_COLORS.success : NEUTRAL_COLORS.warning,
+                            border: `2px solid ${isCompletedFilter 
+                              ? alpha(NEUTRAL_COLORS.success, 0.3) 
+                              : alpha(NEUTRAL_COLORS.warning, 0.3)}`,
                             fontSize: '0.875rem',
                           }}
                         />

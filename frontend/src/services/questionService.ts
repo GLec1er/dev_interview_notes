@@ -11,6 +11,7 @@ export const questionService = {
     sortDir: string = 'desc',
     category_id?: string,
     exclude_inactive_categories?: boolean,
+    is_completed?: boolean,
   ): Promise<QuestionListResponse> {
     const params = new URLSearchParams();
     params.append('page_number', pageNumber.toString());
@@ -29,6 +30,9 @@ export const questionService = {
     }
     if (exclude_inactive_categories !== undefined) {
       params.append('exclude_inactive_categories', exclude_inactive_categories.toString());
+    }
+    if (is_completed !== undefined) {
+      params.append('is_completed', is_completed.toString());
     }
 
     const response = await api.get(`/questions/?${params.toString()}`);

@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 from app.core.loggers import log
 from app.db.models.question import Category
+from app.db.models.question_utils import QuestionCompletion
 
 ModelType = TypeVar("ModelType")
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
@@ -136,6 +137,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         self, 
         query: Select, 
         filters: Dict[str, Any],
+        current_user_id: UUID = None,
     ) -> Select:
         """Применить фильтры к запросу."""
         for key, value in filters.items():
@@ -147,6 +149,18 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
                         Category,
                         self.model.category_id == Category.id
                     ).where(Category.is_active == True)
+                    continue
+
+                # Создаем подзапрос для поиска выполненных вопросов пользователем
+                if key == "is_completed" and current_user_id:
+                    subquery = select(QuestionCompletion.question_id).where(
+                        QuestionCompletion.user_id == current_user_id
+                    ).subquery()
+                    
+                    if value:  # Если нужны выполненные вопросы
+                        query = query.where(self.model.id.in_(subquery))
+                    else:  # Если нужны НЕ выполненные вопросы
+                        query = query.where(self.model.id.notin_(subquery))
                     continue
                     
                 column = getattr(self.model, key, None)

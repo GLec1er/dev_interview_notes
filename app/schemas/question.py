@@ -103,6 +103,7 @@ class QuestionFilterParams(BaseModel):
     is_published: Optional[bool] = None
     difficulty: Optional[DifficultyQuestionLevel] = None
     category_id: Optional[UUID] = None
+    is_completed: Optional[bool] = None
 
     # доп.фильтры
     exclude_inactive_categories: Optional[bool] = None
@@ -119,6 +120,9 @@ class QuestionFilterParams(BaseModel):
         
         if self.category_id is not None:
             filters["category_id"] = self.category_id
+
+        if self.is_completed is not None:
+            filters["is_completed"] = self.is_completed
 
         if self.exclude_inactive_categories is not None:
             filters["exclude_inactive_categories"] = self.exclude_inactive_categories
