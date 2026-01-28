@@ -1008,12 +1008,6 @@ export const UserProfilePage: React.FC = () => {
                       justifyContent: 'center',
                       border: `2px solid ${alpha(NEUTRAL_COLORS.gold, 0.3)}`,
                       boxShadow: `0 0 20px ${alpha(NEUTRAL_COLORS.gold, 0.3)}`,
-                      animation: 'pulse 2s infinite',
-                      '@keyframes pulse': {
-                        '0%': { transform: 'scale(1)', boxShadow: `0 0 0 0 ${alpha(NEUTRAL_COLORS.gold, 0.7)}` },
-                        '70%': { transform: 'scale(1.05)', boxShadow: `0 0 0 10px ${alpha(NEUTRAL_COLORS.gold, 0)}` },
-                        '100%': { transform: 'scale(1)', boxShadow: `0 0 0 0 ${alpha(NEUTRAL_COLORS.gold, 0)}` },
-                      },
                     }}
                   >
                     <TrophyIcon sx={{ fontSize: 28 }} />
