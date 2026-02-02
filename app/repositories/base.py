@@ -66,10 +66,13 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             log.error(f"Ошибка при получении списка {self.model.__name__}: {e}")
             raise
     
-    async def create(self, obj_in: CreateSchemaType) -> ModelType:
+    async def create(self, obj_in: CreateSchemaType, **extra_data) -> ModelType:
         """Создать новый объект."""
         try:
-            db_obj = self.model(**obj_in.model_dump())
+            data = obj_in.model_dump()
+            data.update(extra_data)
+            
+            db_obj = self.model(**data)
             self.session.add(db_obj)
             await self.session.flush()
             log.info(f"✅ {self.model.__name__} создан: {db_obj.id}")

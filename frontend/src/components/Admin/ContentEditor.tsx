@@ -409,7 +409,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
       >
         <CardContent>
           <Typography variant="subtitle2" sx={{ mb: 2, color: NEUTRAL_COLORS.textSecondary, fontWeight: 600 }}>
-            Add Content Block
+            Добавить блок содержимого
           </Typography>
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
             <Tooltip title="Heading (H1-H6)">
@@ -529,10 +529,10 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
             backgroundColor: alpha(NEUTRAL_COLORS.background, 0.3),
           }}>
             <Typography variant="body1" sx={{ color: NEUTRAL_COLORS.textSecondary, mb: 2 }}>
-              No content blocks yet
+              Пока нет блоков контента
             </Typography>
             <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary }}>
-              Use the buttons above to add your first content block
+              Используйте кнопки выше, чтобы добавить свой первый блок контента
             </Typography>
           </Box>
         ) : (
@@ -639,9 +639,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
                         <IconButton
                           size="small"
                           onClick={() => {
-                            if (window.confirm('Are you sure you want to remove this block?')) {
                               removeBlock(index);
-                            }
                           }}
                           sx={{
                             color: NEUTRAL_COLORS.error,
@@ -669,8 +667,8 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
       {content.length > 0 && (
         <Box sx={{ mt: 2, pt: 2, borderTop: `1px solid ${NEUTRAL_COLORS.border}` }}>
           <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-            <Typography variant="caption" sx={{ color: NEUTRAL_COLORS.textSecondary }}>
-              Total blocks: <strong>{content.length}</strong>
+            <Typography variant="caption" sx={{ color: NEUTRAL_COLORS.surface }}>
+              Всего блоков: <strong>{content.length}</strong>
             </Typography>
             <Stack direction="row" spacing={1}>
               {Array.from(new Set(content.map(b => b.type))).map(type => (

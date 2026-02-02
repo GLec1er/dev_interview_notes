@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Button,
-  Card,
   Table,
   TableBody,
   TableCell,

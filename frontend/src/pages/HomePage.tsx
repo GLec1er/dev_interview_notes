@@ -343,7 +343,7 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose, isGues
   const [expandedQuestions, setExpandedQuestions] = useState<string[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const getDifficultyByLevel = (level: 'beginner' | 'intermediate' | 'expert'): string => {
+    const getDifficultyByLevel = (level: 'beginner' | 'intermediate' | 'expert'): string => {
     switch (level) {
       case 'beginner':
         return 'easy';
@@ -1256,24 +1256,41 @@ print(hash("hello"))  # Хеш-значение ключа
       onClose={handleCloseModal}
       maxWidth="md"
       fullWidth
+      fullScreen={window.innerWidth < 600} // Полноэкранный режим на очень маленьких экранах
       PaperProps={{
         sx: {
-          borderRadius: 3,
+          borderRadius: { xs: 0, sm: 3 },
           overflow: 'hidden',
           bgcolor: NEUTRAL_COLORS.surface,
+          minHeight: { xs: '100vh', sm: 'auto' },
+          maxHeight: { xs: '100vh', sm: '90vh' },
+          m: 0,
         }
       }}
     >
       <DialogTitle sx={{ 
         bgcolor: NEUTRAL_COLORS.accent,
         color: 'white',
-        py: 3,
+        py: { xs: 2, sm: 3 },
         position: 'relative',
       }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <BoltIcon />
-            <Typography variant="h5" sx={{ fontWeight: 700 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          gap: 1 
+        }}>
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: { xs: 1, sm: 2 },
+            flexWrap: 'wrap'
+          }}>
+            <BoltIcon sx={{ fontSize: { xs: 24, sm: 32 } }} />
+            <Typography variant="h5" sx={{ 
+              fontWeight: 700,
+              fontSize: { xs: '1.125rem', sm: '1.5rem' }
+            }}>
               {step === 'level' && (isGuestMode ? 'Демо-режим' : 'Быстрый старт')}
               {step === 'countdown' && 'Приготовьтесь!'}
               {step === 'questions' && 'Вопросы'}
@@ -1286,18 +1303,28 @@ print(hash("hello"))  # Хеш-значение ключа
                 sx={{ 
                   backgroundColor: 'rgba(255,255,255,0.2)',
                   color: 'white',
-                  fontWeight: 600 
+                  fontWeight: 600,
+                  fontSize: { xs: '0.75rem', sm: '0.8125rem' }
                 }} 
               />
             )}
           </Box>
-          <IconButton onClick={handleCloseModal} sx={{ color: 'white' }}>
+          <IconButton 
+            onClick={handleCloseModal} 
+            sx={{ 
+              color: 'white',
+              ml: 'auto'
+            }}
+          >
             <CloseIcon />
           </IconButton>
         </Box>
       </DialogTitle>
 
-      <DialogContent sx={{ p: 0 }}>
+      <DialogContent sx={{ 
+        p: 0,
+        height: { xs: 'calc(100vh - 64px)', sm: 'auto' }
+      }}>
         {step !== 'results' && (
           <LinearProgress 
             variant="determinate" 
@@ -1316,14 +1343,18 @@ print(hash("hello"))  # Хеш-значение ключа
         )}
 
         {step === 'level' && (
-          <Box sx={{ p: 4 }}>
-            <Typography variant="h6" gutterBottom align="center" sx={{ mb: 4, color: NEUTRAL_COLORS.textPrimary }}>
+          <Box sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
+            <Typography variant="h6" gutterBottom align="center" sx={{ 
+              mb: { xs: 3, sm: 4 }, 
+              color: NEUTRAL_COLORS.textPrimary,
+              fontSize: { xs: '1rem', sm: '1.25rem' }
+            }}>
               {isGuestMode 
                 ? 'Попробуйте демо-режим. Полный доступ — после регистрации'
                 : 'Выберите ваш уровень, чтобы получить подходящие вопросы'}
             </Typography>
             
-            <Grid container spacing={3} justifyContent="center">
+            <Grid container spacing={{ xs: 1.5, sm: 2, md: 3 }} justifyContent="center">
               {(['beginner', 'intermediate', 'expert'] as const).map((level) => (
                 <Grid item xs={12} sm={6} md={4} key={level}>
                   <Box sx={{ display: 'flex', justifyContent: 'center' }}>
@@ -1335,8 +1366,8 @@ print(hash("hello"))  # Хеш-значение ключа
                         borderRadius: 2,
                         transition: 'all 0.2s',
                         width: '100%',
-                        maxWidth: '300px',
-                        minWidth: '200px',
+                        maxWidth: { xs: '280px', sm: '300px' },
+                        minWidth: { xs: '180px', sm: '200px' },
                         display: 'flex',
                         flexDirection: 'column',
                         '&:hover': {
@@ -1349,25 +1380,27 @@ print(hash("hello"))  # Хеш-значение ключа
                     >
                       <CardContent sx={{ 
                         textAlign: 'center', 
-                        p: 3,
+                        p: { xs: 2, sm: 3 },
                         flexGrow: 1,
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'space-between',
                         alignItems: 'center',
-                        minHeight: '250px',
+                        minHeight: { xs: '220px', sm: '250px' },
                         bgcolor: NEUTRAL_COLORS.background,
                       }}>
                         <Box>
                           <Box sx={{ 
-                            mb: 2,
+                            mb: { xs: 1.5, sm: 2 },
                             color: userLevel === level ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.textSecondary,
                             display: 'inline-flex',
-                            p: 2,
+                            p: { xs: 1.5, sm: 2 },
                             borderRadius: '50%',
                             bgcolor: userLevel === level ? alpha(NEUTRAL_COLORS.accent, 0.1) : alpha(NEUTRAL_COLORS.border, 0.3),
                           }}>
-                            {getLevelIcon(level)}
+                            {React.cloneElement(getLevelIcon(level), { 
+                              sx: { fontSize: { xs: 28, sm: 32 } } 
+                            })}
                           </Box>
                           <Typography 
                             variant="h6" 
@@ -1375,10 +1408,11 @@ print(hash("hello"))  # Хеш-значение ключа
                               fontWeight: 600, 
                               mb: 1, 
                               color: NEUTRAL_COLORS.textPrimary,
-                              minHeight: '60px',
+                              minHeight: { xs: '50px', sm: '60px' },
                               display: 'flex',
                               alignItems: 'center',
-                              justifyContent: 'center'
+                              justifyContent: 'center',
+                              fontSize: { xs: '1rem', sm: '1.125rem' }
                             }}
                           >
                             {getLevelTitle(level)}
@@ -1393,7 +1427,8 @@ print(hash("hello"))  # Хеш-значение ключа
                             color: getDifficultyColor(getDifficultyByLevel(level)),
                             fontWeight: 600,
                             minWidth: '50px',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            fontSize: { xs: '0.7rem', sm: '0.75rem' }
                           }}
                         />
                       </CardContent>
@@ -1403,22 +1438,24 @@ print(hash("hello"))  # Хеш-значение ключа
               ))}
             </Grid>
 
-            <Box sx={{ mt: 4, textAlign: 'center' }}>
+            <Box sx={{ mt: { xs: 3, sm: 4 }, textAlign: 'center' }}>
               <Button
                 variant="contained"
                 size="large"
                 onClick={handleContinue}
                 disabled={!userLevel}
                 sx={{
-                  px: 6,
-                  py: 1.5,
+                  px: { xs: 4, sm: 6 },
+                  py: { xs: 1, sm: 1.5 },
                   borderRadius: 2,
                   fontWeight: 600,
-                  fontSize: '1rem',
+                  fontSize: { xs: '0.9375rem', sm: '1rem' },
                   bgcolor: NEUTRAL_COLORS.accent,
                   '&:hover': {
                     bgcolor: alpha(NEUTRAL_COLORS.accent, 0.9),
-                  }
+                  },
+                  width: { xs: '100%', sm: 'auto' },
+                  maxWidth: { xs: '280px', sm: 'none' }
                 }}
               >
                 {isGuestMode ? 'Попробовать демо' : 'Продолжить'}
@@ -1428,10 +1465,21 @@ print(hash("hello"))  # Хеш-значение ключа
         )}
 
         {step === 'countdown' && (
-          <Box sx={{ p: 8, textAlign: 'center' }}>
+          <Box sx={{ 
+            p: { xs: 3, sm: 4, md: 8 }, 
+            textAlign: 'center',
+            height: { xs: 'calc(100vh - 128px)', sm: 'auto' },
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
             {isLoading ? (
               <>
-                <CircularProgress size={80} sx={{ mb: 4, color: NEUTRAL_COLORS.accent }} />
+                <CircularProgress size={80} sx={{ 
+                  mb: 4, 
+                  color: NEUTRAL_COLORS.accent 
+                }} />
                 <Typography variant="h6" gutterBottom color={NEUTRAL_COLORS.textPrimary}>
                   Загружаем вопросы...
                 </Typography>
@@ -1442,8 +1490,8 @@ print(hash("hello"))  # Хеш-значение ключа
             ) : (
               <>
                 <Box sx={{ 
-                  width: 200, 
-                  height: 200, 
+                  width: { xs: 150, sm: 180, md: 200 }, 
+                  height: { xs: 150, sm: 180, md: 200 }, 
                   mx: 'auto',
                   mb: 4,
                   display: 'flex',
@@ -1468,13 +1516,24 @@ print(hash("hello"))  # Хеш-значение ключа
                       '100%': { transform: 'scale(1)', opacity: 1 },
                     }
                   }} />
-                  <TimerIcon sx={{ fontSize: 80, color: NEUTRAL_COLORS.accent }} />
+                  <TimerIcon sx={{ 
+                    fontSize: { xs: 60, sm: 70, md: 80 }, 
+                    color: NEUTRAL_COLORS.accent 
+                  }} />
                 </Box>
                 
-                <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, color: NEUTRAL_COLORS.textPrimary }}>
+                <Typography variant="h4" gutterBottom sx={{ 
+                  fontWeight: 700, 
+                  color: NEUTRAL_COLORS.textPrimary,
+                  fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
+                }}>
                   Готовы?
                 </Typography>
-                <Typography variant="body1" color={NEUTRAL_COLORS.textSecondary} sx={{ mb: 4 }}>
+                <Typography variant="body1" color={NEUTRAL_COLORS.textSecondary} sx={{ 
+                  mb: 4,
+                  fontSize: { xs: '0.9375rem', sm: '1rem' },
+                  px: { xs: 2, sm: 0 }
+                }}>
                   {isGuestMode 
                     ? 'У вас есть 5 минут на 3 демо-вопроса'
                     : 'У вас есть 10 минут на 5 вопросов уровня'}
@@ -1486,15 +1545,17 @@ print(hash("hello"))  # Хеш-значение ключа
                   startIcon={<PlayIcon />}
                   onClick={handleStartTimer}
                   sx={{
-                    px: 6,
-                    py: 1.5,
+                    px: { xs: 4, sm: 6 },
+                    py: { xs: 1, sm: 1.5 },
                     borderRadius: 2,
                     fontWeight: 600,
-                    fontSize: '1.1rem',
+                    fontSize: { xs: '0.9375rem', sm: '1.1rem' },
                     bgcolor: NEUTRAL_COLORS.success,
                     '&:hover': {
                       bgcolor: alpha(NEUTRAL_COLORS.success, 0.9),
-                    }
+                    },
+                    width: { xs: '100%', sm: 'auto' },
+                    maxWidth: { xs: '280px', sm: 'none' },
                   }}
                 >
                   Вперед
@@ -1505,27 +1566,50 @@ print(hash("hello"))  # Хеш-значение ключа
         )}
 
         {step === 'questions' && (
-          <Box sx={{ display: 'flex', flexDirection: 'column', height: '600px' }}>
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            height: { xs: 'calc(100vh - 64px)', sm: '600px' }
+          }}>
             <Paper
               elevation={0}
               sx={{
-                p: 2,
+                p: { xs: 1.5, sm: 2 },
                 bgcolor: alpha(NEUTRAL_COLORS.accent, 0.05),
                 borderBottom: `1px solid ${NEUTRAL_COLORS.border}`,
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: { xs: 'flex-start', sm: 'center' }, 
+                justifyContent: 'space-between',
+                flexDirection: { xs: 'column', sm: 'row' },
+                gap: { xs: 1, sm: 0 }
+              }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: { xs: 1, sm: 2 },
+                  mb: { xs: 1, sm: 0 }
+                }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     <TimerIcon sx={{ color: NEUTRAL_COLORS.accent }} />
-                    <Typography variant="h5" sx={{ fontWeight: 700, color: NEUTRAL_COLORS.accent }}>
+                    <Typography variant="h5" sx={{ 
+                      fontWeight: 700, 
+                      color: NEUTRAL_COLORS.accent,
+                      fontSize: { xs: '1.25rem', sm: '1.5rem' }
+                    }}>
                       {formatTime(timeLeft)}
                     </Typography>
                   </Box>
                   <Chip
                     label={`Вопрос ${currentQuestionIndex + 1} из ${questions.length}`}
                     size="small"
-                    sx={{ fontWeight: 600, color: NEUTRAL_COLORS.accent }}
+                    sx={{ 
+                      fontWeight: 600, 
+                      color: NEUTRAL_COLORS.accent,
+                      fontSize: { xs: '0.75rem', sm: '0.8125rem' }
+                    }}
                   />
                 </Box>
                 
@@ -1535,21 +1619,38 @@ print(hash("hello"))  # Хеш-значение ключа
                   startIcon={<RestartIcon />}
                   onClick={handleReset}
                   size="small"
+                  sx={{
+                    fontSize: { xs: '0.75rem', sm: '0.8125rem' }
+                  }}
                 >
                   Сбросить
                 </Button>
               </Box>
             </Paper>
 
-            <Box sx={{ flex: 1, overflow: 'auto', p: 3, bgcolor: NEUTRAL_COLORS.surface }}>
+            <Box sx={{ 
+              flex: 1, 
+              overflow: 'auto', 
+              p: { xs: 2, sm: 3 }, 
+              bgcolor: NEUTRAL_COLORS.surface 
+            }}>
               {isLoading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  alignItems: 'center', 
+                  height: '100%' 
+                }}>
                   <CircularProgress />
                 </Box>
               ) : questions.length > 0 && currentQuestionIndex < questions.length ? (
                 <>
                   <Box sx={{ mb: 3 }}>
-                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ 
+                      mb: 2,
+                      flexWrap: 'wrap',
+                      gap: 0.5
+                    }}>
                       <Chip
                         label={questions[currentQuestionIndex].difficulty.toUpperCase()}
                         size="small"
@@ -1557,31 +1658,51 @@ print(hash("hello"))  # Хеш-значение ключа
                           bgcolor: alpha(getDifficultyColor(questions[currentQuestionIndex].difficulty), 0.1),
                           color: getDifficultyColor(questions[currentQuestionIndex].difficulty),
                           fontWeight: 600,
+                          fontSize: { xs: '0.7rem', sm: '0.75rem' }
                         }}
                       />
                       {questions[currentQuestionIndex].category_name && (
                         <Chip
-                          icon={<CategoryIcon />}
+                          icon={<CategoryIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />}
                           label={questions[currentQuestionIndex].category_name}
                           size="small"
-                          sx={{ fontWeight: 500 }}
+                          sx={{ 
+                            fontWeight: 500,
+                            fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                          }}
                         />
                       )}
                     </Stack>
                     
-                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: NEUTRAL_COLORS.textPrimary }}>
+                    <Typography variant="h6" sx={{ 
+                      fontWeight: 600, 
+                      mb: 2, 
+                      color: NEUTRAL_COLORS.textPrimary,
+                      fontSize: { xs: '1rem', sm: '1.125rem' }
+                    }}>
                       {questions[currentQuestionIndex].title}
                     </Typography>
                     
                     {renderQuestionContent(questions[currentQuestionIndex].content)}
                   </Box>
 
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3, pt: 2, borderTop: `1px solid ${NEUTRAL_COLORS.border}` }}>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    mt: 3, 
+                    pt: 2, 
+                    borderTop: `1px solid ${NEUTRAL_COLORS.border}`,
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    gap: { xs: 2, sm: 0 }
+                  }}>
                     <Button
                       startIcon={<ChevronLeftIcon />}
                       onClick={handlePrevQuestion}
                       disabled={currentQuestionIndex === 0}
-                      sx={{ color: NEUTRAL_COLORS.textPrimary }}
+                      sx={{ 
+                        color: NEUTRAL_COLORS.textPrimary,
+                        width: { xs: '100%', sm: 'auto' }
+                      }}
                     >
                       Назад
                     </Button>
@@ -1597,7 +1718,10 @@ print(hash("hello"))  # Хеш-значение ключа
                           setIsTimerRunning(false);
                           setStep('results');
                         }}
-                        sx={{ fontWeight: 600 }}
+                        sx={{ 
+                          fontWeight: 600,
+                          width: { xs: '100%', sm: 'auto' }
+                        }}
                       >
                         Завершить тест
                       </Button>
@@ -1606,6 +1730,7 @@ print(hash("hello"))  # Хеш-значение ключа
                         variant="contained"
                         endIcon={<ChevronRightIcon />}
                         onClick={handleNextQuestion}
+                        sx={{ width: { xs: '100%', sm: 'auto' } }}
                       >
                         Следующий вопрос
                       </Button>
@@ -1622,27 +1747,59 @@ print(hash("hello"))  # Хеш-значение ключа
         )}
 
         {step === 'results' && (
-          <Box sx={{ p: 3, bgcolor: NEUTRAL_COLORS.surface }}>
-            <Box sx={{ textAlign: 'center', mb: 4, p: 3, bgcolor: alpha(NEUTRAL_COLORS.success, 0.1), borderRadius: 2 }}>
-              <CheckIcon sx={{ fontSize: 60, color: NEUTRAL_COLORS.success, mb: 2 }} />
-              <Typography variant="h5" gutterBottom sx={{ fontWeight: 700, color: NEUTRAL_COLORS.textPrimary }}>
+          <Box sx={{ 
+            p: { xs: 2, sm: 3 }, 
+            bgcolor: NEUTRAL_COLORS.surface,
+            height: { xs: 'calc(100vh - 64px)', sm: 'auto' },
+            overflow: 'auto'
+          }}>
+            <Box sx={{ 
+              textAlign: 'center', 
+              mb: 4, 
+              p: { xs: 2, sm: 3 }, 
+              bgcolor: alpha(NEUTRAL_COLORS.success, 0.1), 
+              borderRadius: 2 
+            }}>
+              <CheckIcon sx={{ 
+                fontSize: { xs: 48, sm: 60 }, 
+                color: NEUTRAL_COLORS.success, 
+                mb: 2 
+              }} />
+              <Typography variant="h5" gutterBottom sx={{ 
+                fontWeight: 700, 
+                color: NEUTRAL_COLORS.textPrimary,
+                fontSize: { xs: '1.25rem', sm: '1.5rem' }
+              }}>
                 Тест завершен!
               </Typography>
               <Typography variant="body1" color={NEUTRAL_COLORS.textSecondary}>
                 Вы ответили на все вопросы за {formatTime((isGuestMode ? 300 : 600) - timeLeft)}
               </Typography>
               {isGuestMode && (
-                <Typography variant="body2" sx={{ mt: 2, color: NEUTRAL_COLORS.accent, fontWeight: 600 }}>
+                <Typography variant="body2" sx={{ 
+                  mt: 2, 
+                  color: NEUTRAL_COLORS.accent, 
+                  fontWeight: 600,
+                  fontSize: { xs: '0.875rem', sm: '0.9375rem' }
+                }}>
                   🔒 Полный доступ к 1156+ вопросам — после регистрации
                 </Typography>
               )}
             </Box>
 
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: NEUTRAL_COLORS.textPrimary }}>
+            <Typography variant="h6" gutterBottom sx={{ 
+              fontWeight: 600, 
+              color: NEUTRAL_COLORS.textPrimary,
+              fontSize: { xs: '1rem', sm: '1.125rem' }
+            }}>
               Вопросы и ответы для проверки:
             </Typography>
 
-            <Box sx={{ maxHeight: '400px', overflow: 'auto', bgcolor: NEUTRAL_COLORS.background }}>
+            <Box sx={{ 
+              maxHeight: { xs: 'calc(100vh - 400px)', sm: '400px' }, 
+              overflow: 'auto', 
+              bgcolor: NEUTRAL_COLORS.background 
+            }}>
               {questions.map((question, index) => (
                 <Paper
                   key={question.id}
@@ -1657,17 +1814,29 @@ print(hash("hello"))  # Хеш-значение ключа
                 >
                   <Box
                     sx={{
-                      p: 2,
+                      p: { xs: 1.5, sm: 2 },
                       bgcolor: alpha(NEUTRAL_COLORS.accent, 0.05),
                       cursor: 'pointer',
                       display: 'flex',
-                      alignItems: 'center',
+                      alignItems: { xs: 'flex-start', sm: 'center' },
                       justifyContent: 'space-between',
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      gap: { xs: 1, sm: 0 }
                     }}
                     onClick={() => handleToggleExpand(question.id)}
                   >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600, color: NEUTRAL_COLORS.textPrimary }}>
+                    <Box sx={{ 
+                      display: 'flex', 
+                      alignItems: { xs: 'flex-start', sm: 'center' }, 
+                      gap: { xs: 1, sm: 2 },
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      width: { xs: '100%', sm: 'auto' }
+                    }}>
+                      <Typography variant="subtitle1" sx={{ 
+                        fontWeight: 600, 
+                        color: NEUTRAL_COLORS.textPrimary,
+                        fontSize: { xs: '0.875rem', sm: '1rem' }
+                      }}>
                         Вопрос {index + 1}: {question.title}
                       </Typography>
                       <Chip
@@ -1677,21 +1846,26 @@ print(hash("hello"))  # Хеш-значение ключа
                           bgcolor: alpha(getDifficultyColor(question.difficulty), 0.1),
                           color: getDifficultyColor(question.difficulty),
                           fontWeight: 600,
+                          fontSize: { xs: '0.7rem', sm: '0.75rem' }
                         }}
                       />
                     </Box>
-                    {expandedQuestions.includes(question.id) ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                    {expandedQuestions.includes(question.id) ? 
+                      <ExpandLessIcon sx={{ mt: { xs: 1, sm: 0 } }} /> : 
+                      <ExpandMoreIcon sx={{ mt: { xs: 1, sm: 0 } }} />
+                    }
                   </Box>
 
                   <Collapse in={expandedQuestions.includes(question.id)}>
-                    <Box sx={{ p: 3, bgcolor: NEUTRAL_COLORS.surface }}>
+                    <Box sx={{ p: { xs: 2, sm: 3 }, bgcolor: NEUTRAL_COLORS.surface }}>
                       <Typography 
                         variant="subtitle2" 
                         gutterBottom 
                         sx={{ 
                           fontWeight: 600, 
                           color: NEUTRAL_COLORS.textSecondary,
-                          mb: 2 
+                          mb: 2,
+                          fontSize: { xs: '0.875rem', sm: '0.9375rem' }
                         }}
                       >
                         Вопрос:
@@ -1706,7 +1880,8 @@ print(hash("hello"))  # Хеш-значение ключа
                         sx={{ 
                           fontWeight: 600, 
                           color: NEUTRAL_COLORS.success,
-                          mb: 2 
+                          mb: 2,
+                          fontSize: { xs: '0.875rem', sm: '0.9375rem' }
                         }}
                       >
                         Ответ:
@@ -1724,11 +1899,21 @@ print(hash("hello"))  # Хеш-значение ключа
               ))}
             </Box>
 
-            <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center', gap: 2 }}>
+            <Box sx={{ 
+              mt: 4, 
+              display: 'flex', 
+              justifyContent: 'center', 
+              gap: 2,
+              flexDirection: { xs: 'column', sm: 'row' }
+            }}>
               <Button
                 variant="outlined"
                 onClick={handleReset}
-                sx={{ fontWeight: 600, color: NEUTRAL_COLORS.textPrimary }}
+                sx={{ 
+                  fontWeight: 600, 
+                  color: NEUTRAL_COLORS.textPrimary,
+                  width: { xs: '100%', sm: 'auto' }
+                }}
               >
                 Пройти еще раз
               </Button>
@@ -1739,7 +1924,11 @@ print(hash("hello"))  # Хеш-значение ключа
                     handleCloseModal();
                     navigate('/register');
                   }}
-                  sx={{ fontWeight: 600, bgcolor: NEUTRAL_COLORS.success }}
+                  sx={{ 
+                    fontWeight: 600, 
+                    bgcolor: NEUTRAL_COLORS.success,
+                    width: { xs: '100%', sm: 'auto' }
+                  }}
                 >
                   Зарегистрироваться для полного доступа
                 </Button>
@@ -1747,7 +1936,10 @@ print(hash("hello"))  # Хеш-значение ключа
                 <Button
                   variant="contained"
                   onClick={handleCloseModal}
-                  sx={{ fontWeight: 600 }}
+                  sx={{ 
+                    fontWeight: 600,
+                    width: { xs: '100%', sm: 'auto' }
+                  }}
                 >
                   Закрыть
                 </Button>
@@ -1758,7 +1950,10 @@ print(hash("hello"))  # Хеш-значение ключа
       </DialogContent>
 
       {step !== 'results' && step !== 'countdown' && (
-        <DialogActions sx={{ p: 2, bgcolor: alpha(NEUTRAL_COLORS.background, 0.5) }}>
+        <DialogActions sx={{ 
+          p: { xs: 1.5, sm: 2 }, 
+          bgcolor: alpha(NEUTRAL_COLORS.background, 0.5) 
+        }}>
           <Box sx={{ flex: 1 }} />
           <Typography variant="caption" color={NEUTRAL_COLORS.textSecondary}>
             {isGuestMode 
@@ -1776,11 +1971,7 @@ const QuickStartCard = memo(({ isAuthenticated }: { isAuthenticated: boolean }) 
   const navigate = useNavigate();
   
   const handleClick = () => {
-    if (isAuthenticated) {
-      setQuickStartOpen(true);
-    } else {
-      setQuickStartOpen(true); // Открываем модалку для гостей
-    }
+    setQuickStartOpen(true);
   };
   
   return (
@@ -1790,7 +1981,7 @@ const QuickStartCard = memo(({ isAuthenticated }: { isAuthenticated: boolean }) 
           sx={{
             background: `linear-gradient(135deg, ${alpha(NEUTRAL_COLORS.accent, 0.9)} 0%, ${alpha(NEUTRAL_COLORS.accent, 0.7)} 100%)`,
             color: 'white',
-            borderRadius: 3,
+            borderRadius: { xs: 2, sm: 3 },
             overflow: 'hidden',
             position: 'relative',
             boxShadow: `0 10px 30px ${alpha(NEUTRAL_COLORS.accent, 0.3)}`,
@@ -1803,40 +1994,90 @@ const QuickStartCard = memo(({ isAuthenticated }: { isAuthenticated: boolean }) 
           }}
           onClick={handleClick}
         >
-          <CardContent sx={{ p: 4, position: 'relative', zIndex: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <BoltIcon sx={{ fontSize: 32, mr: 1.5 }} />
-              <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                Быстрый старт
-              </Typography>
+          <CardContent sx={{ 
+            p: { xs: 2.5, sm: 3, md: 4 }, 
+            position: 'relative', 
+            zIndex: 1 
+          }}>
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: { xs: 'flex-start', sm: 'center' }, 
+              mb: { xs: 1.5, sm: 2 },
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: { xs: 1, sm: 1.5 }
+            }}>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center',
+                gap: { xs: 1, sm: 1.5 }
+              }}>
+                <BoltIcon sx={{ fontSize: { xs: 28, sm: 32 } }} />
+                <Typography variant="h5" sx={{ 
+                  fontWeight: 700,
+                  fontSize: { xs: '1.25rem', sm: '1.5rem' }
+                }}>
+                  Быстрый старт
+                </Typography>
+              </Box>
+              
               {!isAuthenticated && (
                 <Chip 
                   label="Для гостей" 
                   size="small" 
                   sx={{ 
-                    ml: 2, 
                     backgroundColor: 'rgba(255,255,255,0.2)',
                     color: 'white',
-                    fontWeight: 600 
+                    fontWeight: 600,
+                    fontSize: { xs: '0.75rem', sm: '0.8125rem' }
                   }} 
                 />
               )}
             </Box>
             
-            <Typography variant="body1" sx={{ mb: 3, opacity: 0.95 }}>
+            <Typography variant="body1" sx={{ 
+              mb: { xs: 2, sm: 3 }, 
+              opacity: 0.95,
+              fontSize: { xs: '0.9375rem', sm: '1rem' },
+              lineHeight: 1.5
+            }}>
               {isAuthenticated 
                 ? 'Ответьте на 5 вопросов за 10 минут и проверьте свои навыки'
                 : 'Попробуйте демо-режим с 3 вопросами. Полный доступ откроется — после регистрации'}
             </Typography>
             
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Box>
-                <Typography variant="caption" sx={{ opacity: 0.8, display: 'block', mb: 0.5 }}>
-                  <TimerIcon sx={{ fontSize: 14, verticalAlign: 'middle', mr: 0.5 }} />
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: { xs: 'flex-start', sm: 'center' },
+              justifyContent: 'space-between',
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: { xs: 2, sm: 0 }
+            }}>
+              <Box sx={{ 
+                width: { xs: '100%', sm: 'auto' },
+                mb: { xs: 1, sm: 0 }
+              }}>
+                <Typography variant="caption" sx={{ 
+                  opacity: 0.8, 
+                  display: 'block', 
+                  mb: 0.5,
+                  fontSize: { xs: '0.75rem', sm: '0.8125rem' }
+                }}>
+                  <TimerIcon sx={{ 
+                    fontSize: { xs: 12, sm: 14 }, 
+                    verticalAlign: 'middle', 
+                    mr: 0.5 
+                  }} />
                   {isAuthenticated ? '10 минут' : '5 минут'}
                 </Typography>
-                <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                  <QuestionsIcon sx={{ fontSize: 14, verticalAlign: 'middle', mr: 0.5 }} />
+                <Typography variant="caption" sx={{ 
+                  opacity: 0.8,
+                  fontSize: { xs: '0.75rem', sm: '0.8125rem' }
+                }}>
+                  <QuestionsIcon sx={{ 
+                    fontSize: { xs: 12, sm: 14 }, 
+                    verticalAlign: 'middle', 
+                    mr: 0.5 
+                  }} />
                   {isAuthenticated ? '5 вопросов' : '3 вопроса'}
                 </Typography>
               </Box>
@@ -1847,9 +2088,12 @@ const QuickStartCard = memo(({ isAuthenticated }: { isAuthenticated: boolean }) 
                   backgroundColor: 'white',
                   color: NEUTRAL_COLORS.accent,
                   fontWeight: 600,
-                  px: 3,
-                  py: 1,
+                  px: { xs: 2.5, sm: 3 },
+                  py: { xs: 0.75, sm: 1 },
                   borderRadius: 2,
+                  fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                  width: { xs: '100%', sm: 'auto' },
+                  minWidth: { xs: 'auto', sm: '120px' },
                   '&:hover': {
                     backgroundColor: alpha('#FFFFFF', 0.9),
                   }
@@ -2260,28 +2504,98 @@ export const HomePage: React.FC = () => {
             </Box>
           </Fade>
 
-          {!isAuthenticated && (
-            <Fade in timeout={1500}>
-              <Box sx={{ mt: 4, textAlign: 'center' }}>
-                <Typography 
-                  variant="body2" 
+        {!isAuthenticated && (
+          <Fade in timeout={1500}>
+            <Box sx={{ 
+              mt: { xs: 3, sm: 4, md: 4 }, // Отступы для разных экранов
+              textAlign: 'center',
+              px: { xs: 2, sm: 3 } // Горизонтальные отступы для мобильных
+            }}>
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  mb: { xs: 1.5, sm: 2 }, // Отступ снизу адаптивный
+                  color: NEUTRAL_COLORS.textSecondary,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: { xs: 0.5, sm: 1, md: 1.5 }, // Расстояние между элементами
+                  flexWrap: { xs: 'wrap', sm: 'nowrap' }, // На мобильных - перенос строк
+                  flexDirection: { xs: 'column', sm: 'row' }, // На мобильных - вертикально
+                  fontSize: { xs: '0.875rem', sm: '0.9375rem' } // Размер шрифта
+                }}
+              >
+                {/* Первая фича - на мобильных может быть отдельно */}
+                <Box 
                   sx={{ 
-                    mb: 2, 
-                    color: NEUTRAL_COLORS.textSecondary,
-                    display: 'flex',
+                    display: 'flex', 
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 1,
-                    flexWrap: 'wrap'
+                    gap: 0.5,
+                    mb: { xs: 0.5, sm: 0 } // Отступ снизу только на мобильных
                   }}
                 >
-                  <CheckIcon fontSize="small" /> Различные вопросы 
-                  <CheckIcon fontSize="small" /> Удобное отслеживание
-                  <CheckIcon fontSize="small" /> Развернутые ответы
-                </Typography>
-              </Box>
-            </Fade>
-          )}
+                  <CheckIcon fontSize="small" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }} /> 
+                  <Box component="span" sx={{ whiteSpace: 'nowrap' }}>
+                    Различные вопросы
+                  </Box>
+                </Box>
+                
+                {/* Разделитель - скрываем на мобильных */}
+                <Box 
+                  component="span" 
+                  sx={{ 
+                    display: { xs: 'none', sm: 'inline' },
+                    mx: 0.5,
+                    color: NEUTRAL_COLORS.border
+                  }}
+                >
+                  •
+                </Box>
+                
+                {/* Вторая фича */}
+                <Box 
+                  sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    gap: 0.5,
+                    mb: { xs: 0.5, sm: 0 }
+                  }}
+                >
+                  <CheckIcon fontSize="small" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }} /> 
+                  <Box component="span" sx={{ whiteSpace: 'nowrap' }}>
+                    Удобное отслеживание
+                  </Box>
+                </Box>
+                
+                {/* Разделитель - скрываем на мобильных */}
+                <Box 
+                  component="span" 
+                  sx={{ 
+                    display: { xs: 'none', sm: 'inline' },
+                    mx: 0.5,
+                    color: NEUTRAL_COLORS.border
+                  }}
+                >
+                  •
+                </Box>
+                
+                {/* Третья фича */}
+                <Box 
+                  sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    gap: 0.5
+                  }}
+                >
+                  <CheckIcon fontSize="small" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }} /> 
+                  <Box component="span" sx={{ whiteSpace: 'nowrap' }}>
+                    Развернутые ответы
+                  </Box>
+                </Box>
+              </Typography>
+            </Box>
+          </Fade>
+        )}
 
           <Fade in timeout={1500}>
             <Box 
@@ -2363,7 +2677,7 @@ export const HomePage: React.FC = () => {
           </Grid>
 
           {/* Быстрый старт карточка (для всех) */}
-          <Box sx={{ mb: 8 }}>
+          <Box sx={{ mb: { xs: 4, sm: 6, md: 8 } }}>
             <QuickStartCard isAuthenticated={isAuthenticated} />
           </Box>
 
@@ -3015,15 +3329,92 @@ export const HomePage: React.FC = () => {
                   <CircularProgress sx={{ color: NEUTRAL_COLORS.accent }} />
                 </Box>
               ) : categories.length > 0 ? (
-                <Grid container spacing={2}>
-                  {categories.map((category) => (
-                    <Grid item xs={6} sm={4} md={2.4} key={category.id}>
-                      <CategoryCard
-                        category={category}
-                      />
-                    </Grid>
-                  ))}
-                </Grid>
+                <>
+                  {/* Для мобильных - горизонтальный скролл */}
+                  <Box 
+                    sx={{ 
+                      display: { xs: 'flex', lg: 'none' },
+                      gap: 2,
+                      overflowX: 'auto',
+                      pb: 2,
+                      scrollbarWidth: 'thin',
+                      scrollbarColor: `${NEUTRAL_COLORS.border} transparent`,
+                      '&::-webkit-scrollbar': {
+                        height: 4,
+                      },
+                      '&::-webkit-scrollbar-track': {
+                        background: alpha(NEUTRAL_COLORS.background, 0.5),
+                        borderRadius: 2,
+                      },
+                      '&::-webkit-scrollbar-thumb': {
+                        background: alpha(NEUTRAL_COLORS.textSecondary, 0.3),
+                        borderRadius: 2,
+                      },
+                    }}
+                  >
+                    {categories.map((category) => (
+                      <Box 
+                        key={category.id}
+                        sx={{ 
+                          minWidth: { 
+                            xs: 'calc(50% - 8px)', 
+                            sm: 'calc(33.333% - 8px)', 
+                            md: 'calc(25% - 8px)',
+                            lg: 'calc(20% - 8px)' // 5 карточек на 900px+
+                          },
+                          flexShrink: 0,
+                        }}
+                      >
+                        <CategoryCard
+                          category={category}
+                          sx={{
+                            height: '100%',
+                            p: 2,
+                            borderRadius: 2,
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                          }}
+                        />
+                      </Box>
+                    ))}
+                  </Box>
+
+                  {/* Для планшетов и десктопов - сетка */}
+                  <Grid 
+                    container 
+                    spacing={2} 
+                    sx={{ 
+                      display: { xs: 'none', lg: 'flex' },
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {categories.map((category) => (
+                      <Grid 
+                        item 
+                        xs={12}
+                        sm={4}
+                        md={2.4}
+                        key={category.id}
+                        sx={{
+                          display: 'flex',
+                        }}
+                      >
+                        <CategoryCard
+                          category={category}
+                          sx={{
+                            flex: 1,
+                            p: { sm: 2, md: 2.5 },
+                            borderRadius: { sm: 2, md: 2.5 },
+                            transition: 'all 0.2s ease',
+                            '&:hover': {
+                              transform: 'translateY(-2px)',
+                              boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
+                            }
+                          }}
+                        />
+                      </Grid>
+                    ))}
+                  </Grid>
+                </>
               ) : (
                 <Typography 
                   sx={{ 
