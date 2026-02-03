@@ -56,9 +56,6 @@ import {
   Psychology as PsychologyIcon,
   School as SchoolIcon,
   Work as WorkIcon,
-  ThumbUp as ThumbUpIcon,
-  AccessTime as AccessTimeIcon,
-  EmojiEvents as TrophyIcon,
   TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
@@ -67,6 +64,7 @@ import { categoryService } from '../services/categoryService';
 import { answerService } from '../services/answerService';
 import type { User } from '../types';
 import { userService } from '../services/userService';
+import { ContentRenderer } from '../components/ContentRenderer';
 
 // Нейтральная цветовая палитра
 const NEUTRAL_COLORS = {
@@ -1038,99 +1036,23 @@ print(hash("hello"))  # Хеш-значение ключа
       );
     }
 
-    return content.map((block, index) => {
-      switch (block.type) {
-        case 'heading':
-          return (
-            <Typography 
-              key={index} 
-              variant="h6" 
-              gutterBottom 
-              sx={{ 
-                fontWeight: 600, 
-                color: NEUTRAL_COLORS.textPrimary,
-                mt: 2,
-                mb: 1
-              }}
-            >
-              {block.data?.text}
-            </Typography>
-          );
-        case 'paragraph':
-          return (
-            <Typography 
-              key={index} 
-              variant="body1" 
-              paragraph 
-              sx={{ 
-                color: NEUTRAL_COLORS.textPrimary,
-                lineHeight: 1.6 
-              }}
-            >
-              {block.data?.text}
-            </Typography>
-          );
-        case 'code':
-          return (
-            <Paper
-              key={index}
-              elevation={0}
-              sx={{
-                p: 2,
-                my: 1.5,
-                bgcolor: alpha(NEUTRAL_COLORS.textPrimary, 0.03),
-                border: `1px solid ${alpha(NEUTRAL_COLORS.border, 0.5)}`,
-                borderRadius: 1,
-                fontFamily: '"Roboto Mono", monospace',
-                fontSize: '0.85rem',
-                overflow: 'auto',
-              }}
-            >
-              <Typography 
-                variant="caption" 
-                sx={{ 
-                  color: NEUTRAL_COLORS.textSecondary, 
-                  display: 'block', 
-                  mb: 0.5,
-                  fontWeight: 500,
-                  fontSize: '0.75rem'
-                }}
-              >
-                {block.data?.language || 'code'}
-              </Typography>
-              <pre style={{ 
-                margin: 0, 
-                whiteSpace: 'pre-wrap',
-                color: NEUTRAL_COLORS.textPrimary,
-                fontSize: '0.85rem',
-                lineHeight: 1.4
-              }}>
-                {block.data?.code || block.data?.text || block.content}
-              </pre>
-            </Paper>
-          );
-        case 'info':
-          return (
-            <Paper
-              key={index}
-              elevation={0}
-              sx={{
-                p: 2,
-                my: 1.5,
-                bgcolor: alpha(NEUTRAL_COLORS.accent, 0.08),
-                borderLeft: `4px solid ${NEUTRAL_COLORS.accent}`,
-                borderRadius: '0 8px 8px 0',
-              }}
-            >
-              <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textPrimary }}>
-                {block.data?.text || block.content}
-              </Typography>
-            </Paper>
-          );
-        default:
-          return null;
-      }
-    });
+    // Используем ContentRenderer как в QuestionDetailPage
+    return (
+      <Box
+        sx={{
+          '& > *': {
+            mb: 2.5,
+          },
+          '& p': {
+            mb: 2.5,
+          },
+        }}
+      >
+        <ContentRenderer 
+          blocks={content}
+        />
+      </Box>
+    );
   };
 
   const renderAnswerContent = (content: any[]) => {
@@ -1142,93 +1064,23 @@ print(hash("hello"))  # Хеш-значение ключа
       );
     }
 
-    return content.map((block, index) => {
-      switch (block.type) {
-        case 'heading':
-          return (
-            <Typography 
-              key={index} 
-              variant="h6" 
-              gutterBottom 
-              sx={{ 
-                fontWeight: 600, 
-                color: NEUTRAL_COLORS.textPrimary,
-                mt: 2,
-                mb: 1
-              }}
-            >
-              {block.data?.text}
-            </Typography>
-          );
-        case 'paragraph':
-          return (
-            <Typography 
-              key={index} 
-              variant="body1" 
-              paragraph 
-              sx={{ 
-                color: NEUTRAL_COLORS.textPrimary,
-                lineHeight: 1.6 
-              }}
-            >
-              {block.data?.text}
-            </Typography>
-          );
-        case 'code':
-          return (
-            <Paper
-              key={index}
-              elevation={0}
-              sx={{
-                p: 2,
-                my: 1.5,
-                bgcolor: alpha(NEUTRAL_COLORS.textPrimary, 0.03),
-                border: `1px solid ${alpha(NEUTRAL_COLORS.success, 0.3)}`,
-                borderRadius: 1,
-                fontFamily: '"Roboto Mono", monospace',
-                fontSize: '0.85rem',
-                overflow: 'auto',
-              }}
-            >
-              <Typography 
-                variant="caption" 
-                sx={{ 
-                  color: NEUTRAL_COLORS.success, 
-                  display: 'block', 
-                  mb: 0.5,
-                  fontWeight: 500,
-                  fontSize: '0.75rem'
-                }}
-              >
-                {block.data?.language || 'code'}
-              </Typography>
-              <pre style={{ 
-                margin: 0, 
-                whiteSpace: 'pre-wrap',
-                color: NEUTRAL_COLORS.textPrimary,
-                fontSize: '0.85rem',
-                lineHeight: 1.4
-              }}>
-                {block.data?.code || block.data?.text || block.content}
-              </pre>
-            </Paper>
-          );
-        default:
-          return (
-            <Typography 
-              key={index} 
-              variant="body1" 
-              paragraph 
-              sx={{ 
-                color: NEUTRAL_COLORS.textPrimary,
-                lineHeight: 1.6 
-              }}
-            >
-              {block.data?.text || block.content}
-            </Typography>
-          );
-      }
-    });
+    // Используем ContentRenderer как в QuestionDetailPage
+    return (
+      <Box
+        sx={{
+          '& > *': {
+            mb: 2.5,
+          },
+          '& p': {
+            mb: 2.5,
+          },
+        }}
+      >
+        <ContentRenderer 
+          blocks={content}
+        />
+      </Box>
+    );
   };
 
   useEffect(() => {

@@ -1,6 +1,5 @@
-// CodeBlock.tsx - улучшенная версия с кнопкой копирования
 import React, { useState } from 'react';
-import { Box, Paper, IconButton, Tooltip, alpha } from '@mui/material';
+import { Box, Paper, IconButton, Tooltip, alpha, useTheme, useMediaQuery } from '@mui/material';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { dracula } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { ContentCopy as CopyIcon, Check as CheckIcon } from '@mui/icons-material';
@@ -13,6 +12,9 @@ interface CodeBlockProps {
 
 export const CodeBlock: React.FC<CodeBlockProps> = ({ code, language = 'text' }) => {
   const [copied, setCopied] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
 
   const handleCopy = async () => {
     try {
@@ -23,6 +25,22 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ code, language = 'text' })
       console.error('Failed to copy:', err);
     }
   };
+
+  // Определяем размер шрифта в зависимости от размера экрана
+  const getFontSize = () => {
+    if (isMobile) return '12px';      // Мобильные
+    if (isTablet) return '13px';      // Планшеты
+    return '14px';                    // Десктоп
+  };
+
+  // Определяем размер номеров строк
+  const getLineNumberStyle = () => ({
+    fontFamily: '"Fira Code", "Cascadia Code", "JetBrains Mono", monospace',
+    fontSize: getFontSize(),
+    minWidth: isMobile ? '2em' : '3em',
+    paddingRight: isMobile ? '0.5em' : '1em',
+    textAlign: 'right',
+  });
 
   return (
     <Box 
@@ -47,12 +65,12 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ code, language = 'text' })
         justifyContent: 'space-between',
         alignItems: 'center',
         backgroundColor: 'rgba(0, 0, 0, 0.23)',
-        padding: '8px 16px',
+        padding: isMobile ? '6px 12px' : '8px 16px',
         borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
       }}>
         {/* Язык */}
         <Box sx={{ 
-          fontSize: '0.85rem', 
+          fontSize: isMobile ? '0.7rem' : '0.85rem', 
           color: '#00fbffff', 
           fontWeight: 600,
           letterSpacing: '0.5px',
@@ -68,8 +86,8 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ code, language = 'text' })
             sx={{
               backgroundColor: copied ? 'rgba(74, 222, 128, 0.1)' : 'rgba(255, 255, 255, 0.05)',
               color: copied ? '#4ade80' : '#94a3b8',
-              width: 32,
-              height: 32,
+              width: isMobile ? 28 : 32,
+              height: isMobile ? 28 : 32,
               transition: 'all 0.2s',
               '&:hover': {
                 backgroundColor: copied ? 'rgba(74, 222, 128, 0.2)' : 'rgba(255, 255, 255, 0.1)',
@@ -78,25 +96,48 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ code, language = 'text' })
             }}
             size="small"
           >
-            {copied ? <CheckIcon fontSize="small" /> : <CopyIcon fontSize="small" />}
+            {copied ? 
+              <CheckIcon fontSize={isMobile ? "small" : "small"} /> : 
+              <CopyIcon fontSize={isMobile ? "small" : "small"} />
+            }
           </IconButton>
         </Tooltip>
       </Box>
 
       {/* Код */}
-      <Box sx={{ position: 'relative' }}>
+      <Box sx={{ 
+        position: 'relative',
+        overflowX: 'auto',
+        '& pre': {
+          margin: 0,
+          padding: isMobile ? '12px' : '16px',
+          backgroundColor: 'transparent',
+          fontSize: getFontSize(),
+          fontFamily: '"Fira Code", "Cascadia Code", "JetBrains Mono", monospace',
+          lineHeight: isMobile ? 1.5 : 1.6,
+          minHeight: isMobile ? '40px' : '60px',
+        },
+        '& code': {
+          fontFamily: '"Fira Code", "Cascadia Code", "JetBrains Mono", monospace',
+          fontSize: 'inherit',
+          lineHeight: 'inherit',
+        },
+      }}>
         <SyntaxHighlighter
           language={language}
           style={dracula}
           customStyle={{
             margin: 0,
-            padding: '16px',
+            padding: isMobile ? '12px' : '16px',
             backgroundColor: 'transparent',
-            fontSize: '16px',
+            fontSize: getFontSize(),
             fontFamily: '"Fira Code", "Cascadia Code", "JetBrains Mono", monospace',
-            lineHeight: 1.6,
+            lineHeight: isMobile ? 1.5 : 1.6,
           }}
-          showLineNumbers={true}
+          showLineNumbers={!isMobile} // На мобильных скрываем номера строк для экономии места
+          lineNumberStyle={getLineNumberStyle()}
+          wrapLines={isMobile} // Перенос строк на мобильных
+          wrapLongLines={isMobile} // Перенос длинных строк на мобильных
         >
           {code}
         </SyntaxHighlighter>
