@@ -5,6 +5,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.db.models.auth import User
 from app.db.models.question import Question
 from app.repositories.category import CategoryRepository
 from app.repositories.question import QuestionRepository
@@ -36,7 +37,8 @@ class QuestionService:
 
     async def create_question(
         self, 
-        data: QuestionCreate
+        data: QuestionCreate,
+        current_user: User,
     ) -> QuestionResponse:
         """Создание нового вопроса.
         
@@ -49,8 +51,12 @@ class QuestionService:
         Raises:
             ValueError: Если вопрос с таким слагом уже существует
         """
-        try:            
-            question = await self.repository.create(data)
+        try:
+            question_user = None
+            if not current_user.is_admin:
+                question_user = current_user.id
+
+            question = await self.repository.create(data, user_id=question_user)
             log.info(f"✅ Вопрос успешно создан: {question.id}")
             return QuestionResponse.model_validate(question)
         except ValueError as e:
@@ -99,6 +105,7 @@ class QuestionService:
     async def get_one(
         self, 
         question_id: UUID,
+        current_user_id: UUID,
     ) -> Optional[QuestionResponse]:
         """Получение вопроса по ID.
         
@@ -109,7 +116,7 @@ class QuestionService:
             QuestionResponse или None
         """
         try:
-            question = await self.repository.get_by_id(question_id)
+            question = await self.repository.get_by_id(question_id, current_user_id)
             
             if not question:
                 log.warning(f"⚠️ Вопрос не найден: {question_id}")

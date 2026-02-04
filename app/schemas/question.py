@@ -53,6 +53,7 @@ class QuestionResponse(BaseModel):
     is_published: bool
     category_id: UUID
     updated_at: datetime
+    user_id: UUID | None = None
 
     class Config:
         from_attributes = True
@@ -103,9 +104,9 @@ class QuestionFilterParams(BaseModel):
     is_published: Optional[bool] = None
     difficulty: Optional[DifficultyQuestionLevel] = None
     category_id: Optional[UUID] = None
-    is_completed: Optional[bool] = None
 
     # доп.фильтры
+    is_completed: Optional[bool] = None
     exclude_inactive_categories: Optional[bool] = None
     
     def get_filters(self) -> Dict[str, Any]:

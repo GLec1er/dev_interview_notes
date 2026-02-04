@@ -52,7 +52,7 @@ async def create_question(
     """
     try:
         service = QuestionService.from_session(session)     
-        return await service.create_question(data)
+        return await service.create_question(data, current_user)
         
     except ValueError as e:
         log.warning(f"⚠️ Ошибка валидации при создании вопроса: {str(e)}")
@@ -136,7 +136,7 @@ async def get_question(
     """
     try:
         service = QuestionService.from_session(session)
-        question = await service.get_one(question_id)
+        question = await service.get_one(question_id, current_user.id)
         
         if not question:
             log.warning(f"⚠️ Вопрос не найден: {question_id}")

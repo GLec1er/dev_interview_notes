@@ -63,6 +63,7 @@ class CategoryService:
         self,
         pagination: PaginationParams,
         include_inactive: bool = False,
+        current_user_id: Optional[UUID] = None,
     ) -> CategoryListResponse:
         """
         Получить список категорий с пагинацией.
@@ -78,11 +79,12 @@ class CategoryService:
             categories, total = await self.repository.get_many(
                 pagination=pagination,
                 include_inactive=include_inactive,
+                current_user_id=current_user_id,
             )
             
             # Получаем количество вопросов для каждой категории
             for category in categories:
-                category.question_count = await self.repository.get_question_count(category.id)
+                category.question_count = await self.repository.get_question_count(category.id, current_user_id)
             
             log.debug(f"📖 Получено {len(categories)} из {total} категорий")
             return CategoryListResponse(items=categories, total=total)

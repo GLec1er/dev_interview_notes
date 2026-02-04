@@ -14,6 +14,19 @@ import {
   IconButton,
   Tooltip,
   Fab,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  Tab,
+  Tabs,
+  DialogTitle,
+  TextField,
+  InputLabel,
+  FormControl,
+  Select,
+  MenuItem,
+  FormControlLabel,
+  Switch,
 } from '@mui/material';
 import {
   ExpandMore as ExpandMoreIcon,
@@ -33,6 +46,10 @@ import {
   ArrowForward as ArrowForwardIcon,
   CheckCircle as CheckCircleIcon,
   RadioButtonUnchecked as RadioButtonUncheckedIcon,
+  Add as AddIcon,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
+  MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
 import { questionService } from '../services/questionService';
 import { answerService } from '../services/answerService';
@@ -40,7 +57,9 @@ import { categoryService } from '../services/categoryService';
 import { questionCompletionService } from '../services/questionCompletionService';
 import { favoriteService } from '../services/favoriteService';
 import { ContentRenderer } from '../components/ContentRenderer';
-import type { Question, Answer, Category } from '../types';
+import type { Question, Answer, Category, ContentBlock } from '../types';
+import { ContentEditor } from '../components/Admin/ContentEditor';
+import { useAuth } from '../context/AuthContext';
 
 // Нейтральная цветовая палитра
 const NEUTRAL_COLORS = {
@@ -58,13 +77,16 @@ const NEUTRAL_COLORS = {
   info: '#3182CE',
 };
 
-// SolutionCard.tsx - обновленная версия компонента
+// SolutionCard.tsx - обновленная версия компонента с кнопками админа
 interface SolutionCardProps {
   answer: Answer;
   index: number;
   isExpanded: boolean;
   onToggle: () => void;
   onCopyCode: (code: string) => void;
+  isAdmin: boolean;
+  onEditAnswer: (answer: Answer) => void;
+  onDeleteAnswer: (answerId: string) => void;
 }
 
 const SolutionCard: React.FC<SolutionCardProps> = ({ 
@@ -72,7 +94,10 @@ const SolutionCard: React.FC<SolutionCardProps> = ({
   index, 
   isExpanded, 
   onToggle,
-  onCopyCode 
+  onCopyCode,
+  isAdmin,
+  onEditAnswer,
+  onDeleteAnswer
 }) => {
 
   return (
@@ -174,7 +199,49 @@ const SolutionCard: React.FC<SolutionCardProps> = ({
         </Stack>
 
         {/* Правая часть с иконкой и статусом */}
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Stack direction="row" spacing={1} alignItems="center">
+          {/* Кнопки для админов */}
+          {isAdmin && (
+            <>
+              <Tooltip title="Редактировать ответ">
+                <IconButton
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEditAnswer(answer);
+                  }}
+                  size="small"
+                  sx={{
+                    color: NEUTRAL_COLORS.accent,
+                    backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
+                    '&:hover': {
+                      backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.2),
+                    },
+                  }}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Удалить ответ">
+                <IconButton
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeleteAnswer(answer.id);
+                  }}
+                  size="small"
+                  sx={{
+                    color: NEUTRAL_COLORS.error,
+                    backgroundColor: alpha(NEUTRAL_COLORS.error, 0.1),
+                    '&:hover': {
+                      backgroundColor: alpha(NEUTRAL_COLORS.error, 0.2),
+                    },
+                  }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </>
+          )}
+          
           {/* Иконка раскрытия */}
           <IconButton
             onClick={onToggle}
@@ -282,18 +349,48 @@ const SolutionCard: React.FC<SolutionCardProps> = ({
 export const QuestionDetailPage: React.FC = () => {
   const { questionId } = useParams<{ questionId: string }>();
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
+  
   const [question, setQuestion] = useState<Question | null>(null);
   const [answers, setAnswers] = useState<Answer[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [category, setCategory] = useState<Category | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedSolutions, setExpandedSolutions] = useState<number[]>([0]);
   const [isBookmarked, setIsBookmarked] = useState(false);
-  const [solutionFilter, setSolutionFilter] = useState<string>('all');
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showCopyNotification, setShowCopyNotification] = useState<string | null>(null);
   const [isCompleted, setIsCompleted] = useState(false);
   const [isCompletionLoading, setIsCompletionLoading] = useState(false);
+  const [answerIsPublished, setAnswerIsPublished] = useState(true);
+  
+  // Состояния для модалок
+  const [openQuestionEditDialog, setOpenQuestionEditDialog] = useState(false);
+  const [openQuestionDeleteDialog, setOpenQuestionDeleteDialog] = useState(false);
+  const [openAnswerAddDialog, setOpenAnswerAddDialog] = useState(false);
+  const [openAnswerEditDialog, setOpenAnswerEditDialog] = useState(false);
+  const [openAnswerDeleteDialog, setOpenAnswerDeleteDialog] = useState(false);
+  
+  // Состояния для форм
+  const [questionFormData, setQuestionFormData] = useState({
+    title: '',
+    slug: '',
+    difficulty: 'easy' as 'easy' | 'medium' | 'hard',
+    is_published: true,
+    category_id: '',
+  });
+  const [questionContent, setQuestionContent] = useState<ContentBlock[]>([]);
+  const [questionTab, setQuestionTab] = useState(0);
+  const [isSavingQuestion, setIsSavingQuestion] = useState(false);
+  const [questionError, setQuestionError] = useState<string | null>(null);
+  
+  const [answerFormData, setAnswerFormData] = useState<Answer | null>(null);
+  const [answerContent, setAnswerContent] = useState<ContentBlock[]>([]);
+  const [answerTab, setAnswerTab] = useState(0);
+  const [isSavingAnswer, setIsSavingAnswer] = useState(false);
+  const [answerError, setAnswerError] = useState<string | null>(null);
+  const [selectedAnswerId, setSelectedAnswerId] = useState<string | null>(null);
 
   // Отслеживание скролла для кнопки "Наверх"
   useEffect(() => {
@@ -310,22 +407,27 @@ export const QuestionDetailPage: React.FC = () => {
     try {
       setIsLoading(true);
       setError(null);
+      
+      // Загружаем вопрос
       const questionData = await questionService.getQuestion(questionId);
       setQuestion(questionData);
 
-      // Если у вопроса есть category_id, загружаем категорию
-      if (questionData.category_id) {
-        try {
-          const categoriesData = await categoryService.getCategories(1, 100, true);
+      // Загружаем категории
+      try {
+        const categoriesData = await categoryService.getCategories(1, 100, true);
+        setCategories(categoriesData.items);
+        
+        // Находим категорию вопроса
+        if (questionData.category_id) {
           const foundCategory = categoriesData.items.find(
             (cat: Category) => cat.id === questionData.category_id
           );
           if (foundCategory) {
             setCategory(foundCategory);
           }
-        } catch (categoryErr) {
-          console.warn('Failed to load category:', categoryErr);
         }
+      } catch (categoryErr) {
+        console.warn('Failed to load categories:', categoryErr);
       }
 
       // Загружаем ответы
@@ -452,15 +554,275 @@ export const QuestionDetailPage: React.FC = () => {
     }
   }, [questionId]);
 
-  const filteredAnswers = () => {
-    switch (solutionFilter) {
-      case 'newest':
-        return [...answers].sort((a, b) => 
-          new Date(b.updated_at || '').getTime() - new Date(a.updated_at || '').getTime()
-        );
-      default:
-        return answers;
+  // Функции для работы с вопросами
+  const handleOpenQuestionEdit = () => {
+    if (!question || !user?.is_admin) return;
+    
+    setQuestionFormData({
+      title: question.title,
+      slug: question.slug,
+      difficulty: question.difficulty,
+      is_published: question.is_published,
+      category_id: question.category_id || '',
+    });
+    
+    // Конвертируем контент вопроса в правильный формат
+    const convertedContent = (question.content || []).map(block => {
+      if (block.type === 'code' && block.data) {
+        const data = block.data as any;
+        if (data.content !== undefined && data.code === undefined) {
+          return {
+            ...block,
+            data: {
+              ...data,
+              code: data.content,
+              content: undefined
+            }
+          };
+        }
+      }
+      return block;
+    });
+    
+    setQuestionContent(convertedContent);
+    setQuestionTab(0);
+    setQuestionError(null);
+    setOpenQuestionEditDialog(true);
+  };
+
+  const handleOpenQuestionDelete = () => {
+    setOpenQuestionDeleteDialog(true);
+  };
+
+  const handleCloseQuestionEdit = () => {
+    setOpenQuestionEditDialog(false);
+    setQuestionFormData({
+      title: '',
+      slug: '',
+      difficulty: 'easy',
+      is_published: true,
+      category_id: '',
+    });
+    setQuestionContent([]);
+    setQuestionError(null);
+  };
+
+  const handleCloseQuestionDelete = () => {
+    setOpenQuestionDeleteDialog(false);
+  };
+
+  const handleSaveQuestion = async () => {
+    if (!questionId || !question || !user?.is_admin) return;
+    
+    try {
+      setIsSavingQuestion(true);
+      setQuestionError(null);
+      
+      if (!questionFormData.category_id) {
+        setQuestionError('Пожалуйста, выберите категорию');
+        setIsSavingQuestion(false);
+        return;
+      }
+
+      if (!questionFormData.title.trim()) {
+        setQuestionError('Название вопроса обязательно');
+        setIsSavingQuestion(false);
+        return;
+      }
+
+      if (!questionFormData.slug.trim()) {
+        setQuestionError('URL-адрес вопроса обязателен');
+        setIsSavingQuestion(false);
+        return;
+      }
+
+      const questionData = {
+        title: questionFormData.title,
+        slug: questionFormData.slug,
+        difficulty: questionFormData.difficulty,
+        is_published: questionFormData.is_published,
+        content: questionContent,
+        category_id: questionFormData.category_id,
+      };
+
+      await questionService.updateQuestion(questionId, questionData);
+      
+      handleCloseQuestionEdit();
+      loadData(); // Перезагружаем данные
+      setShowCopyNotification('Вопрос успешно обновлен');
+      setTimeout(() => setShowCopyNotification(null), 2000);
+    } catch (err: any) {
+      setQuestionError(err.response?.data?.detail || 'Не удалось сохранить вопрос');
+      console.error('Failed to save question:', err);
+    } finally {
+      setIsSavingQuestion(false);
     }
+  };
+
+  const handleDeleteQuestion = async () => {
+    if (!questionId || !user?.is_admin) return;
+    
+    try {
+      await questionService.deleteQuestion(questionId);
+      setShowCopyNotification('Вопрос успешно удален');
+      setTimeout(() => {
+        navigate('/questions');
+      }, 1500);
+    } catch (err) {
+      console.error('Failed to delete question:', err);
+      setShowCopyNotification('Ошибка при удалении вопроса');
+      setTimeout(() => setShowCopyNotification(null), 2000);
+    } finally {
+      handleCloseQuestionDelete();
+    }
+  };
+
+// Функции для работы с ответами
+const handleOpenAnswerAdd = () => {
+  if (!user?.is_admin || !questionId) return;
+  
+  setAnswerFormData(null);
+  setAnswerContent([]);
+  setAnswerIsPublished(true); // По умолчанию опубликован
+  setAnswerError(null);
+  setAnswerTab(0);
+  setOpenAnswerAddDialog(true);
+};
+
+const handleCloseAnswerAdd = () => {
+  setOpenAnswerAddDialog(false);
+  setAnswerFormData(null);
+  setAnswerContent([]);
+  setAnswerIsPublished(true);
+  setAnswerError(null);
+};
+
+const handleOpenAnswerEdit = (answer: Answer) => {
+  if (!user?.is_admin) return;
+  
+  setAnswerFormData(answer);
+  
+  // Конвертируем контент ответа в правильный формат
+  const convertedContent = (answer.content || []).map(block => {
+    if (block.type === 'code' && block.data) {
+      const data = block.data as any;
+      if (data.content !== undefined && data.code === undefined) {
+        return {
+          ...block,
+          data: {
+            ...data,
+            code: data.content,
+            content: undefined
+          }
+        };
+      }
+    }
+    return block;
+  });
+  
+  setAnswerContent(convertedContent);
+  setAnswerIsPublished(answer.is_published || true); // Устанавливаем текущий статус
+  setAnswerError(null);
+  setAnswerTab(0);
+  setOpenAnswerEditDialog(true);
+};
+
+const handleCloseAnswerEdit = () => {
+  setOpenAnswerEditDialog(false);
+  setAnswerFormData(null);
+  setAnswerContent([]);
+  setAnswerIsPublished(true);
+  setAnswerError(null);
+};
+
+  const handleOpenAnswerDelete = (answerId: string) => {
+    if (!user?.is_admin) return;
+    
+    setSelectedAnswerId(answerId);
+    setOpenAnswerDeleteDialog(true);
+  };
+
+  const handleCloseAnswerDelete = () => {
+    setOpenAnswerDeleteDialog(false);
+    setSelectedAnswerId(null);
+  };
+
+  const handleSaveAnswer = async (isEdit: boolean = false) => {
+  if (!questionId || !user?.is_admin) return;
+  
+  try {
+    setIsSavingAnswer(true);
+    setAnswerError(null);
+    
+    if (answerContent.length === 0) {
+      setAnswerError('Содержание ответа не может быть пустым');
+      setIsSavingAnswer(false);
+      return;
+    }
+    
+    // ✅ Теперь передаем настройку публикации
+    const answerData = {
+      content: answerContent,
+      is_published: answerIsPublished, // Используем состояние
+    };
+    
+    console.log('Saving answer with data:', answerData); // Для отладки
+    
+    if (isEdit && answerFormData?.id) {
+      await answerService.updateAnswer(questionId, answerFormData.id, answerData);
+      setShowCopyNotification('Ответ успешно обновлен');
+    } else {
+      await answerService.createAnswer(questionId, answerData);
+      setShowCopyNotification('Ответ успешно добавлен');
+    }
+    
+    if (isEdit) {
+      handleCloseAnswerEdit();
+    } else {
+      handleCloseAnswerAdd();
+    }
+    
+    loadData();
+    setTimeout(() => setShowCopyNotification(null), 2000);
+  } catch (err: any) {
+    setAnswerError(err.response?.data?.detail || 'Не удалось сохранить ответ');
+    console.error('Failed to save answer:', err);
+    console.error('Error details:', err.response?.data);
+  } finally {
+    setIsSavingAnswer(false);
+  }
+};
+
+  const handleDeleteAnswer = async () => {
+    if (!selectedAnswerId || !user?.is_admin || !questionId) return;
+    
+    try {
+      // ✅ Исправлено: передаем questionId как параметр
+      await answerService.deleteAnswer(questionId, selectedAnswerId);
+      setAnswers(answers.filter(answer => answer.id !== selectedAnswerId));
+      setShowCopyNotification('Ответ успешно удален');
+      setTimeout(() => setShowCopyNotification(null), 2000);
+    } catch (err) {
+      console.error('Failed to delete answer:', err);
+      setShowCopyNotification('Ошибка при удалении ответа');
+      setTimeout(() => setShowCopyNotification(null), 2000);
+    } finally {
+      handleCloseAnswerDelete();
+    }
+  };
+
+  // Автоматическая генерация slug из title
+  const handleQuestionTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const title = e.target.value;
+    setQuestionFormData({
+      ...questionFormData,
+      title: title,
+      slug: title.toLowerCase()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim()
+    });
   };
 
   const scrollToTop = () => {
@@ -494,7 +856,7 @@ export const QuestionDetailPage: React.FC = () => {
           onClick={() => navigate('/questions')}
           sx={{ mb: 2, color: NEUTRAL_COLORS.accent }}
         >
-          Back to Questions
+          Назад к вопросам
         </Button>
         <Alert
           severity="error"
@@ -503,13 +865,11 @@ export const QuestionDetailPage: React.FC = () => {
             border: `1px solid ${alpha(NEUTRAL_COLORS.error, 0.2)}`,
           }}
         >
-          {error || 'Question not found'}
+          {error || 'Вопрос не найден'}
         </Alert>
       </Container>
     );
   }
-
-  const answersToShow = filteredAnswers();
 
   return (
     <Box
@@ -836,6 +1196,52 @@ export const QuestionDetailPage: React.FC = () => {
               </Box>
             </Stack>
           </Stack>
+
+          {/* Кнопки управления вопросом внизу карточки (только для админов) */}
+          {user?.is_admin && (
+            <Box 
+              sx={{ 
+                mt: 4, 
+                pt: 3, 
+                borderTop: `1px solid ${alpha(NEUTRAL_COLORS.border, 0.5)}`,
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 2
+              }}
+            >
+              <Button
+                startIcon={<EditIcon />}
+                onClick={handleOpenQuestionEdit}
+                variant="outlined"
+                sx={{
+                  borderColor: NEUTRAL_COLORS.accent,
+                  color: NEUTRAL_COLORS.accent,
+                  '&:hover': {
+                    borderColor: alpha(NEUTRAL_COLORS.accent, 0.8),
+                    backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+                  },
+                }}
+              >
+                Редактировать вопрос
+              </Button>
+              
+              <Button
+                startIcon={<DeleteIcon />}
+                onClick={handleOpenQuestionDelete}
+                variant="outlined"
+                sx={{
+                  borderColor: NEUTRAL_COLORS.error,
+                  color: NEUTRAL_COLORS.error,
+                  '&:hover': {
+                    borderColor: alpha(NEUTRAL_COLORS.error, 0.8),
+                    backgroundColor: alpha(NEUTRAL_COLORS.error, 0.04),
+                  },
+                }}
+              >
+                Удалить вопрос
+              </Button>
+            </Box>
+          )}
         </Paper>
 
         {/* Секция решений */}
@@ -891,10 +1297,29 @@ export const QuestionDetailPage: React.FC = () => {
                   Подробные объяснения и подходы к решению проблемы
                 </Typography>
               </Box>
+
+              {/* Кнопка добавления ответа для админов */}
+              {user?.is_admin && (
+                <Button
+                  startIcon={<AddIcon />}
+                  onClick={handleOpenAnswerAdd}
+                  variant="contained"
+                  size="small"
+                  sx={{
+                    backgroundColor: NEUTRAL_COLORS.success,
+                    color: NEUTRAL_COLORS.surface,
+                    '&:hover': {
+                      backgroundColor: alpha(NEUTRAL_COLORS.success, 0.9),
+                    },
+                  }}
+                >
+                  Добавить решение
+                </Button>
+              )}
             </Stack>
 
             {/* Список решений */}
-            {answersToShow.length === 0 ? (
+            {answers.length === 0 ? (
               <Paper
                 elevation={0}
                 sx={{
@@ -925,19 +1350,7 @@ export const QuestionDetailPage: React.FC = () => {
                     mb: 1,
                   }}
                 >
-                  {solutionFilter === 'all' 
-                    ? 'Пока нет доступных решений' 
-                    : 'Нет решений по выбранному фильтру'}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: NEUTRAL_COLORS.textSecondary,
-                    mb: 2,
-                  }}
-                >
-                  {solutionFilter !== 'all' && 'Попробуйте выбрать другой фильтр.'}
-                  Зайдите позже
+                  Пока нет доступных решений
                 </Typography>
               </Paper>
             ) : (
@@ -946,7 +1359,7 @@ export const QuestionDetailPage: React.FC = () => {
                   Кликните на заголовок, чтобы развернуть решение.
                 </Typography>
                 
-                {answersToShow.map((answer, index) => (
+                {answers.map((answer, index) => (
                   <SolutionCard
                     key={answer.id}
                     answer={answer}
@@ -954,6 +1367,9 @@ export const QuestionDetailPage: React.FC = () => {
                     isExpanded={expandedSolutions.includes(index)}
                     onToggle={() => handleSolutionToggle(index)}
                     onCopyCode={handleCopyCode}
+                    isAdmin={user?.is_admin || false}
+                    onEditAnswer={handleOpenAnswerEdit}
+                    onDeleteAnswer={handleOpenAnswerDelete}
                   />
                 ))}
               </Box>
@@ -989,9 +1405,6 @@ export const QuestionDetailPage: React.FC = () => {
             </Typography>
             <Stack spacing={1}>
               <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary }}>
-                • Используйте фильтры для сортировки решений по популярности или новизне
-              </Typography>
-              <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary }}>
                 • Нажимайте на код, чтобы скопировать его в буфер обмена
               </Typography>
               <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary }}>
@@ -1001,6 +1414,540 @@ export const QuestionDetailPage: React.FC = () => {
           </Stack>
         </Paper>
       </Container>
+
+      {/* Модалка редактирования вопроса */}
+      <Dialog 
+        open={openQuestionEditDialog} 
+        onClose={handleCloseQuestionEdit} 
+        maxWidth="md" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            border: `1px solid ${NEUTRAL_COLORS.border}`,
+            maxHeight: '90vh',
+            backgroundColor: NEUTRAL_COLORS.secondary,
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          borderBottom: `1px solid ${NEUTRAL_COLORS.border}`,
+          pb: 2,
+          fontWeight: 700,
+          color: NEUTRAL_COLORS.surface,
+        }}>
+          Редактировать вопрос
+          {questionError && (
+            <Alert 
+              severity="error" 
+              sx={{ 
+                mt: 2,
+                borderRadius: 2,
+                border: `1px solid ${alpha(NEUTRAL_COLORS.error, 0.2)}`,
+              }}
+              onClose={() => setQuestionError(null)}
+            >
+              {questionError}
+            </Alert>
+          )}
+        </DialogTitle>
+        
+        <DialogContent sx={{ pt: 3 }}>
+          <Tabs 
+            value={questionTab} 
+            onChange={(e, v) => setQuestionTab(v)}
+            sx={{ mb: 3 }}
+          >
+            <Tab label="Основная информация" />
+            <Tab label="Содержание" />
+          </Tabs>
+          
+          {questionTab === 0 ? (
+            <Stack spacing={2}>
+              <TextField
+                fullWidth
+                label="Название вопроса *"
+                value={questionFormData.title}
+                onChange={handleQuestionTitleChange}
+                size="medium"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    '&:hover fieldset': {
+                      borderColor: NEUTRAL_COLORS.accent,
+                    }
+                  }
+                }}
+              />
+              <TextField
+                fullWidth
+                label="URL-адрес вопроса *"
+                value={questionFormData.slug}
+                onChange={(e) => setQuestionFormData({ ...questionFormData, slug: e.target.value })}
+                size="medium"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    '&:hover fieldset': {
+                      borderColor: NEUTRAL_COLORS.accent,
+                    }
+                  }
+                }}
+                helperText="URL-friendly версия названия (генерируется автоматически)"
+              />
+              
+              {/* Категория */}
+              <FormControl fullWidth size="medium">
+                <InputLabel>Категория *</InputLabel>
+                <Select
+                  value={questionFormData.category_id}
+                  label="Категория *"
+                  onChange={(e) => setQuestionFormData({ ...questionFormData, category_id: e.target.value })}
+                  sx={{
+                    borderRadius: 2,
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: NEUTRAL_COLORS.accent,
+                    }
+                  }}
+                >
+                  <MenuItem value="">
+                    <em>Выберите категорию</em>
+                  </MenuItem>
+                  {categories.map((cat) => (
+                    <MenuItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth size="medium">
+                <InputLabel>Сложность</InputLabel>
+                <Select
+                  value={questionFormData.difficulty}
+                  label="Сложность"
+                  onChange={(e) => setQuestionFormData({ ...questionFormData, difficulty: e.target.value as any })}
+                  sx={{
+                    borderRadius: 2,
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: NEUTRAL_COLORS.accent,
+                    }
+                  }}
+                >
+                  <MenuItem value="easy">Легкий</MenuItem>
+                  <MenuItem value="medium">Средний</MenuItem>
+                  <MenuItem value="hard">Сложный</MenuItem>
+                </Select>
+              </FormControl>
+            </Stack>
+          ) : (
+            <ContentEditor
+              content={questionContent}
+              onChange={setQuestionContent}
+              maxHeight="400px"
+            />
+          )}
+        </DialogContent>
+        <DialogActions sx={{ 
+          borderTop: `1px solid ${NEUTRAL_COLORS.border}`,
+          pt: 2,
+          px: 3,
+          pb: 3
+        }}>
+          <Button
+            variant="outlined"
+            onClick={handleCloseQuestionEdit}
+            sx={{
+              borderWidth: 2,
+              borderColor: NEUTRAL_COLORS.border,
+              color: NEUTRAL_COLORS.surface,
+              borderRadius: 2,
+              px: 3,
+              py: 1,
+              fontWeight: 600,
+              '&:hover': {
+                borderColor: NEUTRAL_COLORS.accent,
+                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+              }
+            }}
+          >
+            Отмена
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSaveQuestion}
+            disabled={!questionFormData.category_id || !questionFormData.title.trim() || !questionFormData.slug.trim() || isSavingQuestion}
+            startIcon={isSavingQuestion ? <CircularProgress size={20} color="inherit" /> : null}
+            sx={{
+              backgroundColor: NEUTRAL_COLORS.success,
+              color: NEUTRAL_COLORS.surface,
+              borderRadius: 2,
+              px: 3,
+              py: 1,
+              fontWeight: 600,
+              '&:hover': {
+                backgroundColor: alpha(NEUTRAL_COLORS.success, 0.9),
+              }
+            }}
+          >
+            {isSavingQuestion ? 'Сохранение...' : 'Сохранить изменения'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Модалка подтверждения удаления вопроса */}
+      <Dialog 
+        open={openQuestionDeleteDialog} 
+        onClose={handleCloseQuestionDelete} 
+        maxWidth="sm" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            border: `1px solid ${NEUTRAL_COLORS.border}`,
+            backgroundColor: NEUTRAL_COLORS.secondary,
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          borderBottom: `1px solid ${NEUTRAL_COLORS.border}`,
+          pb: 2,
+          fontWeight: 700,
+          color: NEUTRAL_COLORS.surface,
+        }}>
+          Удаление вопроса
+        </DialogTitle>
+        
+        <DialogContent sx={{ pt: 3 }}>
+          <Typography sx={{ mt:2, mb: 2, color: NEUTRAL_COLORS.surface }}>
+            Вы уверены, что хотите удалить вопрос "{question?.title}"?
+          </Typography>
+          <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.primary }}>
+            Это действие нельзя отменить. Все связанные ответы также будут удалены.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ 
+          borderTop: `1px solid ${NEUTRAL_COLORS.border}`,
+          pt: 2,
+          px: 3,
+          pb: 3
+        }}>
+          <Button
+            variant="outlined"
+            onClick={handleCloseQuestionDelete}
+            sx={{
+              borderWidth: 2,
+              borderColor: NEUTRAL_COLORS.border,
+              color: NEUTRAL_COLORS.surface,
+              borderRadius: 2,
+              px: 3,
+              py: 1,
+              fontWeight: 600,
+              '&:hover': {
+                borderColor: NEUTRAL_COLORS.accent,
+                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+              }
+            }}
+          >
+            Отмена
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleDeleteQuestion}
+            sx={{
+              backgroundColor: NEUTRAL_COLORS.error,
+              color: NEUTRAL_COLORS.surface,
+              borderRadius: 2,
+              px: 3,
+              py: 1,
+              fontWeight: 600,
+              '&:hover': {
+                backgroundColor: alpha(NEUTRAL_COLORS.error, 0.9),
+              }
+            }}
+          >
+            Удалить вопрос
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Модалка добавления ответа */}
+      <Dialog 
+        open={openAnswerAddDialog} 
+        onClose={handleCloseAnswerAdd} 
+        maxWidth="md" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            border: `1px solid ${NEUTRAL_COLORS.border}`,
+            maxHeight: '90vh',
+            backgroundColor: NEUTRAL_COLORS.secondary,
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          borderBottom: `1px solid ${NEUTRAL_COLORS.border}`,
+          pb: 2,
+          fontWeight: 700,
+          color: NEUTRAL_COLORS.surface,
+        }}>
+          Добавить новый ответ
+          {answerError && (
+            <Alert 
+              severity="error" 
+              sx={{ 
+                mt: 2,
+                borderRadius: 2,
+                border: `1px solid ${alpha(NEUTRAL_COLORS.error, 0.2)}`,
+              }}
+              onClose={() => setAnswerError(null)}
+            >
+              {answerError}
+            </Alert>
+          )}
+        </DialogTitle>
+        
+        <DialogContent sx={{ pt: 3 }}>
+          <Tabs 
+            value={answerTab} 
+            onChange={(e, v) => setAnswerTab(v)}
+            sx={{ mb: 3 }}
+          >
+            <Tab label="Содержание ответа" />
+          </Tabs>
+          
+          {answerTab === 0 && (
+            <ContentEditor
+              content={answerContent}
+              onChange={setAnswerContent}
+              maxHeight="400px"
+            />
+          )}
+        </DialogContent>
+        <DialogActions sx={{ 
+          borderTop: `1px solid ${NEUTRAL_COLORS.border}`,
+          pt: 2,
+          px: 3,
+          pb: 3
+        }}>
+          <Button
+            variant="outlined"
+            onClick={handleCloseAnswerAdd}
+            sx={{
+              borderWidth: 2,
+              borderColor: NEUTRAL_COLORS.border,
+              color: NEUTRAL_COLORS.surface,
+              borderRadius: 2,
+              px: 3,
+              py: 1,
+              fontWeight: 600,
+              '&:hover': {
+                borderColor: NEUTRAL_COLORS.accent,
+                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+              }
+            }}
+          >
+            Отмена
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => handleSaveAnswer(false)}
+            disabled={answerContent.length === 0 || isSavingAnswer}
+            startIcon={isSavingAnswer ? <CircularProgress size={20} color="inherit" /> : null}
+            sx={{
+              backgroundColor: NEUTRAL_COLORS.success,
+              color: NEUTRAL_COLORS.surface,
+              borderRadius: 2,
+              px: 3,
+              py: 1,
+              fontWeight: 600,
+              '&:hover': {
+                backgroundColor: alpha(NEUTRAL_COLORS.success, 0.9),
+              }
+            }}
+          >
+            {isSavingAnswer ? 'Сохранение...' : 'Добавить ответ'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Модалка редактирования ответа */}
+      <Dialog 
+        open={openAnswerEditDialog} 
+        onClose={handleCloseAnswerEdit} 
+        maxWidth="md" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            border: `1px solid ${NEUTRAL_COLORS.border}`,
+            maxHeight: '90vh',
+            backgroundColor: NEUTRAL_COLORS.secondary,
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          borderBottom: `1px solid ${NEUTRAL_COLORS.border}`,
+          pb: 2,
+          fontWeight: 700,
+          color: NEUTRAL_COLORS.surface,
+        }}>
+          Редактировать ответ
+          {answerError && (
+            <Alert 
+              severity="error" 
+              sx={{ 
+                mt: 2,
+                borderRadius: 2,
+                border: `1px solid ${alpha(NEUTRAL_COLORS.error, 0.2)}`,
+              }}
+              onClose={() => setAnswerError(null)}
+            >
+              {answerError}
+            </Alert>
+          )}
+        </DialogTitle>
+        
+        <DialogContent sx={{ pt: 3 }}>
+          <Tabs 
+            value={answerTab} 
+            onChange={(e, v) => setAnswerTab(v)}
+            sx={{ mb: 3 }}
+          >
+            <Tab label="Содержание ответа" />
+          </Tabs>
+          
+          {answerTab === 0 && (
+            <ContentEditor
+              content={answerContent}
+              onChange={setAnswerContent}
+              maxHeight="400px"
+            />
+          )}
+        </DialogContent>
+        <DialogActions sx={{ 
+          borderTop: `1px solid ${NEUTRAL_COLORS.border}`,
+          pt: 2,
+          px: 3,
+          pb: 3
+        }}>
+          <Button
+            variant="outlined"
+            onClick={handleCloseAnswerEdit}
+            sx={{
+              borderWidth: 2,
+              borderColor: NEUTRAL_COLORS.border,
+              color: NEUTRAL_COLORS.textPrimary,
+              borderRadius: 2,
+              px: 3,
+              py: 1,
+              fontWeight: 600,
+              '&:hover': {
+                borderColor: NEUTRAL_COLORS.accent,
+                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+              }
+            }}
+          >
+            Отмена
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => handleSaveAnswer(true)}
+            disabled={answerContent.length === 0 || isSavingAnswer}
+            startIcon={isSavingAnswer ? <CircularProgress size={20} color="inherit" /> : null}
+            sx={{
+              backgroundColor: NEUTRAL_COLORS.success,
+              color: NEUTRAL_COLORS.surface,
+              borderRadius: 2,
+              px: 3,
+              py: 1,
+              fontWeight: 600,
+              '&:hover': {
+                backgroundColor: alpha(NEUTRAL_COLORS.success, 0.9),
+              }
+            }}
+          >
+            {isSavingAnswer ? 'Сохранение...' : 'Сохранить изменения'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Модалка подтверждения удаления ответа */}
+      <Dialog 
+        open={openAnswerDeleteDialog} 
+        onClose={handleCloseAnswerDelete} 
+        maxWidth="sm" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            border: `1px solid ${NEUTRAL_COLORS.border}`,
+            backgroundColor: NEUTRAL_COLORS.secondary,
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          borderBottom: `1px solid ${NEUTRAL_COLORS.border}`,
+          pb: 2,
+          fontWeight: 700,
+          color: NEUTRAL_COLORS.surface,
+        }}>
+          Удаление ответа
+        </DialogTitle>
+        
+        <DialogContent sx={{ pt: 3 }}>
+          <Typography sx={{ mt:2, mb: 2, color: NEUTRAL_COLORS.surface }}>
+            Вы уверены, что хотите удалить этот ответ?
+          </Typography>
+          <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.primary }}>
+            Это действие нельзя отменить.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ 
+          borderTop: `1px solid ${NEUTRAL_COLORS.border}`,
+          pt: 2,
+          px: 3,
+          pb: 3
+        }}>
+          <Button
+            variant="outlined"
+            onClick={handleCloseAnswerDelete}
+            sx={{
+              borderWidth: 2,
+              borderColor: NEUTRAL_COLORS.border,
+              color: NEUTRAL_COLORS.surface,
+              borderRadius: 2,
+              px: 3,
+              py: 1,
+              fontWeight: 600,
+              '&:hover': {
+                borderColor: NEUTRAL_COLORS.accent,
+                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+              }
+            }}
+          >
+            Отмена
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleDeleteAnswer}
+            sx={{
+              backgroundColor: NEUTRAL_COLORS.error,
+              color: NEUTRAL_COLORS.surface,
+              borderRadius: 2,
+              px: 3,
+              py: 1,
+              fontWeight: 600,
+              '&:hover': {
+                backgroundColor: alpha(NEUTRAL_COLORS.error, 0.9),
+              }
+            }}
+          >
+            Удалить ответ
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

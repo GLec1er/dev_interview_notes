@@ -56,6 +56,7 @@ async def create_answer(
         answer = await service.create_answer(
             question_id, 
             data,
+            current_user,
         )
         return answer
     except ValueError as e:
@@ -109,6 +110,7 @@ async def get_answers(
         service = AnswerService.from_session(session)
         answers = await service.get_answers_by_question(
             question_id=question_id,
+            current_user_id=current_user.id,
             filters=filters,
             sort=sort,
             pagination=pagination,

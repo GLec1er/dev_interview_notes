@@ -86,7 +86,7 @@ async def get_categories(
     """
     try:
         service = CategoryService.from_session(session)
-        return await service.get_many(pagination, include_inactive)
+        return await service.get_many(pagination, include_inactive, current_user.id)
     except Exception as e:
         log.error(f"❌ Ошибка при получении списка категорий: {str(e)}")
         raise HTTPException(

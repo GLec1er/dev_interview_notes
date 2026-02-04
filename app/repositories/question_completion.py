@@ -3,7 +3,7 @@
 from typing import Optional, List, Dict, Any
 from uuid import UUID
 
-from sqlalchemy import case, func, select, delete
+from sqlalchemy import case, func, or_, select, delete
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
@@ -228,7 +228,13 @@ class QuestionCompletionRepository(
             total_counts_stmt = select(
                 Question.difficulty,
                 func.count(Question.id).label('count')
-            ).group_by(Question.difficulty)
+            ).group_by(Question.difficulty
+            ).where(
+                or_(
+                    Question.user_id == user_id,
+                    Question.user_id.is_(None),
+                )
+            )
             
             total_counts_result = await self.session.execute(total_counts_stmt)
             total_counts = total_counts_result.all()
@@ -272,6 +278,11 @@ class QuestionCompletionRepository(
                 Category.name,
                 func.count(QuestionCompletion.id).label('completed_count'),
                 func.count(Question.id).label('total_count'),
+            ).where(
+                or_(
+                    Question.user_id == user_id,
+                    Question.user_id.is_(None),
+                )
             ).outerjoin(
                 Question, Category.id == Question.category_id
             ).outerjoin(
@@ -324,6 +335,13 @@ class QuestionCompletionRepository(
             total_stmt = select(func.count()).select_from(Question).where(
                 Question.is_published == True
             )
+            
+            user_filter = or_(
+                Question.user_id == user_id,
+                Question.user_id.is_(None)
+            )
+            total_stmt = total_stmt.where(user_filter)
+            
             total_result = await self.session.execute(total_stmt)
             total_questions = total_result.scalar_one()
             

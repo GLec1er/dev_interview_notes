@@ -43,6 +43,7 @@ export interface Question {
   category?: Category;
   exclude_inactive_categories?: boolean,
   is_completed?: boolean;
+  user_id?: string | null;
 }
 
 export interface QuestionCreate {
@@ -80,6 +81,7 @@ export interface Answer {
 
 export interface AnswerCreate {
   content: ContentBlock[];
+  is_published: boolean;
 }
 
 export interface AnswerUpdate {

@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 from sqlalchemy import (
@@ -21,6 +21,7 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from app.db.models.base import Base
+from app.db.models.question_utils import QuestionCompletion, QuestionFavorite
 
 
 class DifficultyQuestionLevel(str, Enum):
@@ -52,6 +53,85 @@ class ProgrammingLanguage(str, Enum):
     MARKDOWN = "markdown"
     TEXT = "text"
     OTHER = "other"
+
+
+class Company(Base):
+    """Модель компании."""
+    
+    __tablename__ = "companies"
+    
+    id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4
+    )
+    name: Mapped[str] = mapped_column(
+        String(200), 
+        nullable=False, 
+        index=True,
+        comment='Название компании'
+    )
+    slug: Mapped[str] = mapped_column(
+        String(255), 
+        unique=True, 
+        nullable=False, 
+        index=True,
+        comment='Уникальный слаг компании'
+    )
+    description: Mapped[Optional[str]] = mapped_column(
+        TEXT,
+        nullable=True,
+        comment='Описание компании'
+    )
+    logo_url: Mapped[Optional[str]] = mapped_column(
+        String(500),
+        nullable=True,
+        comment='URL логотипа компании'
+    )
+    is_active: Mapped[bool] = mapped_column(
+        Boolean, 
+        default=True, 
+        index=True,
+        comment='Активна ли компания'
+    )
+    
+    ############# Time metadata #############
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        server_default=func.now(),
+        nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+    
+    ############# Relationships #############
+    questions: Mapped[List["Question"]] = relationship(
+        "Question", 
+        back_populates="company",
+        cascade="all, delete-orphan",
+        lazy="dynamic"
+    )
+    
+    ############# Validations #############
+    @validates('name')
+    def validate_name(self, key, name):
+        """Валидация названия компании."""
+        if not name or len(name.strip()) == 0:
+            raise ValueError("Название компании не может быть пустым")
+        return name.strip()
+    
+    __table_args__ = (
+        # Уникальный индекс для slug
+        Index(
+            'idx_companies_slug_active',
+            'slug',
+            'is_active'
+        ),
+    )
 
 
 class Question(Base):
@@ -94,6 +174,15 @@ class Question(Base):
         default=False, 
         index=True,
     )
+    
+    # Связь с компанией
+    company_id: Mapped[Optional[UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("companies.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+        comment='ID компании, связанной с вопросом'
+    )
 
     category_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -101,6 +190,14 @@ class Question(Base):
         nullable=False,
         index=True,
         comment='ID категории вопроса'
+    )
+
+    user_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+        comment="ID пользователя"
     )
 
     ############# Time metadata #############
@@ -117,6 +214,12 @@ class Question(Base):
     )
 
     ############# Relationships #############
+    user: Mapped["User"] = relationship(
+        "User",
+        back_populates="questions",
+        lazy="joined"  # Для быстрой загрузки пользователя
+    )
+
     answers: Mapped[List["Answer"]] = relationship(
         "Answer", back_populates="question", cascade="all, delete-orphan"
     )
@@ -126,15 +229,21 @@ class Question(Base):
         back_populates="questions",
         lazy="joined"  # Опционально: загружать категорию вместе с вопросом
     )
+    
+    company: Mapped[Optional["Company"]] = relationship(
+        "Company", 
+        back_populates="questions",
+        lazy="joined"  # Опционально: загружать компанию вместе с вопросом
+    )
 
-    completions: Mapped[List["QuestionCompletion"]] = relationship(
+    completions: Mapped[List[QuestionCompletion]] = relationship(
         "QuestionCompletion",
         back_populates="question",
         cascade="all, delete-orphan",
         lazy="dynamic"
     )
 
-    favorites: Mapped[list["QuestionFavorite"]] = relationship(
+    favorites: Mapped[list[QuestionFavorite]] = relationship(
         "QuestionFavorite",
         back_populates="question",
         cascade="all, delete-orphan",
@@ -185,6 +294,21 @@ class Question(Base):
             'is_published',
             'created_at'
         ),
+        # Индекс для компании
+        Index(
+            'idx_questions_company',
+            'company_id',
+            'is_published',
+            'created_at'
+        ),
+        # Составной индекс для частых запросов по компании и категории
+        Index(
+            'idx_questions_company_category',
+            'company_id',
+            'category_id',
+            'is_published',
+            'difficulty'
+        ),
     )
 
 
@@ -215,6 +339,21 @@ class Answer(Base):
         Boolean, 
         default=False, 
         index=True,
+    )
+
+    user_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+        comment="ID пользователя"
+    )
+
+    ############# Relationships #############
+    user: Mapped["User"] = relationship(
+        "User",
+        back_populates="answers",
+        lazy="joined"  # Для быстрой загрузки пользователя
     )
 
     ############# Time metadata #############

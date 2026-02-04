@@ -1,4 +1,4 @@
-# alembic/env.py для асинхронных драйверов
+# alembic/env.py
 import asyncio
 from logging.config import fileConfig
 from sqlalchemy import pool
@@ -6,47 +6,63 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 import sys
-from os.path import abspath, dirname
-from dotenv import load_dotenv
 import os
-from app.core.configs import settings
+from pathlib import Path
 
-# Загружаем переменные окружения
-load_dotenv()
-
-# Добавляем путь к проекту
-sys.path.insert(0, dirname(dirname(abspath(__file__))))
+# Добавляем корень проекта в Python path
+sys.path.append(str(Path(__file__).parent.parent))
 
 from app.db.models.base import Base
+from app.core.configs import settings
 
+# Загружаем конфигурацию Alembic
 config = context.config
 
+# Настраиваем логирование
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-target_metadata = Base.metadata
-
-# Переопределяем URL
+# Устанавливаем URL базы данных из настроек
 config.set_main_option("sqlalchemy.url", settings.database.database_url)
 
+# Указываем метаданные
+target_metadata = Base.metadata
+
 def run_migrations_offline() -> None:
+    """Запуск миграций в офлайн-режиме."""
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        compare_type=True,
+        compare_server_default=True,
     )
 
     with context.begin_transaction():
         context.run_migrations()
 
 def do_run_migrations(connection: Connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata)
+    """Запуск миграций."""
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        # Важные опции для работы с существующими таблицами
+        include_object=lambda object, name, type_, reflected, compare_to: (
+            # Исключаем таблицу alembic_version из сравнения
+            not (type_ == "table" and name == "alembic_version")
+        ),
+        compare_type=True,
+        compare_server_default=True,
+        render_as_batch=True,  # Для совместимости с SQLite и изменения столбцов
+    )
+
     with context.begin_transaction():
         context.run_migrations()
 
 async def run_async_migrations() -> None:
+    """Асинхронный запуск миграций."""
     connectable = async_engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
@@ -59,6 +75,7 @@ async def run_async_migrations() -> None:
     await connectable.dispose()
 
 def run_migrations_online() -> None:
+    """Запуск миграций в онлайн-режиме."""
     asyncio.run(run_async_migrations())
 
 if context.is_offline_mode():

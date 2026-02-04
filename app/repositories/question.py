@@ -3,7 +3,7 @@
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from sqlalchemy import func, select, delete
+from sqlalchemy import func, or_, select, delete
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
@@ -34,7 +34,12 @@ class QuestionRepository(
     ) -> int:
         """Посчитать количество отфильтрованных записей."""
         try:
-            query = select(func.count()).select_from(self.model)
+            query = select(func.count()).select_from(self.model).where(
+                or_(
+                    self.model.user_id == current_user_id,
+                    self.model.user_id.is_(None),
+                )
+            )
             
             if filters:
                 query = await self._apply_filters(query, filters, current_user_id)
@@ -55,7 +60,12 @@ class QuestionRepository(
     ) -> tuple[List[Question], int]:
         """Получить отфильтрованный список вопросов."""
         try:
-            query = select(self.model)
+            query = select(self.model).where(
+                or_(
+                    self.model.user_id == current_user_id,
+                    self.model.user_id.is_(None),
+                )
+            )
             
             # Применяем фильтры
             if filters:
@@ -89,7 +99,8 @@ class QuestionRepository(
 
     async def get_by_id(
         self, 
-        question_id: UUID
+        question_id: UUID,
+        current_user_id: UUID,
     ) -> Optional[Question]:
         """Получение вопроса по ID.
         
@@ -102,7 +113,13 @@ class QuestionRepository(
         try:
             stmt = (
                 select(Question)
-                .where(Question.id == question_id)
+                .where(
+                    Question.id == question_id,
+                    or_(
+                        Question.user_id == current_user_id,
+                        Question.user_id.is_(None),
+                    )
+                )
                 .options(
                     selectinload(Question.answers),
                 )

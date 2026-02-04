@@ -24,6 +24,7 @@ class CategoryRepository(BaseRepository[Category, CategoryCreate, CategoryUpdate
         self,
         pagination: PaginationParams,
         include_inactive: bool = False,
+        current_user_id: Optional[UUID] = None,
     ) -> tuple[List[Category], int]:
         """Получить список категорий.
         
@@ -128,19 +129,38 @@ class CategoryRepository(BaseRepository[Category, CategoryCreate, CategoryUpdate
             log.error(f"❌ Ошибка при получении категории по имени: {str(e)}")
             raise
 
-    async def get_question_count(self, category_id: UUID) -> int:
+    async def get_question_count(
+        self, 
+        category_id: UUID,
+        current_user_id: Optional[UUID] = None,
+    ) -> int:
         """Получить количество вопросов в категории.
         
         Args:
             category_id: UUID категории
-            
+            current_user_id: UUID текущего пользователя (опционально)
+            only_my_questions: Если True, считать только вопросы пользователя
+        
         Returns:
             Количество вопросов
         """
         try:
-            stmt = select(func.count()).select_from(Question).where(
+            conditions = [
                 Question.category_id == category_id,
                 Question.is_published == True,
+            ]
+            
+            # Добавляем фильтр по пользователю, если указан
+            if current_user_id:
+                conditions.append(
+                    or_(
+                        Question.user_id == current_user_id,
+                        Question.user_id.is_(None)
+                    )
+                )
+            
+            stmt = select(func.count()).select_from(Question).where(
+                *conditions
             )
             result = await self.session.execute(stmt)
             return result.scalar_one()

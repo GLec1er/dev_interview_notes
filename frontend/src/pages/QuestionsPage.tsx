@@ -23,6 +23,16 @@ import {
   useMediaQuery,
   useTheme,
   SwipeableDrawer,
+  DialogActions,
+  DialogContent,
+  Dialog,
+  Switch,
+  FormControlLabel,
+  InputLabel,
+  DialogTitle,
+  Tabs,
+  Alert,
+  Tab,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -43,13 +53,16 @@ import {
   CheckCircle as CheckCircleIcon,
   RadioButtonUnchecked as RadioButtonUncheckedIcon,
   AssignmentRounded as AssignmentRoundedIcon,
-  Menu as MenuIcon,
+  Add as AddIcon,
+  Lock as LockIcon,
 } from '@mui/icons-material';
 import { questionService } from '../services/questionService';
 import { categoryService } from '../services/categoryService';
 import { questionCompletionService } from '../services/questionCompletionService';
 import { FeedbackFab } from '../components/FeedbackFab';
-import type { Question, Category } from '../types';
+import type { Question, Category, ContentBlock } from '../types';
+import { useAuth } from '../context/AuthContext';
+import { ContentEditor } from '../components/Admin/ContentEditor';
 
 // Нейтральная цветовая палитра
 const NEUTRAL_COLORS = {
@@ -65,9 +78,8 @@ const NEUTRAL_COLORS = {
   warning: '#DD6B20',
   error: '#E53E3E',
   info: '#3182CE',
+  question: '#9e3fa7ff',
 };
-
-const ITEMS_PER_PAGE = 10;
 
 // Вспомогательная функция для меток сортировки
 const getSortLabel = (sortBy: string) => {
@@ -735,7 +747,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   onClick, 
   index, 
   categories,
-  onCompletionChange 
+  onCompletionChange,
 }) => {
   const [isCompleted, setIsCompleted] = useState(false);
   const [isCompletionLoading, setIsCompletionLoading] = useState(false);
@@ -804,6 +816,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   };
 
   const categoryName = getCategoryName(question);
+  const isUserIdQuestion = question.user_id;
 
   return (
     <Paper
@@ -931,6 +944,28 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                     '& .MuiChip-icon': {
                       fontSize: '0.875rem',
                       color: NEUTRAL_COLORS.info,
+                      ml: 0.5,
+                    },
+                  }}
+                />
+              )}
+              
+              {/* Бейдж "Твой вопрос" */}
+              {isUserIdQuestion && (
+                <Chip
+                  icon={<PersonIcon />}
+                  label="Твой вопрос"
+                  size="small"
+                  sx={{
+                    fontWeight: 700,
+                    backgroundColor: alpha(NEUTRAL_COLORS.question, 0.15),
+                    color: NEUTRAL_COLORS.question,
+                    border: `1px solid ${alpha(NEUTRAL_COLORS.question, 0.3)}`,
+                    fontSize: '0.75rem',
+                    height: 28,
+                    '& .MuiChip-icon': {
+                      fontSize: '0.875rem',
+                      color: NEUTRAL_COLORS.question,
                       ml: 0.5,
                     },
                   }}
@@ -1587,9 +1622,10 @@ export const QuestionsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down(1380));
+  const isMobile = useMediaQuery(theme.breakpoints.down(1000));
   const isMobileFilter = useMediaQuery(theme.breakpoints.down(1000));
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, isAuthenticated, logout } = useAuth();
   
   // Пагинация
   const [page, setPage] = useState(1);
@@ -1615,6 +1651,20 @@ export const QuestionsPage: React.FC = () => {
   });
   const [overallPercentage, setOverallPercentage] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isAddButtonDisabled, setIsAddButtonDisabled] = useState(false);
+  
+  // Состояние для модалки добавления вопроса
+  const [openDialog, setOpenDialog] = useState(false);
+  const [contentTab, setContentTab] = useState(0);
+  const [formData, setFormData] = useState({
+    title: '',
+    slug: '',
+    difficulty: 'easy' as 'easy' | 'medium' | 'hard',
+    category_id: '',
+  });
+  const [content, setContent] = useState<ContentBlock[]>([]);
+  const [dialogError, setDialogError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Функция для загрузки статистики завершения
   const loadCompletionStats = useCallback(async () => {
@@ -1788,6 +1838,99 @@ export const QuestionsPage: React.FC = () => {
   };
 
   const totalPages = Math.ceil(total / limit);
+
+  // Обработчики для модалки добавления вопроса
+  const handleOpenDialog = () => {
+    if (user?.is_admin) {
+      setOpenDialog(true);
+      setFormData({
+        title: '',
+        slug: '',
+        difficulty: 'easy',
+        is_published: false,
+        category_id: '',
+      });
+      setContent([]);
+      setContentTab(0);
+      setDialogError(null);
+    } else {
+      setIsAddButtonDisabled(true);
+      setTimeout(() => {
+        setIsAddButtonDisabled(false);
+      }, 3000);
+    }
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setFormData({
+      title: '',
+      slug: '',
+      difficulty: 'easy',
+      is_published: false,
+      category_id: '',
+    });
+    setContent([]);
+    setDialogError(null);
+  };
+
+  const handleSave = async () => {
+    try {
+      setDialogError(null);
+      setIsSaving(true);
+
+      if (!formData.category_id) {
+        setDialogError('Пожалуйста, выберите категорию');
+        setIsSaving(false);
+        return;
+      }
+
+      if (!formData.title.trim()) {
+        setDialogError('Название вопроса обязательно');
+        setIsSaving(false);
+        return;
+      }
+
+      if (!formData.slug.trim()) {
+        setDialogError('URL-адрес вопроса обязателен');
+        setIsSaving(false);
+        return;
+      }
+
+      const questionData = {
+        title: formData.title,
+        slug: formData.slug,
+        difficulty: formData.difficulty,
+        is_published: true,
+        content: content,
+        category_id: formData.category_id,
+      };
+
+      await questionService.createQuestion(questionData);
+      
+      handleCloseDialog();
+      loadQuestions(); // Перезагружаем вопросы
+      refreshStats(); // Обновляем статистику
+    } catch (err: any) {
+      setDialogError(err.response?.data?.detail || 'Не удалось сохранить вопрос');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Автоматическая генерация slug из title
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const title = e.target.value;
+    setFormData({
+      ...formData,
+      title: title,
+      slug: title.toLowerCase()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim()
+    });
+  };
 
   // Обработчик открытия/закрытия Drawer
   const handleDrawerToggle = () => {
@@ -2430,116 +2573,174 @@ export const QuestionsPage: React.FC = () => {
               </Paper>
             ) : (
               <>
-                {/* Заголовок результатов */}
-                <Box sx={{ mb: 4 }}>
-                  <Typography
-                    variant="h4"
-                    sx={{
-                      fontWeight: 800,
-                      color: NEUTRAL_COLORS.textPrimary,
-                      mb: 2,
-                    }}
-                  >
-                    {total} Вопроса
-                  </Typography>
-                  {(difficulty || categoryId || debouncedSearch || isCompletedFilter !== undefined || sortBy !== 'updated_at' || sortDir !== 'desc' || limit !== 10) && (
-                    <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
-                      {difficulty && (
-                        <Chip
-                          label={`Difficulty: ${difficulty}`}
-                          size="medium"
-                          onDelete={() => setDifficulty('')}
-                          sx={{
-                            fontWeight: 700,
-                            backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
-                            color: NEUTRAL_COLORS.accent,
-                            border: `2px solid ${alpha(NEUTRAL_COLORS.accent, 0.3)}`,
-                            fontSize: '0.875rem',
-                          }}
-                        />
-                      )}
-                      {categoryId && (
-                        <Chip
-                          label={`Category: ${getSelectedCategoryName() || 'Unknown'}`}
-                          size="medium"
-                          onDelete={() => setCategoryId('')}
-                          icon={<CategoryIcon />}
-                          sx={{
-                            fontWeight: 700,
-                            backgroundColor: alpha(NEUTRAL_COLORS.info, 0.1),
-                            color: NEUTRAL_COLORS.info,
-                            border: `2px solid ${alpha(NEUTRAL_COLORS.info, 0.3)}`,
-                            fontSize: '0.875rem',
-                          }}
-                        />
-                      )}
-                      {debouncedSearch && (
-                        <Chip
-                          label={`Search: "${debouncedSearch}"`}
-                          size="medium"
-                          onDelete={() => {
-                            setSearch('');
-                            setDebouncedSearch('');
-                          }}
-                          sx={{
-                            fontWeight: 700,
-                            backgroundColor: alpha(NEUTRAL_COLORS.warning, 0.1),
-                            color: NEUTRAL_COLORS.warning,
-                            border: `2px solid ${alpha(NEUTRAL_COLORS.warning, 0.3)}`,
-                            fontSize: '0.875rem',
-                          }}
-                        />
-                      )}
-                      {isCompletedFilter !== undefined && (
-                        <Chip
-                          label={`Выполнено: ${isCompletedFilter ? 'да' : 'нет'}`}
-                          size="medium"
-                          onDelete={() => setIsCompletedFilter(undefined)}
-                          icon={isCompletedFilter ? <CheckCircleIcon /> : <RadioButtonUncheckedIcon />}
-                          sx={{
-                            fontWeight: 700,
-                            backgroundColor: isCompletedFilter 
-                              ? alpha(NEUTRAL_COLORS.success, 0.1) 
-                              : alpha(NEUTRAL_COLORS.warning, 0.1),
-                            color: isCompletedFilter ? NEUTRAL_COLORS.success : NEUTRAL_COLORS.warning,
-                            border: `2px solid ${isCompletedFilter 
-                              ? alpha(NEUTRAL_COLORS.success, 0.3) 
-                              : alpha(NEUTRAL_COLORS.warning, 0.3)}`,
-                            fontSize: '0.875rem',
-                          }}
-                        />
-                      )}
-                      {sortBy !== 'updated_at' && (
-                        <Chip
-                          label={`Sort: ${getSortLabel(sortBy)}`}
-                          size="medium"
-                          onDelete={() => setSortBy('updated_at')}
-                          sx={{
-                            fontWeight: 700,
-                            backgroundColor: alpha(NEUTRAL_COLORS.success, 0.1),
+                {/* Заголовок результатов - в одну линию с кнопкой */}
+                <Box sx={{ 
+                  mb: 4, 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: 2
+                }}>
+                  {/* Левая часть - заголовок и кнопка в одной строке */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, flex: 1 }}>
+                    <Typography
+                      variant="h4"
+                      sx={{
+                        fontWeight: 800,
+                        color: NEUTRAL_COLORS.textPrimary,
+                        fontSize: { xs: '1.5rem', sm: '2rem' },
+                      }}
+                    >
+                      {total} Вопрос{total !== 1 ? (total > 1 && total < 5 ? 'а' : 'ов') : ''}
+                    </Typography>
+                    
+                    {/* Кнопка добавления вопроса */}
+                    {user?.is_admin && (
+                    <Button
+                      variant={user?.is_admin ? "contained" : "outlined"}
+                      startIcon={user?.is_admin ? <AddIcon /> : <LockIcon />}
+                      onClick={handleOpenDialog}
+                      disabled={isAddButtonDisabled && !user?.is_admin}
+                      sx={{
+                        textTransform: 'none',
+                        fontWeight: 700,
+                        borderRadius: 3,
+                        px: 3,
+                        py: 1.5,
+                        fontSize: '0.875rem',
+                        transition: 'all 0.3s ease',
+                        minWidth: { xs: 'auto', sm: 180 },
+                        ...(user?.is_admin ? {
+                          backgroundColor: NEUTRAL_COLORS.success,
+                          color: NEUTRAL_COLORS.surface,
+                          boxShadow: `0 4px 12px ${alpha(NEUTRAL_COLORS.success, 0.3)}`,
+                          '&:hover': {
+                            backgroundColor: alpha(NEUTRAL_COLORS.success, 0.9),
+                            transform: 'translateY(-2px)',
+                            boxShadow: `0 8px 20px ${alpha(NEUTRAL_COLORS.success, 0.4)}`,
+                          }
+                        } : {
+                          borderColor: NEUTRAL_COLORS.border,
+                          color: NEUTRAL_COLORS.textSecondary,
+                          backgroundColor: alpha(NEUTRAL_COLORS.background, 0.8),
+                          backdropFilter: 'blur(8px)',
+                          '&:hover': {
+                            borderColor: NEUTRAL_COLORS.accent,
+                            backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.05),
+                          },
+                          ...(isAddButtonDisabled && {
+                            borderColor: NEUTRAL_COLORS.success,
                             color: NEUTRAL_COLORS.success,
-                            border: `2px solid ${alpha(NEUTRAL_COLORS.success, 0.3)}`,
-                            fontSize: '0.875rem',
-                          }}
-                        />
-                      )}
-                      {limit !== 10 && (
-                        <Chip
-                          label={`Limit: ${limit}`}
-                          size="medium"
-                          onDelete={() => setLimit(10)}
-                          sx={{
-                            fontWeight: 700,
-                            backgroundColor: alpha(NEUTRAL_COLORS.warning, 0.1),
-                            color: NEUTRAL_COLORS.warning,
-                            border: `2px solid ${alpha(NEUTRAL_COLORS.warning, 0.3)}`,
-                            fontSize: '0.875rem',
-                          }}
-                        />
-                      )}
-                    </Stack>
-                  )}
+                            backgroundColor: alpha(NEUTRAL_COLORS.success, 0.1),
+                          })
+                        })
+                      }}
+                    >
+                      {user?.is_admin ? 'Добавить вопрос' : (isAddButtonDisabled ? 'Скоро будет доступно!' : 'Добавить вопрос')}
+                    </Button>
+                    )}
+                  </Box>
                 </Box>
+
+                {/* Активные фильтры - отдельный блок под заголовком */}
+                {(difficulty || categoryId || debouncedSearch || isCompletedFilter !== undefined || sortBy !== 'updated_at' || sortDir !== 'desc' || limit !== 10) && (
+                  <Stack direction="row" spacing={1} sx={{ mb: 3 }} flexWrap="wrap" gap={1}>
+                    {difficulty && (
+                      <Chip
+                        label={`Сложность: ${difficulty}`}
+                        size="small"
+                        onDelete={() => setDifficulty('')}
+                        sx={{
+                          fontWeight: 700,
+                          backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
+                          color: NEUTRAL_COLORS.accent,
+                          border: `2px solid ${alpha(NEUTRAL_COLORS.accent, 0.3)}`,
+                          fontSize: '0.875rem',
+                        }}
+                      />
+                    )}
+                    {categoryId && (
+                      <Chip
+                        label={`Категория: ${getSelectedCategoryName() || 'Неизвестно'}`}
+                        size="small"
+                        onDelete={() => setCategoryId('')}
+                        icon={<CategoryIcon />}
+                        sx={{
+                          fontWeight: 700,
+                          backgroundColor: alpha(NEUTRAL_COLORS.info, 0.1),
+                          color: NEUTRAL_COLORS.info,
+                          border: `2px solid ${alpha(NEUTRAL_COLORS.info, 0.3)}`,
+                          fontSize: '0.875rem',
+                        }}
+                      />
+                    )}
+                    {debouncedSearch && (
+                      <Chip
+                        label={`Поиск: "${debouncedSearch}"`}
+                        size="small"
+                        onDelete={() => {
+                          setSearch('');
+                          setDebouncedSearch('');
+                        }}
+                        sx={{
+                          fontWeight: 700,
+                          backgroundColor: alpha(NEUTRAL_COLORS.warning, 0.1),
+                          color: NEUTRAL_COLORS.warning,
+                          border: `2px solid ${alpha(NEUTRAL_COLORS.warning, 0.3)}`,
+                          fontSize: '0.875rem',
+                        }}
+                      />
+                    )}
+                    {isCompletedFilter !== undefined && (
+                      <Chip
+                        label={`Выполнено: ${isCompletedFilter ? 'да' : 'нет'}`}
+                        size="small"
+                        onDelete={() => setIsCompletedFilter(undefined)}
+                        icon={isCompletedFilter ? <CheckCircleIcon /> : <RadioButtonUncheckedIcon />}
+                        sx={{
+                          fontWeight: 700,
+                          backgroundColor: isCompletedFilter 
+                            ? alpha(NEUTRAL_COLORS.success, 0.1) 
+                            : alpha(NEUTRAL_COLORS.warning, 0.1),
+                          color: isCompletedFilter ? NEUTRAL_COLORS.success : NEUTRAL_COLORS.warning,
+                          border: `2px solid ${isCompletedFilter 
+                            ? alpha(NEUTRAL_COLORS.success, 0.3) 
+                            : alpha(NEUTRAL_COLORS.warning, 0.3)}`,
+                          fontSize: '0.875rem',
+                        }}
+                      />
+                    )}
+                    {sortBy !== 'updated_at' && (
+                      <Chip
+                        label={`Сортировка: ${getSortLabel(sortBy)}`}
+                        size="small"
+                        onDelete={() => setSortBy('updated_at')}
+                        sx={{
+                          fontWeight: 700,
+                          backgroundColor: alpha(NEUTRAL_COLORS.success, 0.1),
+                          color: NEUTRAL_COLORS.success,
+                          border: `2px solid ${alpha(NEUTRAL_COLORS.success, 0.3)}`,
+                          fontSize: '0.875rem',
+                        }}
+                      />
+                    )}
+                    {limit !== 10 && (
+                      <Chip
+                        label={`На странице: ${limit}`}
+                        size="small"
+                        onDelete={() => setLimit(10)}
+                        sx={{
+                          fontWeight: 700,
+                          backgroundColor: alpha(NEUTRAL_COLORS.warning, 0.1),
+                          color: NEUTRAL_COLORS.warning,
+                          border: `2px solid ${alpha(NEUTRAL_COLORS.warning, 0.3)}`,
+                          fontSize: '0.875rem',
+                        }}
+                      />
+                    )}
+                  </Stack>
+                )}
 
                 {/* Список вопросов (вертикальный) */}
                 <Box sx={{ mb: 4 }}>
@@ -2551,6 +2752,7 @@ export const QuestionsPage: React.FC = () => {
                       index={(page - 1) * limit + index}
                       categories={categories}
                       onCompletionChange={refreshStats}
+                      currentUserId={user?.id || undefined} // Передаем ID пользователя
                     />
                   ))}
                 </Box>
@@ -2607,6 +2809,201 @@ export const QuestionsPage: React.FC = () => {
           </Box>
         </Box>
       </Container>
+
+      {/* Модалка добавления вопроса (по аналогии с админкой) */}
+      <Dialog 
+        open={openDialog} 
+        onClose={handleCloseDialog} 
+        maxWidth="md" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            border: `1px solid ${NEUTRAL_COLORS.border}`,
+            maxHeight: '90vh',
+            backgroundColor: NEUTRAL_COLORS.secondary,
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          borderBottom: `1px solid ${NEUTRAL_COLORS.border}`,
+          pb: 2,
+          fontWeight: 700,
+          color: NEUTRAL_COLORS.surface,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+          Создать новый вопрос
+          {dialogError && (
+            <Alert 
+              severity="error" 
+              sx={{ 
+                mt: 2,
+                borderRadius: 2,
+                border: `1px solid ${alpha(NEUTRAL_COLORS.error, 0.2)}`,
+              }}
+              onClose={() => setDialogError(null)}
+            >
+              {dialogError}
+            </Alert>
+          )}
+        </DialogTitle>
+        
+        <DialogContent sx={{ pt: 3 }}>
+          <Tabs 
+            value={contentTab} 
+            onChange={(e, v) => setContentTab(v)}
+            sx={{ mb: 3 }}
+          >
+            <Tab label="Основная информация" />
+            <Tab label="Содержание" />
+          </Tabs>
+          
+          {contentTab === 0 ? (
+            <Stack spacing={2}>
+              <TextField
+                fullWidth
+                label="Название вопроса *"
+                value={formData.title}
+                onChange={handleTitleChange}
+                size="medium"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    '&:hover fieldset': {
+                      borderColor: NEUTRAL_COLORS.accent,
+                    }
+                  }
+                }}
+              />
+              <TextField
+                fullWidth
+                label="URL-адрес вопроса *"
+                value={formData.slug}
+                onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                size="medium"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    '&:hover fieldset': {
+                      borderColor: NEUTRAL_COLORS.accent,
+                    }
+                  }
+                }}
+                helperText="URL-friendly версия названия (генерируется автоматически)"
+              />
+              
+              {/* Категория */}
+              <FormControl fullWidth size="medium">
+                <InputLabel>Категория *</InputLabel>
+                <Select
+                  value={formData.category_id}
+                  label="Категория *"
+                  onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                  disabled={isLoadingCategories}
+                  sx={{
+                    borderRadius: 2,
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: NEUTRAL_COLORS.accent,
+                    }
+                  }}
+                >
+                  <MenuItem value="">
+                    <em>Выберите категорию</em>
+                  </MenuItem>
+                  {categories.map((category) => (
+                    <MenuItem key={category.id} value={category.id}>
+                      {category.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {isLoadingCategories && (
+                  <CircularProgress 
+                    size={20} 
+                    sx={{ 
+                      position: 'absolute', 
+                      right: 40, 
+                      top: '50%', 
+                      transform: 'translateY(-50%)' 
+                    }} 
+                  />
+                )}
+              </FormControl>
+
+              <FormControl fullWidth size="medium">
+                <InputLabel>Сложность</InputLabel>
+                <Select
+                  value={formData.difficulty}
+                  label="Сложность"
+                  onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as any })}
+                  sx={{
+                    borderRadius: 2,
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: NEUTRAL_COLORS.accent,
+                    }
+                  }}
+                >
+                  <MenuItem value="easy">Легкий</MenuItem>
+                  <MenuItem value="medium">Средний</MenuItem>
+                  <MenuItem value="hard">Сложный</MenuItem>
+                </Select>
+              </FormControl>
+            </Stack>
+          ) : (
+            <ContentEditor
+              content={content}
+              onChange={setContent}
+              maxHeight="400px"
+            />
+          )}
+        </DialogContent>
+        <DialogActions sx={{ 
+          borderTop: `1px solid ${NEUTRAL_COLORS.border}`,
+          pt: 2,
+          px: 3,
+          pb: 3
+        }}>
+          <Button
+            variant="outlined"
+            onClick={handleCloseDialog}
+            sx={{
+              borderWidth: 2,
+              borderColor: NEUTRAL_COLORS.border,
+              color: NEUTRAL_COLORS.surface,
+              borderRadius: 2,
+              px: 3,
+              py: 1,
+              fontWeight: 600,
+              '&:hover': {
+                borderColor: NEUTRAL_COLORS.accent,
+                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+              }
+            }}
+          >
+            Отмена
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            disabled={!formData.category_id || !formData.title.trim() || !formData.slug.trim() || isSaving}
+            startIcon={isSaving ? <CircularProgress size={20} color="inherit" /> : null}
+            sx={{
+              backgroundColor: NEUTRAL_COLORS.success,
+              color: NEUTRAL_COLORS.surface,
+              borderRadius: 2,
+              px: 3,
+              py: 1,
+              fontWeight: 600,
+              '&:hover': {
+                backgroundColor: alpha(NEUTRAL_COLORS.success, 0.9),
+              }
+            }}
+          >
+            {isSaving ? 'Сохранение...' : 'Создать вопрос'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Плавающая кнопка обратной связи */}
       <FeedbackFab />

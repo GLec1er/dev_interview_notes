@@ -43,6 +43,7 @@ class AnswerService:
         self,
         question_id: UUID,
         data: AnswerCreate,
+        current_user,
     ) -> AnswerResponse:
         """Создание нового ответа на вопрос.
         
@@ -63,10 +64,16 @@ class AnswerService:
                 log.warning(f"⚠️ Вопрос не найден: {question_id}")
                 raise ValueError(f"Вопрос с ID {question_id} не существует")
             
+            user_id = None
+            if not current_user.is_admin:
+                user_id = current_user.id
+
             # Создание объекта Answer
             answer = Answer(
                 question_id=question_id,
                 content=data.content,
+                is_published=data.is_published,
+                user_id=user_id,
             )
             
             created_answer = await self.repository.create(answer)
@@ -106,6 +113,7 @@ class AnswerService:
     async def get_answers_by_question(
         self,
         question_id: UUID,
+        current_user_id: UUID,
         filters: AnswerFilterParams,
         sort: AnswerSortParams,
         pagination: PaginationParams,
@@ -126,7 +134,7 @@ class AnswerService:
         """
         try:
             # Проверка существования вопроса
-            question = await self.question_repository.get_by_id(question_id)
+            question = await self.question_repository.get_by_id(question_id, current_user_id)
             if not question:
                 log.warning(f"⚠️ Вопрос не найден: {question_id}")
                 raise ValueError(f"Вопрос с ID {question_id} не существует")
