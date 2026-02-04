@@ -38,6 +38,10 @@ def upgrade() -> None:
         batch_op.create_index(batch_op.f('ix_companies_name'), ['name'], unique=False)
         batch_op.create_index(batch_op.f('ix_companies_slug'), ['slug'], unique=True)
 
+    # Добавить колонку company_id в таблицу questions
+    with op.batch_alter_table('questions', schema=None) as batch_op:
+        batch_op.add_column(sa.Column('company_id', sa.UUID(), nullable=True))
+        
     with op.batch_alter_table('questions', schema=None) as batch_op:
         batch_op.create_index('idx_questions_company', ['company_id', 'is_published', 'created_at'], unique=False)
         batch_op.create_index('idx_questions_company_category', ['company_id', 'category_id', 'is_published', 'difficulty'], unique=False)
@@ -53,6 +57,7 @@ def downgrade() -> None:
         batch_op.drop_constraint(None, type_='foreignkey')
         batch_op.drop_index('idx_questions_company_category')
         batch_op.drop_index('idx_questions_company')
+        batch_op.drop_column('company_id')  # Удалить колонку при откате
 
     with op.batch_alter_table('companies', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_companies_slug'))
