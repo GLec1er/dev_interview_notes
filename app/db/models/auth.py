@@ -114,19 +114,19 @@ class User(Base):
     )
 
     ############# Relationships #############
-    # questions: Mapped[List["Question"]] = relationship(
-    #     "Question", 
-    #     back_populates="user",
-    #     cascade="all, delete-orphan",
-    #     lazy="dynamic"
-    # )
+    questions: Mapped[List["Question"]] = relationship(
+        "Question", 
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="dynamic"
+    )
 
-    # answers: Mapped[List["Answer"]] = relationship(
-    #     "Answer", 
-    #     back_populates="user",
-    #     cascade="all, delete-orphan",
-    #     lazy="dynamic"
-    # )
+    answers: Mapped[List["Answer"]] = relationship(
+        "Answer", 
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="dynamic"
+    )
 
     completed_questions: Mapped[List["QuestionCompletion"]] = relationship(
         "QuestionCompletion",
