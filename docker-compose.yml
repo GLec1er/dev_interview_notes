@@ -57,42 +57,42 @@ services:
       - VITE_API_URL=/api/v1
     command: yarn dev --host 0.0.0.0
 
-  # migrations:
-  #   container_name: migrations
-  #   build: .
-  #   environment:
-  #     DB_HOST: db
-  #     DB_PORT: 5432
-  #     DB_USER: ${DB_USER:-postgres}
-  #     DB_PASSWORD: ${DB_PASSWORD:-postgres}
-  #     DB_NAME: ${DB_NAME:-interview_notes}
-  #     PYTHONUNBUFFERED: 1
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
-  #   networks:
-  #     - interview_network
-  #   volumes:
-  #     - .:/app
-  #   command: |
-  #     sh -c "
-  #       # Ждем готовности базы
-  #       until pg_isready -h db -p 5432; do
-  #         echo 'Waiting for database...'
-  #         sleep 2
-  #       done
+  migrations:
+    container_name: migrations
+    build: .
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: ${DB_NAME:-interview_notes}
+      PYTHONUNBUFFERED: 1
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - interview_network
+    volumes:
+      - .:/app
+    command: |
+      sh -c "
+        # Ждем готовности базы
+        until pg_isready -h db -p 5432; do
+          echo 'Waiting for database...'
+          sleep 2
+        done
         
-  #       # Создаем таблицу alembic_version если её нет
-  #       PGPASSWORD=${DB_PASSWORD:-postgres} psql -h db -U ${DB_USER:-postgres} -d ${DB_NAME:-interview_notes} -c \"
-  #         CREATE TABLE IF NOT EXISTS alembic_version (
-  #           version_num VARCHAR(32) NOT NULL,
-  #           CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
-  #         );
-  #       \" || true
+        # Создаем таблицу alembic_version если её нет
+        PGPASSWORD=${DB_PASSWORD:-postgres} psql -h db -U ${DB_USER:-postgres} -d ${DB_NAME:-interview_notes} -c \"
+          CREATE TABLE IF NOT EXISTS alembic_version (
+            version_num VARCHAR(32) NOT NULL,
+            CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
+          );
+        \" || true
         
-  #       # Запускаем миграции
-  #       alembic upgrade head
-  #     "
+        # Запускаем миграции
+        alembic upgrade head
+      "
 
   nginx:
     image: nginx:alpine
