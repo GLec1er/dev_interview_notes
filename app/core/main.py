@@ -23,10 +23,10 @@ from app.routers.question_favorite import router as question_favorite_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # log.info("Создание таблиц в БД...")
-    # async with engine.begin() as conn:
-    #     await conn.run_sync(Base.metadata.create_all)
-    # log.info("Таблицы успешно созданы/проверены")
+    log.info("Создание таблиц в БД...")
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    log.info("Таблицы успешно созданы/проверены")
     yield
     log.info("Завершение работы приложения...")
 
