@@ -33,6 +33,7 @@ import {
   Tabs,
   Alert,
   Tab,
+  Tooltip,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -907,69 +908,108 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             </Typography>
 
             {/* Теги и статус */}
-            <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
-              {/* Сложность */}
-              <Chip
-                label={question.difficulty}
-                size="small"
-                icon={<BoltIcon sx={{ fontSize: '0.875rem !important' }} />}
-                sx={{
-                  fontWeight: 700,
-                  backgroundColor: alpha(getDifficultyColor(question.difficulty), 0.1),
-                  color: getDifficultyColor(question.difficulty),
-                  border: `2px solid ${alpha(getDifficultyColor(question.difficulty), 0.2)}`,
-                  textTransform: 'uppercase',
-                  fontSize: '0.75rem',
-                  height: 28,
-                  '& .MuiChip-icon': {
-                    color: getDifficultyColor(question.difficulty),
-                    ml: 0.5,
-                  },
-                }}
-              />
-
-              {/* Категория */}
-              {categoryName && (
+            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+              {/* Сложность - на мобиле только иконка */}
+              <Tooltip title={question.difficulty} arrow>
                 <Chip
-                  icon={<CategoryIcon />}
-                  label={categoryName}
+                  label={
+                    <Box sx={{ 
+                      display: { xs: 'none', sm: 'inline' },
+                      textTransform: 'uppercase'
+                    }}>
+                      {question.difficulty}
+                    </Box>
+                  }
                   size="small"
+                  icon={<BoltIcon />}
                   sx={{
-                    fontWeight: 600,
-                    backgroundColor: alpha(NEUTRAL_COLORS.info, 0.1),
-                    color: NEUTRAL_COLORS.info,
-                    border: `2px solid ${alpha(NEUTRAL_COLORS.info, 0.2)}`,
-                    fontSize: '0.75rem',
-                    height: 28,
+                    fontWeight: 700,
+                    backgroundColor: alpha(getDifficultyColor(question.difficulty), 0.1),
+                    color: getDifficultyColor(question.difficulty),
+                    border: `2px solid ${alpha(getDifficultyColor(question.difficulty), 0.2)}`,
+                    fontSize: '1rem',
+                    height: { xs: 30, sm: 28 },
+                    width: { xs: 30, sm: 'auto' }, // Круг на мобиле
+                    justifyContent: 'center',
                     '& .MuiChip-icon': {
-                      fontSize: '0.875rem',
-                      color: NEUTRAL_COLORS.info,
-                      ml: 0.5,
+                      color: getDifficultyColor(question.difficulty),
+                      m: 0,
+                      fontSize: { xs: '1.3rem !important', sm: '0.875rem !important' },
+                    },
+                    '& .MuiChip-label': {
+                      display: { xs: 'none', sm: 'block' },
+                      px: 1,
                     },
                   }}
                 />
+              </Tooltip>
+
+              {/* Категория */}
+              {categoryName && (
+                <Tooltip title={categoryName} arrow>
+                  <Chip
+                    icon={<CategoryIcon />}
+                    label={
+                      <Box sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                        {categoryName}
+                      </Box>
+                    }
+                    size="small"
+                    sx={{
+                      fontWeight: 600,
+                      backgroundColor: alpha(NEUTRAL_COLORS.info, 0.1),
+                      color: NEUTRAL_COLORS.info,
+                      border: `2px solid ${alpha(NEUTRAL_COLORS.info, 0.2)}`,
+                      fontSize: '1rem',
+                      height: { xs: 30, sm: 28 },
+                      width: { xs: 30, sm: 'auto' },
+                      justifyContent: 'center',
+                      '& .MuiChip-icon': {
+                        fontSize: { xs: '1.3rem', sm: '0.875rem' },
+                        color: NEUTRAL_COLORS.info,
+                        m: 0,
+                      },
+                      '& .MuiChip-label': {
+                        display: { xs: 'none', sm: 'block' },
+                        px: 1,
+                      },
+                    }}
+                  />
+                </Tooltip>
               )}
               
               {/* Бейдж "Твой вопрос" */}
               {isUserIdQuestion && (
-                <Chip
-                  icon={<PersonIcon />}
-                  label="Твой вопрос"
-                  size="small"
-                  sx={{
-                    fontWeight: 700,
-                    backgroundColor: alpha(NEUTRAL_COLORS.question, 0.15),
-                    color: NEUTRAL_COLORS.question,
-                    border: `1px solid ${alpha(NEUTRAL_COLORS.question, 0.3)}`,
-                    fontSize: '0.75rem',
-                    height: 28,
-                    '& .MuiChip-icon': {
-                      fontSize: '0.875rem',
+                <Tooltip title="Твой вопрос" arrow>
+                  <Chip
+                    icon={<PersonIcon />}
+                    label={
+                      <Box sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                        Твой вопрос
+                      </Box>
+                    }
+                    size="small"
+                    sx={{
+                      fontWeight: 700,
+                      backgroundColor: alpha(NEUTRAL_COLORS.question, 0.15),
                       color: NEUTRAL_COLORS.question,
-                      ml: 0.5,
-                    },
-                  }}
-                />
+                      border: `1px solid ${alpha(NEUTRAL_COLORS.question, 0.3)}`,
+                      fontSize: '1rem',
+                      height: { xs: 30, sm: 28 },
+                      width: { xs: 30, sm: 'auto' },
+                      justifyContent: 'center',
+                      '& .MuiChip-icon': {
+                        fontSize: { xs: '1.3rem', sm: '0.875rem' },
+                        color: NEUTRAL_COLORS.question,
+                        m: 0,
+                      },
+                      '& .MuiChip-label': {
+                        display: { xs: 'none', sm: 'block' },
+                        px: 1,
+                      },
+                    }}
+                  />
+                </Tooltip>
               )}
             </Stack>
           </Box>
@@ -2269,6 +2309,7 @@ export const QuestionsPage: React.FC = () => {
             </Typography>
             )}
             {/* Быстрые действия */}
+            {!isMobileFilter && (
             <Stack direction="row" alignItems="center" justifyContent="center" flexWrap="wrap" gap={1}>
               <Button
                 variant="contained"
@@ -2352,7 +2393,7 @@ export const QuestionsPage: React.FC = () => {
                 Найди то, что нужно
               </Button>
             </Stack>
-
+            )}
             {/* Индикатор активности фильтров */}
             {(difficulty || categoryId || debouncedSearch || isCompletedFilter !== undefined || sortBy !== 'updated_at' || sortDir !== 'desc' || limit !== 10) && (
               <Fade in>
@@ -2637,7 +2678,7 @@ export const QuestionsPage: React.FC = () => {
                         })
                       }}
                     >
-                      {user?.is_admin ? 'Добавить вопрос' : (isAddButtonDisabled ? 'Скоро будет доступно!' : 'Добавить вопрос')}
+                      {user?.is_admin ? 'Вопрос' : (isAddButtonDisabled ? 'Скоро будет доступно!' : 'Вопрос')}
                     </Button>
                     )}
                   </Box>
