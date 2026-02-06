@@ -27,22 +27,18 @@ import {
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
+  ArrowDownward as ArrowDownwardIcon,
+  ArrowUpward as ArrowUpwardIcon,
   Bookmark as BookmarkIcon,
   BookmarkBorder as BookmarkBorderIcon,
   Delete as DeleteIcon,
   OpenInNew as OpenInNewIcon,
-  Info as InfoIcon,
   TrendingUp as TrendingUpIcon,
   KeyboardArrowUp as ScrollTopIcon,
   Refresh as RefreshIcon,
   Star as StarIcon,
-  Category as CategoryIcon,
-  Speed as SpeedIcon,
-  Bolt as BoltIcon,
-  EmojiEvents as TrophyIcon,
   History as HistoryIcon,
   CheckCircle as CheckCircleIcon,
-  RadioButtonUnchecked as RadioButtonUncheckedIcon,
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
 } from '@mui/icons-material';
@@ -385,26 +381,47 @@ const StatCard = ({
   <Paper
     elevation={0}
     sx={{
-      p: 3,
+      p: { xs: 2, sm: 3 }, // Меньший padding на мобильных
       borderRadius: 2,
       backgroundColor: alpha(color, 0.05),
       border: `1px solid ${alpha(color, 0.2)}`,
       height: '100%',
-      minWidth: 250,
+      minWidth: { xs: 'unset', sm: 250 }, // Убираем фиксированную минимальную ширину на мобильных
       display: 'flex',
       flexDirection: 'column',
       transition: 'all 0.3s ease',
       '&:hover': {
-        transform: 'translateY(-4px)',
-        boxShadow: `0 8px 24px ${alpha(color, 0.15)}`,
-        borderColor: alpha(color, 0.4),
+        transform: { xs: 'none', sm: 'translateY(-4px)' }, // Анимация только на больших экранах
+        boxShadow: { 
+          xs: 'none', 
+          sm: `0 8px 24px ${alpha(color, 0.15)}` 
+        },
+        borderColor: { xs: alpha(color, 0.2), sm: alpha(color, 0.4) },
       },
+      // Адаптивные стили для очень маленьких экранов
+      '@media (max-width: 400px)': {
+        p: 1.5,
+        '& .MuiTypography-h3': {
+          fontSize: '1.75rem !important',
+        },
+        '& .icon-container': {
+          padding: '10px !important',
+        }
+      }
     }}
   >
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+    <Box 
+      sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: { xs: 1.5, sm: 2 }, // Меньший gap на мобильных
+        mb: { xs: 1.5, sm: 2 } 
+      }}
+    >
       <Box
+        className="icon-container"
         sx={{
-          p: 1.5,
+          p: { xs: 1, sm: 1.5 }, // Меньший padding для иконки
           borderRadius: '50%',
           backgroundColor: alpha(color, 0.1),
           color: color,
@@ -412,6 +429,10 @@ const StatCard = ({
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
+          // Размер иконки адаптивный
+          '& svg': {
+            fontSize: { xs: 20, sm: 24 }
+          }
         }}
       >
         {icon}
@@ -421,6 +442,8 @@ const StatCard = ({
         sx={{
           fontWeight: 600,
           color: NEUTRAL_COLORS.textPrimary,
+          fontSize: { xs: '0.9rem', sm: '1rem' }, // Меньший шрифт на мобильных
+          lineHeight: 1.3,
         }}
       >
         {title}
@@ -432,12 +455,17 @@ const StatCard = ({
       sx={{
         fontWeight: 800,
         color: color,
-        mb: 1,
-        fontSize: { xs: '2rem', md: '2.5rem' },
+        mb: { xs: 0.5, sm: 1 },
+        fontSize: { 
+          xs: '1.75rem',  // Меньше на мобильных
+          sm: '2rem',     // Средний размер
+          md: '2.5rem'    // Полный размер на десктопе
+        },
         background: percentage ? `linear-gradient(135deg, ${color} 0%, ${alpha(color, 0.7)} 100%)` : 'none',
         backgroundClip: percentage ? 'text' : 'none',
         WebkitBackgroundClip: percentage ? 'text' : 'none',
         WebkitTextFillColor: percentage ? 'transparent' : 'inherit',
+        lineHeight: 1.2,
       }}
     >
       {percentage ? `${value}%` : value}
@@ -448,6 +476,8 @@ const StatCard = ({
       sx={{
         color: NEUTRAL_COLORS.textSecondary,
         flexGrow: 1,
+        fontSize: { xs: '0.8rem', sm: '0.875rem' }, // Меньший шрифт
+        lineHeight: 1.4,
       }}
     >
       {subtitle}
@@ -460,6 +490,7 @@ export const FavoritesPage: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMobileFilter = useMediaQuery(theme.breakpoints.down(930));
 
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const [completedQuestions, setCompletedQuestions] = useState<Set<string>>(new Set());
@@ -467,11 +498,14 @@ export const FavoritesPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [statsExpanded, setStatsExpanded] = useState(true);
+  const [sortBy, setSortBy] = useState<string>('added_at');
+  const [sortDir, setSortDir] = useState<string>('desc');
 
-  const ITEMS_PER_PAGE = 12;
+  const ITEMS_PER_PAGE = 6; // Количество элементов на странице
 
   // Отслеживание скролла
   useEffect(() => {
@@ -489,17 +523,28 @@ export const FavoritesPage: React.FC = () => {
       setIsRefreshing(true);
       setError(null);
 
-      // Используем правильный endpoint
-      const response = await favoriteService.getFavorites(page, ITEMS_PER_PAGE);
+      // Используем правильный endpoint с параметрами пагинации и сортировки
+      const response = await favoriteService.getFavorites(
+        page,
+        ITEMS_PER_PAGE,
+        sortBy,
+        sortDir
+      );
+      
       setFavorites(response.items);
       setTotal(response.total);
+      setTotalPages(Math.ceil(response.total / ITEMS_PER_PAGE));
 
       // Загрузим статус выполнения для каждого вопроса
       const completedSet = new Set<string>();
       for (const favorite of response.items) {
-        const completion = await questionCompletionService.isQuestionCompleted(favorite.question_id);
-        if (completion.is_completed) {
-          completedSet.add(favorite.question_id);
+        try {
+          const completion = await questionCompletionService.isQuestionCompleted(favorite.question_id);
+          if (completion.is_completed) {
+            completedSet.add(favorite.question_id);
+          }
+        } catch (err) {
+          console.warn(`Не удалось загрузить статус выполнения для вопроса ${favorite.question_id}:`, err);
         }
       }
       setCompletedQuestions(completedSet);
@@ -510,11 +555,30 @@ export const FavoritesPage: React.FC = () => {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [page]);
+  }, [page, sortBy, sortDir, ITEMS_PER_PAGE]);
 
+  // Загрузка данных при изменении page или сортировки
   useEffect(() => {
     loadFavorites();
   }, [loadFavorites]);
+
+  // Обработчик изменения страницы
+  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+    setPage(value);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Обработчик сортировки
+  const handleSortChange = (newSortBy: string) => {
+    if (sortBy === newSortBy) {
+      // Меняем направление сортировки, если кликнули на тот же столбец
+      setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(newSortBy);
+      setSortDir('desc'); // По умолчанию нисходящая сортировка
+    }
+    setPage(1); // Сбрасываем на первую страницу при изменении сортировки
+  };
 
   // Удаление из избранного
   const handleRemoveFavorite = async (questionId: string) => {
@@ -522,6 +586,7 @@ export const FavoritesPage: React.FC = () => {
       await favoriteService.removeFromFavorites(questionId);
       setFavorites(favorites.filter(f => f.question_id !== questionId));
       setTotal(Math.max(0, total - 1));
+      setTotalPages(Math.ceil((total - 1) / ITEMS_PER_PAGE));
       setCompletedQuestions(prev => {
         const newSet = new Set(prev);
         newSet.delete(questionId);
@@ -712,11 +777,24 @@ export const FavoritesPage: React.FC = () => {
 
           {/* Развернутая статистика */}
           <Collapse in={statsExpanded}>
-            <Box sx={{ mb: 4}}>
-              <Grid container spacing={3} sx={{ mb: 3 }}>
+            <Box sx={{ mb: 4 }}>
+              <Grid 
+                container 
+                spacing={{ xs: 2, sm: 3 }} // Меньший отступ на мобильных
+                justifyContent="center"
+                sx={{ 
+                  mb: 3,
+                  // На очень маленьких экранах делаем вертикальное расположение
+                  '@media (max-width: 400px)': {
+                    '& .MuiGrid-item': {
+                      width: '100%',
+                    }
+                  }
+                }}
+              >
                 <Grid item xs={12} sm={6} md={3}>
                   <StatCard
-                    title="Всего вопросов"
+                    title={isMobileFilter ? "Вопросы" : "Всего вопросов"}
                     value={total}
                     subtitle="в избранном"
                     color={NEUTRAL_COLORS.accent}
@@ -732,6 +810,7 @@ export const FavoritesPage: React.FC = () => {
                     icon={<CheckCircleIcon />}
                   />
                 </Grid>
+                {!isMobileFilter && (
                 <Grid item xs={12} sm={6} md={3}>
                   <StatCard
                     title="Прогресс"
@@ -742,6 +821,7 @@ export const FavoritesPage: React.FC = () => {
                     percentage
                   />
                 </Grid>
+                )}
               </Grid>            
             </Box>
           </Collapse>
@@ -814,22 +894,92 @@ export const FavoritesPage: React.FC = () => {
             </Fade>
           )}
 
-          {/* Сетка вопросов */}
+          {/* Сетка вопросов с сортировкой */}
           {!isLoading && favorites.length > 0 && (
             <Fade in={true}>
               <Box>
-                <Typography
-                  variant="h5"
-                  sx={{
-                    fontWeight: 700,
-                    color: NEUTRAL_COLORS.textPrimary,
-                    mb: 3,
-                  }}
-                >
-                  Ваши избранные вопросы ({total})
-                </Typography>
+                {/* Заголовок и сортировка */}
+                <Box sx={{ 
+                  display: 'flex', 
+                  flexDirection: { xs: 'column', sm: 'row' }, 
+                  justifyContent: 'space-between', 
+                  alignItems: { xs: 'flex-start', sm: 'center' },
+                  mb: 3,
+                  gap: 2 
+                }}>
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontWeight: 700,
+                      color: NEUTRAL_COLORS.textPrimary,
+                    }}
+                  >
+                    Ваши избранные вопросы ({total})
+                  </Typography>
 
-                {/* Grid с одинаковыми карточками */}
+                  {/* Кнопки сортировки */}
+                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                    <Chip
+                      label="По дате добавления"
+                      variant={sortBy === 'added_at' ? 'filled' : 'outlined'}
+                      onClick={() => handleSortChange('added_at')}
+                      icon={sortBy === 'added_at' ? 
+                        (sortDir === 'desc' ? <ArrowDownwardIcon fontSize="small" /> : <ArrowUpwardIcon fontSize="small" />) 
+                        : undefined
+                      }
+                      size={isMobile ? 'small' : 'medium'}
+                      sx={{
+                        backgroundColor: sortBy === 'added_at' ? alpha(NEUTRAL_COLORS.accent, 0.1) : 'transparent',
+                        color: sortBy === 'added_at' ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.textSecondary,
+                        borderColor: sortBy === 'added_at' ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.border,
+                        '&:hover': {
+                          backgroundColor: sortBy === 'added_at' ? alpha(NEUTRAL_COLORS.accent, 0.15) : alpha(NEUTRAL_COLORS.accent, 0.05),
+                          borderColor: sortBy === 'added_at' ? NEUTRAL_COLORS.accent : alpha(NEUTRAL_COLORS.accent, 0.3),
+                        },
+                      }}
+                    />
+                    <Chip
+                      label="По сложности"
+                      variant={sortBy === 'difficulty' ? 'filled' : 'outlined'}
+                      onClick={() => handleSortChange('difficulty')}
+                      icon={sortBy === 'difficulty' ? 
+                        (sortDir === 'desc' ? <ArrowDownwardIcon fontSize="small" /> : <ArrowUpwardIcon fontSize="small" />) 
+                        : undefined
+                      }
+                      size={isMobile ? 'small' : 'medium'}
+                      sx={{
+                        backgroundColor: sortBy === 'difficulty' ? alpha(NEUTRAL_COLORS.warning, 0.1) : 'transparent',
+                        color: sortBy === 'difficulty' ? NEUTRAL_COLORS.warning : NEUTRAL_COLORS.textSecondary,
+                        borderColor: sortBy === 'difficulty' ? NEUTRAL_COLORS.warning : NEUTRAL_COLORS.border,
+                        '&:hover': {
+                          backgroundColor: sortBy === 'difficulty' ? alpha(NEUTRAL_COLORS.warning, 0.15) : alpha(NEUTRAL_COLORS.warning, 0.05),
+                          borderColor: sortBy === 'difficulty' ? NEUTRAL_COLORS.warning : alpha(NEUTRAL_COLORS.warning, 0.3),
+                        },
+                      }}
+                    />
+                    <Chip
+                      label="По названию"
+                      variant={sortBy === 'title' ? 'filled' : 'outlined'}
+                      onClick={() => handleSortChange('title')}
+                      icon={sortBy === 'title' ? 
+                        (sortDir === 'desc' ? <ArrowDownwardIcon fontSize="small" /> : <ArrowUpwardIcon fontSize="small" />) 
+                        : undefined
+                      }
+                      size={isMobile ? 'small' : 'medium'}
+                      sx={{
+                        backgroundColor: sortBy === 'title' ? alpha(NEUTRAL_COLORS.success, 0.1) : 'transparent',
+                        color: sortBy === 'title' ? NEUTRAL_COLORS.success : NEUTRAL_COLORS.textSecondary,
+                        borderColor: sortBy === 'title' ? NEUTRAL_COLORS.success : NEUTRAL_COLORS.border,
+                        '&:hover': {
+                          backgroundColor: sortBy === 'title' ? alpha(NEUTRAL_COLORS.success, 0.15) : alpha(NEUTRAL_COLORS.success, 0.05),
+                          borderColor: sortBy === 'title' ? NEUTRAL_COLORS.success : alpha(NEUTRAL_COLORS.success, 0.3),
+                        },
+                      }}
+                    />
+                  </Stack>
+                </Box>
+
+                {/* Сетка вопросов */}
                 <Grid container spacing={3} sx={{ mb: 4 }}>
                   {favorites.map(favorite => (
                     <Grid item xs={12} sm={6} md={4} key={favorite.favorite_id} sx={{ display: 'flex' }}>
@@ -844,86 +994,157 @@ export const FavoritesPage: React.FC = () => {
                 </Grid>
 
                 {/* Пагинация */}
-                {total > ITEMS_PER_PAGE && (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-                    <Paper
-                      elevation={0}
-                      sx={{
-                        p: 2,
-                        borderRadius: 3,
-                        backgroundColor: alpha(NEUTRAL_COLORS.background, 0.5),
-                        border: `1px solid ${alpha(NEUTRAL_COLORS.border, 0.3)}`,
-                      }}
-                    >
-                      <Stack direction={isMobile ? 'column' : 'row'} spacing={2} alignItems="center">
-                        <Button
-                          disabled={page === 1}
-                          onClick={() => setPage(page - 1)}
-                          variant="outlined"
-                          startIcon={<ArrowBackIcon />}
-                          sx={{
-                            borderColor: NEUTRAL_COLORS.border,
-                            color: NEUTRAL_COLORS.textSecondary,
-                            '&:hover': {
-                              borderColor: NEUTRAL_COLORS.accent,
-                              color: NEUTRAL_COLORS.accent,
-                            },
-                          }}
-                        >
-                          Предыдущая
-                        </Button>
-
-                        <Pagination
-                          count={Math.ceil(total / ITEMS_PER_PAGE)}
-                          page={page}
-                          onChange={(_, value) => setPage(value)}
-                          color="primary"
-                          sx={{
-                            '& .MuiPaginationItem-root': {
-                              color: NEUTRAL_COLORS.textSecondary,
-                              '&.Mui-selected': {
-                                backgroundColor: NEUTRAL_COLORS.accent,
-                                color: NEUTRAL_COLORS.surface,
-                                fontWeight: 700,
-                              },
-                              '&:hover': {
-                                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
-                              },
-                            },
-                          }}
-                        />
-
-                        <Button
-                          disabled={page >= Math.ceil(total / ITEMS_PER_PAGE)}
-                          onClick={() => setPage(page + 1)}
-                          variant="outlined"
-                          endIcon={<ArrowBackIcon sx={{ transform: 'rotate(180deg)' }} />}
-                          sx={{
-                            borderColor: NEUTRAL_COLORS.border,
-                            color: NEUTRAL_COLORS.textSecondary,
-                            '&:hover': {
-                              borderColor: NEUTRAL_COLORS.accent,
-                              color: NEUTRAL_COLORS.accent,
-                            },
-                          }}
-                        >
-                          Следующая
-                        </Button>
-                      </Stack>
-
-                      <Typography
-                        variant="caption"
+                {totalPages > 1 && (
+                  <Fade in={true}>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 4 }}>
+                      <Paper
+                        elevation={0}
                         sx={{
-                          display: 'block',
-                          textAlign: 'center',
-                          mt: 2,
-                          color: NEUTRAL_COLORS.textSecondary,
+                          p: { xs: 2, sm: 3 },
+                          borderRadius: 3,
+                          backgroundColor: alpha(NEUTRAL_COLORS.surface, 0.8),
+                          border: `1px solid ${alpha(NEUTRAL_COLORS.border, 0.5)}`,
+                          backdropFilter: 'blur(10px)',
+                          width: '100%',
+                          maxWidth: '800px',
                         }}
                       >
-                        Страница {page} из {Math.ceil(total / ITEMS_PER_PAGE)}
-                      </Typography>
-                    </Paper>
-                  </Box>
+                        {/* Информация о странице */}
+                        {/* <Box sx={{ textAlign: 'center', mb: 2 }}>
+                          <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+                            Показано {((page - 1) * ITEMS_PER_PAGE) + 1} - {Math.min(page * ITEMS_PER_PAGE, total)} из {total} вопросов
+                          </Typography>
+                        </Box> */}
+
+                        {/* Основная пагинация */}
+                        <Stack 
+                          direction={isMobile ? 'column' : 'row'} 
+                          spacing={isMobile ? 2 : 3} 
+                          alignItems="center" 
+                          justifyContent="center"
+                        >
+                          {/* Кнопка "Назад" */}
+                          <Button
+                            disabled={page === 1}
+                            onClick={() => {
+                              setPage(page - 1);
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                            variant="outlined"
+                            startIcon={<ArrowBackIcon />}
+                            sx={{
+                              borderColor: NEUTRAL_COLORS.border,
+                              color: page === 1 ? NEUTRAL_COLORS.textSecondary : NEUTRAL_COLORS.accent,
+                              '&:hover': {
+                                borderColor: NEUTRAL_COLORS.accent,
+                                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+                              },
+                              minWidth: { xs: '100%', sm: 'auto' },
+                            }}
+                          >
+                            {isMobile ? 'Предыдущая' : 'Предыдущая страница'}
+                          </Button>
+
+                          {/* Pagination компонент */}
+                          <Pagination
+                            count={totalPages}
+                            page={page}
+                            onChange={handlePageChange}
+                            color="primary"
+                            siblingCount={isMobile ? 0 : 1}
+                            boundaryCount={isMobile ? 1 : 2}
+                            sx={{
+                              '& .MuiPaginationItem-root': {
+                                color: NEUTRAL_COLORS.textSecondary,
+                                border: `1px solid ${NEUTRAL_COLORS.border}`,
+                                backgroundColor: NEUTRAL_COLORS.surface,
+                                fontSize: { xs: '0.875rem', sm: '1rem' },
+                                minWidth: { xs: 32, sm: 40 },
+                                height: { xs: 32, sm: 40 },
+                                margin: { xs: '0 2px', sm: '0 4px' },
+                                '&.Mui-selected': {
+                                  backgroundColor: NEUTRAL_COLORS.accent,
+                                  color: NEUTRAL_COLORS.surface,
+                                  fontWeight: 700,
+                                  borderColor: NEUTRAL_COLORS.accent,
+                                  '&:hover': {
+                                    backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.9),
+                                  },
+                                },
+                                '&:hover': {
+                                  backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
+                                  borderColor: NEUTRAL_COLORS.accent,
+                                },
+                                '&.MuiPaginationItem-ellipsis': {
+                                  border: 'none',
+                                  backgroundColor: 'transparent',
+                                },
+                              },
+                            }}
+                          />
+
+                          {/* Кнопка "Вперед" */}
+                          <Button
+                            disabled={page >= totalPages}
+                            onClick={() => {
+                              setPage(page + 1);
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                            variant="outlined"
+                            endIcon={<ArrowBackIcon sx={{ transform: 'rotate(180deg)' }} />}
+                            sx={{
+                              borderColor: NEUTRAL_COLORS.border,
+                              color: page >= totalPages ? NEUTRAL_COLORS.textSecondary : NEUTRAL_COLORS.accent,
+                              '&:hover': {
+                                borderColor: NEUTRAL_COLORS.accent,
+                                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+                              },
+                              minWidth: { xs: '100%', sm: 'auto' },
+                            }}
+                          >
+                            {isMobile ? 'Следующая' : 'Следующая страница'}
+                          </Button>
+                        </Stack>
+
+                        {/* Переход к странице */}
+                        {!isMobile && totalPages > 5 && (
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mt: 2, gap: 1 }}>
+                            <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+                              Перейти к странице:
+                            </Typography>
+                            <Box sx={{ display: 'flex', gap: 0.5 }}>
+                              <input
+                                type="number"
+                                min="1"
+                                max={totalPages}
+                                value={page}
+                                onChange={(e) => {
+                                  const value = parseInt(e.target.value);
+                                  if (value >= 1 && value <= totalPages) {
+                                    setPage(value);
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                  }
+                                }}
+                                style={{
+                                  width: '60px',
+                                  padding: '4px 8px',
+                                  border: `1px solid ${NEUTRAL_COLORS.border}`,
+                                  borderRadius: '4px',
+                                  textAlign: 'center',
+                                  fontSize: '14px',
+                                  color: NEUTRAL_COLORS.textPrimary,
+                                  backgroundColor: NEUTRAL_COLORS.surface,
+                                }}
+                              />
+                              <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary, alignSelf: 'center' }}>
+                                / {totalPages}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        )}
+                      </Paper>
+                    </Box>
+                  </Fade>
                 )}
               </Box>
             </Fade>

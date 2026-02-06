@@ -27,6 +27,12 @@ import {
   MenuItem,
   FormControlLabel,
   Switch,
+  useMediaQuery,
+  useTheme,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  Divider,
 } from '@mui/material';
 import {
   ExpandMore as ExpandMoreIcon,
@@ -350,6 +356,8 @@ export const QuestionDetailPage: React.FC = () => {
   const { questionId } = useParams<{ questionId: string }>();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
+  const theme = useTheme();
+  const isMobileFilter = useMediaQuery(theme.breakpoints.down(1000));
   
   const [question, setQuestion] = useState<Question | null>(null);
   const [answers, setAnswers] = useState<Answer[]>([]);
@@ -371,6 +379,7 @@ export const QuestionDetailPage: React.FC = () => {
   const [openAnswerAddDialog, setOpenAnswerAddDialog] = useState(false);
   const [openAnswerEditDialog, setOpenAnswerEditDialog] = useState(false);
   const [openAnswerDeleteDialog, setOpenAnswerDeleteDialog] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   
   // Состояния для форм
   const [questionFormData, setQuestionFormData] = useState({
@@ -976,14 +985,20 @@ const handleCloseAnswerEdit = () => {
           }}
         >
           {/* Действия с вопросом (правый верхний угол) */}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: { xs: 16, md: 24 },
+            right: { xs: 16, md: 24 },
+            zIndex: 1,
+          }}
+        >
+          {/* Десктопная версия */}
           <Stack 
             direction="row" 
             spacing={1} 
             sx={{ 
-              position: 'absolute',
-              top: { xs: 16, md: 24 },
-              right: { xs: 16, md: 24 },
-              zIndex: 1,
+              display: { xs: 'none', md: 'flex' },
             }}
           >
             <Tooltip title={isCompleted ? "Снять отметку выполнения" : "Отметить как выполненный"}>
@@ -1042,6 +1057,122 @@ const handleCloseAnswerEdit = () => {
             </Tooltip>
           </Stack>
 
+          {/* Мобильная версия с меню */}
+          <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+            <IconButton
+              onClick={(e) => setAnchorEl(e.currentTarget)}
+              size="small"
+              sx={{
+                color: NEUTRAL_COLORS.textSecondary,
+                backgroundColor: alpha(NEUTRAL_COLORS.background, 0.8),
+                '&:hover': {
+                  backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
+                },
+              }}
+            >
+              <MoreVertIcon />
+            </IconButton>
+            
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={() => setAnchorEl(null)}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'right',
+              }}
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+              PaperProps={{
+                sx: {
+                  mt: 1,
+                  minWidth: 200,
+                  borderRadius: 2,
+                  boxShadow: 3,
+                  backgroundColor: NEUTRAL_COLORS.surface,
+                }
+              }}
+            >
+              <MenuItem 
+                onClick={() => {
+                  handleToggleCompletion();
+                  setAnchorEl(null);
+                }}
+                disabled={isCompletionLoading}
+                sx={{
+                  py: 1.5,
+                  color: isCompleted ? NEUTRAL_COLORS.success : NEUTRAL_COLORS.textPrimary,
+                }}
+              >
+                <ListItemIcon sx={{ 
+                  minWidth: 36,
+                  color: isCompleted ? NEUTRAL_COLORS.success : NEUTRAL_COLORS.textPrimary,
+                }}>
+                  {isCompletionLoading ? (
+                    <CircularProgress size={20} />
+                  ) : isCompleted ? (
+                    <CheckCircleIcon fontSize="small" />
+                  ) : (
+                    <RadioButtonUncheckedIcon fontSize="small" />
+                  )}
+                </ListItemIcon>
+                <ListItemText 
+                  primary={isCompleted ? "Снять отметку" : "Отметить выполненным"} 
+                  primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }}
+                />
+              </MenuItem>
+              
+              <MenuItem 
+                onClick={() => {
+                  handleBookmarkToggle();
+                  setAnchorEl(null);
+                }}
+                sx={{
+                  py: 1.5,
+                  color: isBookmarked ? NEUTRAL_COLORS.warning : NEUTRAL_COLORS.textPrimary,
+                }}
+              >
+                <ListItemIcon sx={{ 
+                  minWidth: 36,
+                  color: isBookmarked ? NEUTRAL_COLORS.warning : NEUTRAL_COLORS.textPrimary,
+                }}>
+                  {isBookmarked ? (
+                    <BookmarkIcon fontSize="small" />
+                  ) : (
+                    <BookmarkBorderIcon fontSize="small" />
+                  )}
+                </ListItemIcon>
+                <ListItemText 
+                  primary={isBookmarked ? "Удалить из избранного" : "Добавить в избранное"} 
+                  primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }}
+                />
+              </MenuItem>
+              <MenuItem 
+                onClick={() => {
+                  handleShareQuestion();
+                  setAnchorEl(null);
+                }}
+                sx={{
+                  py: 1.5,
+                  color: NEUTRAL_COLORS.textPrimary,
+                }}
+              >
+                <ListItemIcon sx={{ 
+                  minWidth: 36,
+                  color: NEUTRAL_COLORS.textPrimary,
+                }}>
+                  <ShareIcon fontSize="small"/>
+                </ListItemIcon>
+                <ListItemText 
+                  primary="Поделиться вопросом" 
+                  primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }}
+                />
+              </MenuItem>
+            </Menu>
+          </Box>
+        </Box>
           <Stack spacing={4}>
             {/* Верхняя часть: статус, сложность и категория */}
             <Stack
@@ -1059,7 +1190,8 @@ const handleCloseAnswerEdit = () => {
               {/* Сложность */}
               <Chip
                 icon={<DifficultyIcon />}
-                label={`Сложность: ${question.difficulty.charAt(0).toUpperCase() + question.difficulty.slice(1)}`}
+                // label={`Сложность: ${question.difficulty.charAt(0).toUpperCase() + question.difficulty.slice(1)}`}
+                label={isMobileFilter ? `${question.difficulty.charAt(0).toUpperCase() + question.difficulty.slice(1)}` : `Сложность: ${question.difficulty.charAt(0).toUpperCase() + question.difficulty.slice(1)}`}
                 size="medium"
                 sx={{
                   fontWeight: 700,
@@ -1077,7 +1209,7 @@ const handleCloseAnswerEdit = () => {
               {category && (
                 <Chip
                   icon={<CategoryIcon />}
-                  label={`Категория: ${category.name}`}
+                  label={isMobileFilter ? `${category.name}` : `Категория: ${category.name}`}
                   size="medium"
                   sx={{
                     fontWeight: 700,
@@ -1093,44 +1225,12 @@ const handleCloseAnswerEdit = () => {
                   }}
                 />
               )}
-              
-              {/* Статус публикации */}
-              {question.is_published ? (
-                <Chip
-                  icon={<PublishedIcon />}
-                  label="Опубликовано"
-                  size="medium"
-                  sx={{
-                    fontWeight: 700,
-                    backgroundColor: alpha(NEUTRAL_COLORS.success, 0.1),
-                    color: NEUTRAL_COLORS.success,
-                    border: `1px solid ${alpha(NEUTRAL_COLORS.success, 0.3)}`,
-                    fontSize: '0.95rem',
-                    px: 1,
-                    height: 36,
-                  }}
-                />
-              ) : (
-                <Chip
-                  icon={<DraftIcon />}
-                  label="Черновик"
-                  size="medium"
-                  sx={{
-                    fontWeight: 700,
-                    backgroundColor: alpha(NEUTRAL_COLORS.secondary, 0.1),
-                    color: NEUTRAL_COLORS.secondary,
-                    border: `1px solid ${alpha(NEUTRAL_COLORS.secondary, 0.3)}`,
-                    fontSize: '0.95rem',
-                    px: 1,
-                    height: 36,
-                  }}
-                />
-              )}
             </Stack>
 
             {/* Содержимое вопроса с иконкой слева */}
             <Stack direction="row" spacing={3} alignItems="flex-start">
               {/* Иконка вопроса */}
+              { !isMobileFilter && (
               <Box sx={{ flexShrink: 0 }}>
                 <Box
                   sx={{
@@ -1148,7 +1248,7 @@ const handleCloseAnswerEdit = () => {
                   <DescriptionIcon sx={{ fontSize: 28 }} />
                 </Box>
               </Box>
-
+              )}
               {/* Заголовок и контент вопроса */}
               <Box sx={{ flex: 1 }}>
                 <Typography
@@ -1222,7 +1322,7 @@ const handleCloseAnswerEdit = () => {
                   },
                 }}
               >
-                Редактировать вопрос
+                {isMobileFilter ? "Редактировать" : "Редактировать вопрос"}
               </Button>
               
               <Button
@@ -1238,7 +1338,7 @@ const handleCloseAnswerEdit = () => {
                   },
                 }}
               >
-                Удалить вопрос
+                {isMobileFilter ? "Удалить" : "Удалить вопрос"}
               </Button>
             </Box>
           )}
@@ -1258,6 +1358,7 @@ const handleCloseAnswerEdit = () => {
             {/* Заголовок секции решений с иконкой слева */}
             <Stack direction="row" spacing={3} alignItems="center" sx={{ flexWrap: 'wrap', gap: 2 }}>
               {/* Иконка решений */}
+              { !isMobileFilter && (
               <Box sx={{ flexShrink: 0 }}>
                 <Box
                   sx={{
@@ -1274,7 +1375,7 @@ const handleCloseAnswerEdit = () => {
                   <SolutionIcon sx={{ fontSize: 28 }} />
                 </Box>
               </Box>
-
+              )}
               {/* Текст заголовка */}
               <Box sx={{ flex: 1 }}>
                 <Typography
@@ -1297,25 +1398,6 @@ const handleCloseAnswerEdit = () => {
                   Подробные объяснения и подходы к решению проблемы
                 </Typography>
               </Box>
-
-              {/* Кнопка добавления ответа для админов */}
-              {user?.is_admin && (
-                <Button
-                  startIcon={<AddIcon />}
-                  onClick={handleOpenAnswerAdd}
-                  variant="contained"
-                  size="small"
-                  sx={{
-                    backgroundColor: NEUTRAL_COLORS.success,
-                    color: NEUTRAL_COLORS.surface,
-                    '&:hover': {
-                      backgroundColor: alpha(NEUTRAL_COLORS.success, 0.9),
-                    },
-                  }}
-                >
-                  Добавить решение
-                </Button>
-              )}
             </Stack>
 
             {/* Список решений */}
@@ -1382,8 +1464,24 @@ const handleCloseAnswerEdit = () => {
                 onClick={() => navigate('/questions')}
                 variant="outlined"
               >
-                Вернуться к вопросам
+                {isMobileFilter ? "К вопросам" : "Вернуться к вопросам"}
               </Button>
+              {user?.is_admin && (
+                <Button
+                  startIcon={<AddIcon />}
+                  onClick={handleOpenAnswerAdd}
+                  variant="contained"
+                  sx={{
+                    backgroundColor: NEUTRAL_COLORS.success,
+                    color: NEUTRAL_COLORS.surface,
+                    '&:hover': {
+                      backgroundColor: alpha(NEUTRAL_COLORS.success, 0.9),
+                    },
+                  }}
+                >
+                  {isMobileFilter ? "Добавить" : "Добавить решение"}
+                </Button>
+              )}
             </Stack>
           </Stack>
         </Paper>

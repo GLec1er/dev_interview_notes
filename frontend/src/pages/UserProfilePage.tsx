@@ -19,6 +19,8 @@ import {
   OutlinedInput,
   Grid,
   Collapse,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -563,6 +565,8 @@ export const UserProfilePage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [localError, setLocalError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const theme = useTheme();
+  const isMobileFilter = useMediaQuery(theme.breakpoints.down(1000));
 
   // Редактируемые поля
   const [firstName, setFirstName] = useState(user?.first_name || '');
@@ -891,7 +895,7 @@ export const UserProfilePage: React.FC = () => {
             }}
             variant="contained"
           >
-            К вопросам
+            Назад
           </Button>
           
           {/* Кнопка перехода к избранным вопросам */}
@@ -916,7 +920,7 @@ export const UserProfilePage: React.FC = () => {
             }}
             variant="outlined"
           >
-            Избранные вопросы
+            {isMobileFilter ? "Вопросы" : "Избранные вопросы"}
           </Button>
         </Stack>
 
@@ -957,7 +961,7 @@ export const UserProfilePage: React.FC = () => {
         )}
 
         {/* Кнопка для просмотра ачивок - привлекательная и мотивирующая */}
-        {!isLoadingStats && achievements.length > 0 && (
+        {!isMobileFilter && !isLoadingStats && achievements.length > 0 && (
           <Paper
             elevation={0}
             sx={{
@@ -968,16 +972,24 @@ export const UserProfilePage: React.FC = () => {
               mb: 3,
               position: 'relative',
               overflow: 'hidden',
-              cursor: 'pointer',
+              cursor: { xs: 'default', md: 'pointer' }, // На мобильных курсор обычный
               transition: 'all 0.3s ease',
               '&:hover': {
-                transform: 'translateY(-2px)',
-                boxShadow: `0 8px 25px ${alpha(NEUTRAL_COLORS.gold, 0.15)}`,
-                borderColor: alpha(NEUTRAL_COLORS.gold, 0.5),
-                backgroundColor: alpha(NEUTRAL_COLORS.gold, 0.08),
+                transform: { xs: 'none', md: 'translateY(-2px)' }, // На мобильных нет трансформации
+                boxShadow: { 
+                  xs: 'none', 
+                  md: `0 8px 25px ${alpha(NEUTRAL_COLORS.gold, 0.15)}` 
+                },
+                borderColor: { xs: `2px solid ${alpha(NEUTRAL_COLORS.gold, 0.3)}`, md: alpha(NEUTRAL_COLORS.gold, 0.5) },
+                backgroundColor: { xs: alpha(NEUTRAL_COLORS.gold, 0.05), md: alpha(NEUTRAL_COLORS.gold, 0.08) },
               },
             }}
-            onClick={() => setIsAchievementsVisible(!isAchievementsVisible)}
+            onClick={() => {
+              // На мобильных не открываем, на десктопе - открываем
+              if (window.innerWidth >= 900) { // или используйте theme.breakpoints.up('md')
+                setIsAchievementsVisible(!isAchievementsVisible);
+              }
+            }}
           >
             {/* Анимированные элементы фона */}
             <Box
@@ -1013,6 +1025,7 @@ export const UserProfilePage: React.FC = () => {
                     <TrophyIcon sx={{ fontSize: 28 }} />
                   </Box>
                   <Box>
+                    {/* Изменяем текст на мобильных */}
                     <Typography
                       variant="h5"
                       sx={{
@@ -1025,7 +1038,11 @@ export const UserProfilePage: React.FC = () => {
                         fontSize: { xs: '1.4rem', md: '1.6rem' },
                       }}
                     >
-                      {isAchievementsVisible ? 'Скрыть достижения' : 'Показать мои достижения'}
+                      {isAchievementsVisible && window.innerWidth >= 900 
+                        ? 'Скрыть достижения' 
+                        : window.innerWidth >= 900 
+                          ? 'Показать мои достижения' 
+                          : 'Достижения доступны в десктопной версии'}
                     </Typography>
                     <Typography
                       variant="body2"
@@ -1035,14 +1052,20 @@ export const UserProfilePage: React.FC = () => {
                         fontWeight: 500,
                       }}
                     >
-                      {isAchievementsVisible 
+                      {isAchievementsVisible && window.innerWidth >= 900 
                         ? 'Нажмите, чтобы скрыть' 
-                        : `У вас разблокировано ${unlockedAchievements} из ${totalAchievements} достижений!`}
+                        : window.innerWidth >= 900 
+                          ? `У вас разблокировано ${unlockedAchievements} из ${totalAchievements} достижений!` 
+                          : 'Перейдите на компьютер, чтобы просмотреть все ваши награды'}
                     </Typography>
                   </Box>
                 </Box>
 
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ 
+                  display: { xs: 'none', md: 'flex' }, // Скрываем прогресс и стрелку на мобильных
+                  alignItems: 'center', 
+                  gap: 2 
+                }}>
                   {/* Индикатор прогресса */}
                   <Box
                     sx={{
@@ -1081,7 +1104,7 @@ export const UserProfilePage: React.FC = () => {
                     />
                   </Box>
 
-                  {/* Иконка стрелки */}
+                  {/* Иконка стрелки - показываем только на десктопе */}
                   <IconButton
                     sx={{
                       backgroundColor: alpha(NEUTRAL_COLORS.gold, 0.2),
@@ -1091,10 +1114,21 @@ export const UserProfilePage: React.FC = () => {
                         transform: 'scale(1.1)',
                       },
                       transition: 'all 0.2s ease',
+                      display: { xs: 'none', md: 'flex' }, // Скрываем на мобильных
                     }}
                   >
                     {isAchievementsVisible ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                   </IconButton>
+                </Box>
+
+                {/* На мобильных показываем иконку информации */}
+                <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center' }}>
+                  <InfoIcon 
+                    sx={{ 
+                      color: NEUTRAL_COLORS.gold,
+                      fontSize: 32,
+                    }} 
+                  />
                 </Box>
               </Box>
             </Box>
