@@ -2098,10 +2098,6 @@ export const HomePage: React.FC = () => {
     navigate(path);
   }, [navigate]);
 
-  const handleCardClick = (category: ApiCategory) => {
-    navigate(`/questions?category=${category.id}`);
-  };
-
   return (
     <Box sx={{ 
       minHeight: '100vh',

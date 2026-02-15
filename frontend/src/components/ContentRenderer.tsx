@@ -3,6 +3,7 @@ import React from 'react';
 import { Box, Typography, Paper, Alert, alpha } from '@mui/material';
 import { CodeBlock } from './CodeBlock';
 import type { ContentBlock } from '../types';
+import { FormattedText } from './FormattedText';
 
 const NEUTRAL_COLORS = {
   primary: '#2D3748',
@@ -52,9 +53,11 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({ blocks }) => {
             const level = data.level || 1;
             const variant = `h${Math.min(6, level + 1)}` as const;
             return (
-              <Typography 
-                key={index} 
+              <FormattedText
+                key={index}
+                text={text}
                 variant={variant}
+                component="div"
                 sx={{ 
                   mt: level === 1 ? 4 : 3,
                   mb: 2,
@@ -63,26 +66,25 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({ blocks }) => {
                   lineHeight: 1.3,
                   fontSize: '1.7rem',
                 }}
-              >
-                {text}
-              </Typography>
+              />
             );
 
           case 'paragraph':
           case 'text':
             return (
-              <Typography 
-                key={index} 
-                variant="body1" 
+              <FormattedText
+                key={index}
+                text={text}
+                variant="body1"
+                component="div"
                 sx={{ 
                   mb: 2.5, 
+                  fontWeight: 400,
                   lineHeight: 1.8,
                   color: NEUTRAL_COLORS.textPrimary,
-                  fontSize: '1.1rem',
+                  fontSize: '1.15rem',
                 }}
-              >
-                {text}
-              </Typography>
+              />
             );
 
           case 'code':
@@ -96,49 +98,26 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({ blocks }) => {
             );
 
           case 'info':
-            return (
-              <Alert 
-                key={index} 
-                severity="info"
-                sx={{ 
-                  mb: 3,
-                  borderRadius: 2,
-                  border: `1px solid ${alpha(NEUTRAL_COLORS.info, 0.3)}`,
-                  backgroundColor: alpha(NEUTRAL_COLORS.info, 0.05),
-                  color: NEUTRAL_COLORS.textPrimary,
-                  '& .MuiAlert-icon': {
-                    color: NEUTRAL_COLORS.info,
-                  },
-                  alignItems: 'flex-start',
-                  py: 2,
-                }}
-              >
-                <Box sx={{ lineHeight: 1.7, fontSize: '1.05rem' }}>
-                  {text}
-                </Box>
-              </Alert>
-            );
-
           case 'warning':
             return (
               <Alert 
                 key={index} 
-                severity="warning"
+                severity={block.type}
                 sx={{ 
                   mb: 3,
                   borderRadius: 2,
-                  border: `1px solid ${alpha(NEUTRAL_COLORS.warning, 0.3)}`,
-                  backgroundColor: alpha(NEUTRAL_COLORS.warning, 0.05),
+                  border: `1px solid ${alpha(NEUTRAL_COLORS[block.type], 0.3)}`,
+                  backgroundColor: alpha(NEUTRAL_COLORS[block.type], 0.05),
                   color: NEUTRAL_COLORS.textPrimary,
                   '& .MuiAlert-icon': {
-                    color: NEUTRAL_COLORS.warning,
+                    color: NEUTRAL_COLORS[block.type],
                   },
                   alignItems: 'flex-start',
                   py: 2,
                 }}
               >
                 <Box sx={{ lineHeight: 1.7, fontSize: '1.05rem' }}>
-                  {text}
+                  <FormattedText text={text} variant="body1" />
                 </Box>
               </Alert>
             );
@@ -213,11 +192,9 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({ blocks }) => {
                   <Typography 
                     key={itemIndex} 
                     component="li"
-                    sx={{ 
-                      mb: 1,
-                    }}
+                    sx={{ mb: 1 }}
                   >
-                    {item}
+                    <FormattedText text={item} variant="body1" />
                   </Typography>
                 ))}
               </Box>
@@ -236,17 +213,16 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({ blocks }) => {
                   fontStyle: 'italic',
                 }}
               >
-                <Typography 
-                  variant="body1" 
+                <FormattedText
+                  text={text}
+                  variant="body1"
                   sx={{ 
                     color: NEUTRAL_COLORS.textPrimary,
                     lineHeight: 1.8,
                     fontSize: '1.1rem',
                     mb: data.caption ? 2 : 0,
                   }}
-                >
-                  {text}
-                </Typography>
+                />
                 {data.caption && (
                   <Typography 
                     variant="caption" 

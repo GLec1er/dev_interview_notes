@@ -132,6 +132,7 @@ class QuestionService:
         self,
         question_id: UUID,
         data: QuestionUpdate,
+        current_user_id: UUID,
     ) -> Optional[QuestionUpdateResponse]:
         """Обновление вопроса.
         
@@ -147,7 +148,10 @@ class QuestionService:
         """
         try:
             # Проверка существования вопроса
-            existing_question = await self.repository.get_by_id(question_id)
+            existing_question = await self.repository.get_by_id(
+                question_id, 
+                current_user_id,
+            )
             if not existing_question:
                 log.warning(f"⚠️ Вопрос не найден для обновления: {question_id}")
                 return None
@@ -157,7 +161,8 @@ class QuestionService:
             
             # Обновление в БД
             updated_question = await self.repository.update(
-                question_id, 
+                question_id,
+                current_user_id,
                 **update_data,
             )
             

@@ -34,6 +34,8 @@ import {
   Alert,
   Tab,
   Tooltip,
+  AppBar,
+  Toolbar,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -56,6 +58,8 @@ import {
   AssignmentRounded as AssignmentRoundedIcon,
   Add as AddIcon,
   Lock as LockIcon,
+  Logout as LogoutIcon,
+  Map as MapIcon
 } from '@mui/icons-material';
 import { questionService } from '../services/questionService';
 import { categoryService } from '../services/categoryService';
@@ -848,7 +852,10 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           },
         },
       }}
-      onClick={onClick}
+      onClick={(e) => {
+      // Открываем в новой вкладке
+      window.open(`/questions/${question.id}`, '_blank');
+    }}
     >
       {/* Индикатор ховера */}
       <Box
@@ -1985,9 +1992,109 @@ export const QuestionsPage: React.FC = () => {
           NEUTRAL_COLORS.background,
           0.8
         )} 100%)`,
-        py: 4,
       }}
     >
+      {/* AppBar Header */}
+      <Box sx={{ 
+        position: 'sticky', 
+        zIndex: 1200, 
+        mb: 2, 
+      }}>
+        <Fade in timeout={400}>
+          <AppBar 
+            position="static" 
+            elevation={0}
+            sx={{ 
+              top: 0,
+              backgroundColor: alpha(NEUTRAL_COLORS.surface, 0.95),
+              backdropFilter: 'blur(12px)',
+              borderBottom: `1px solid ${NEUTRAL_COLORS.border}`,
+              transition: 'all 0.3s ease',
+            }}
+          >
+            <Container maxWidth="xl">
+              <Toolbar sx={{ 
+                px: { xs: 1, sm: 2 },
+                py: 1.5,
+                minHeight: '64px !important'
+              }}>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    flexGrow: 1,
+                    fontWeight: 900,
+                    color: NEUTRAL_COLORS.textPrimary,
+                    fontSize: '1.45rem',
+                    cursor: 'pointer',
+                    letterSpacing: '-0.025em',
+                    display: 'flex',
+                    alignItems: 'center',
+                    '&:hover': { 
+                      color: NEUTRAL_COLORS.accent,
+                      opacity: 0.9 
+                    }
+                  }}
+                  onClick={() => navigate('/')}
+                >
+                  Interview<span style={{ color: NEUTRAL_COLORS.accent }}>Box</span>
+                </Typography>
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  {user?.is_admin && !isMobile && (
+                    <Button
+                      variant="outlined"
+                      startIcon={<MapIcon />}
+                      onClick={() => navigate('/roadmap')}
+                      sx={{
+                        borderColor: alpha(NEUTRAL_COLORS.accent, 0.5),
+                        color: NEUTRAL_COLORS.accent,
+                        fontWeight: 600,
+                        textTransform: 'none',
+                        '&:hover': {
+                          backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.08),
+                          borderColor: NEUTRAL_COLORS.accent,
+                        }
+                      }}
+                    >
+                      Дорожные карты
+                    </Button>
+                  )}
+                  {user?.is_admin && (
+                    <Chip 
+                      label="Admin"
+                      onClick={() => navigate('/admin')}
+                      size="medium"
+                      sx={{ 
+                        fontWeight: 600,
+                        backgroundColor: alpha(NEUTRAL_COLORS.success, 0.1),
+                        color: NEUTRAL_COLORS.success,
+                      }}
+                    />
+                  )}
+                  <IconButton
+                    onClick={async () => {
+                      await logout();
+                      navigate('/login');
+                    }}
+                    size="medium"
+                    sx={{
+                      backgroundColor: alpha(NEUTRAL_COLORS.error, 0.1),
+                      color: NEUTRAL_COLORS.error,
+                      '&:hover': {
+                        backgroundColor: alpha(NEUTRAL_COLORS.error, 0.2),
+                      },
+                      width: 40,
+                      height: 40
+                    }}
+                  >
+                    <LogoutIcon fontSize="small" />
+                  </IconButton>
+                </Stack>
+              </Toolbar>
+            </Container>
+          </AppBar>
+        </Fade>
+      </Box>
+
       <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3 } }}>
         {/* Hero Section */}
         <Box sx={{ mb: 6, textAlign: 'center', position: 'relative' }}>

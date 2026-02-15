@@ -186,6 +186,7 @@ async def update_question(
         question = await service.update_question(
             question_id, 
             data,
+            current_user.id
         )
         
         if not question:

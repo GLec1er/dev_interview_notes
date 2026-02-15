@@ -168,9 +168,75 @@ class QuestionRepository(
             log.error(f"❌ Ошибка при получении вопроса по слагу: {str(e)}")
             raise
 
+    async def get_by_ids(
+        self,
+        question_ids: List[str],
+    ) -> List[Question]:
+        """Получение вопросов по списку ID.
+        
+        Args:
+            question_ids: Список ID вопросов
+            
+        Returns:
+            Список объектов Question
+        """
+        if not question_ids:
+            return []
+        
+        try:
+            # Конвертируем строковые ID в UUID
+            uuid_ids = [UUID(id_str) if isinstance(id_str, str) else id_str for id_str in question_ids]
+            
+            stmt = (
+                select(Question)
+                .where(Question.id.in_(uuid_ids))
+                .options(
+                    selectinload(Question.answers),
+                )
+            )
+            result = await self.session.execute(stmt)
+            questions = result.scalars().all()
+            
+            log.debug(f"📖 Найдено {len(questions)} вопросов из {len(question_ids)} запрошенных")
+            return questions
+        except Exception as e:
+            log.error(f"❌ Ошибка при получении вопросов по ID: {str(e)}")
+            raise
+
+    async def get_by_category_id(
+        self,
+        category_id: UUID,
+    ) -> List[Question]:
+        """Получение вопросов по категории.
+        
+        Args:
+            category_id: ID категории
+            
+        Returns:
+            Список объектов Question
+        """
+        try:
+            stmt = (
+                select(Question)
+                .where(Question.category_id == category_id)
+                .order_by(Question.created_at.desc())
+                .options(
+                    selectinload(Question.answers),
+                )
+            )
+            result = await self.session.execute(stmt)
+            questions = result.scalars().all()
+            
+            log.debug(f"📖 Найдено {len(questions)} вопросов для категории {category_id}")
+            return questions
+        except Exception as e:
+            log.error(f"❌ Ошибка при получении вопросов по категории: {str(e)}")
+            raise
+
     async def update(
         self, 
-        question_id: UUID, 
+        question_id: UUID,
+        current_user_id: UUID,
         **kwargs
     ) -> Optional[Question]:
         """Обновление вопроса.
@@ -183,7 +249,7 @@ class QuestionRepository(
             Обновленный объект Question или None
         """
         try:
-            question = await self.get_by_id(question_id)
+            question = await self.get_by_id(question_id, current_user_id)
             
             if not question:
                 log.warning(f"⚠️ Вопрос не найден для обновления: {question_id}")

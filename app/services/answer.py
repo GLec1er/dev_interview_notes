@@ -59,7 +59,7 @@ class AnswerService:
         """
         try:
             # Проверка существования вопроса
-            question = await self.question_repository.get_by_id(question_id)
+            question = await self.question_repository.get_by_id(question_id, current_user.id)
             if not question:
                 log.warning(f"⚠️ Вопрос не найден: {question_id}")
                 raise ValueError(f"Вопрос с ID {question_id} не существует")
