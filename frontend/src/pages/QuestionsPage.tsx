@@ -977,107 +977,171 @@ const GlassQuestionCard: React.FC<GlassQuestionCardProps> = ({
               {question.title}
             </Typography>
 
-            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-              <Tooltip title={question.difficulty} arrow>
+            <Stack 
+              direction="row" 
+              spacing={1.5} 
+              alignItems="center" 
+              flexWrap="wrap" 
+              useFlexGap
+              sx={{
+                // Добавляем небольшой контейнер для лучшей группировки
+                p: 0.5,
+                borderRadius: 2,
+                backgroundColor: alpha(GLASS_COLORS.surface, 0.1),
+                backdropFilter: 'blur(5px)',
+                display: 'inline-flex',
+              }}
+            >
+              {/* Чип сложности */}
+              <Tooltip title={question.difficulty} arrow placement="top">
                 <Chip
                   label={
                     <Box sx={{ 
                       display: { xs: 'none', sm: 'inline' },
-                      textTransform: 'uppercase'
+                      textTransform: 'uppercase',
+                      fontWeight: 600,
+                      letterSpacing: '0.3px',
                     }}>
                       {question.difficulty}
                     </Box>
                   }
                   size="small"
-                  icon={<BoltIcon />}
+                  icon={<BoltIcon sx={{ 
+                    fontSize: { xs: '1.2rem', sm: '0.9rem' },
+                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+                  }} />}
                   sx={{
                     fontWeight: 600,
-                    backgroundColor: alpha(getDifficultyColor(question.difficulty), 0.15),
-                    backdropFilter: 'blur(10px)',
+                    background: `linear-gradient(135deg, ${alpha(getDifficultyColor(question.difficulty), 0.2)} 0%, ${alpha(getDifficultyColor(question.difficulty), 0.1)} 100%)`,
+                    backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)',
                     color: getDifficultyColor(question.difficulty),
                     border: '1px solid',
-                    borderColor: alpha(getDifficultyColor(question.difficulty), 0.3),
-                    fontSize: '1rem',
-                    height: { xs: 30, sm: 28 },
-                    width: { xs: 30, sm: 'auto' },
+                    borderColor: alpha(getDifficultyColor(question.difficulty), 0.4),
+                    fontSize: '0.9rem',
+                    height: { xs: 32, sm: 28 },
+                    width: { xs: 32, sm: 'auto' },
                     justifyContent: 'center',
+                    borderRadius: '8px', // Более квадратные, как в macOS
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.05), 0 0 0 1px rgba(255,255,255,0.3) inset',
+                    transition: 'all 0.2s ease',
                     '& .MuiChip-icon': {
                       color: getDifficultyColor(question.difficulty),
                       m: 0,
-                      fontSize: { xs: '1.3rem !important', sm: '0.875rem !important' },
+                      fontSize: { xs: '1.2rem !important', sm: '0.9rem !important' },
                     },
                     '& .MuiChip-label': {
                       display: { xs: 'none', sm: 'block' },
-                      px: 1,
+                      px: 1.5,
+                    },
+                    '&:hover': {
+                      background: `linear-gradient(135deg, ${alpha(getDifficultyColor(question.difficulty), 0.3)} 0%, ${alpha(getDifficultyColor(question.difficulty), 0.2)} 100%)`,
+                      transform: 'translateY(-1px)',
+                      boxShadow: `0 4px 12px ${alpha(getDifficultyColor(question.difficulty), 0.2)}, 0 0 0 1px rgba(255,255,255,0.5) inset`,
+                      borderColor: alpha(getDifficultyColor(question.difficulty), 0.6),
                     },
                   }}
                 />
               </Tooltip>
 
+              {/* Чип категории */}
               {categoryName && (
-                <Tooltip title={categoryName} arrow>
+                <Tooltip title={categoryName} arrow placement="top">
                   <Chip
-                    icon={<CategoryIcon />}
+                    icon={<CategoryIcon sx={{ 
+                      fontSize: { xs: '1.2rem', sm: '0.9rem' },
+                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+                    }} />}
                     label={
-                      <Box sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                      <Box sx={{ 
+                        display: { xs: 'none', sm: 'inline' },
+                        fontWeight: 500,
+                      }}>
                         {categoryName}
                       </Box>
                     }
                     size="small"
                     sx={{
-                      fontWeight: 600,
-                      backgroundColor: alpha(GLASS_COLORS.info, 0.15),
-                      backdropFilter: 'blur(10px)',
+                      fontWeight: 500,
+                      background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.info, 0.15)} 0%, ${alpha(GLASS_COLORS.info, 0.05)} 100%)`,
+                      backdropFilter: 'blur(20px)',
+                      WebkitBackdropFilter: 'blur(20px)',
                       color: GLASS_COLORS.info,
                       border: '1px solid',
                       borderColor: alpha(GLASS_COLORS.info, 0.3),
-                      fontSize: '1rem',
-                      height: { xs: 30, sm: 28 },
-                      width: { xs: 30, sm: 'auto' },
+                      fontSize: '0.9rem',
+                      height: { xs: 32, sm: 28 },
+                      width: { xs: 32, sm: 'auto' },
                       justifyContent: 'center',
+                      borderRadius: '8px',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.05), 0 0 0 1px rgba(255,255,255,0.3) inset',
+                      transition: 'all 0.2s ease',
                       '& .MuiChip-icon': {
-                        fontSize: { xs: '1.3rem', sm: '0.875rem' },
+                        fontSize: { xs: '1.2rem', sm: '0.9rem' },
                         color: GLASS_COLORS.info,
                         m: 0,
                       },
                       '& .MuiChip-label': {
                         display: { xs: 'none', sm: 'block' },
-                        px: 1,
+                        px: 1.5,
+                      },
+                      '&:hover': {
+                        background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.info, 0.25)} 0%, ${alpha(GLASS_COLORS.info, 0.15)} 100%)`,
+                        transform: 'translateY(-1px)',
+                        boxShadow: `0 4px 12px ${alpha(GLASS_COLORS.info, 0.15)}, 0 0 0 1px rgba(255,255,255,0.5) inset`,
+                        borderColor: alpha(GLASS_COLORS.info, 0.5),
                       },
                     }}
                   />
                 </Tooltip>
               )}
               
+              {/* Чип "Твой вопрос" */}
               {isUserIdQuestion && (
-                <Tooltip title="Твой вопрос" arrow>
+                <Tooltip title="Твой вопрос" arrow placement="top">
                   <Chip
-                    icon={<PersonIcon />}
+                    icon={<PersonIcon sx={{ 
+                      fontSize: { xs: '1.2rem', sm: '0.9rem' },
+                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+                    }} />}
                     label={
-                      <Box sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                      <Box sx={{ 
+                        display: { xs: 'none', sm: 'inline' },
+                        fontWeight: 500,
+                      }}>
                         Твой вопрос
                       </Box>
                     }
                     size="small"
                     sx={{
-                      fontWeight: 600,
-                      backgroundColor: alpha(GLASS_COLORS.question, 0.15),
-                      backdropFilter: 'blur(10px)',
+                      fontWeight: 500,
+                      background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.question, 0.15)} 0%, ${alpha(GLASS_COLORS.question, 0.05)} 100%)`,
+                      backdropFilter: 'blur(20px)',
+                      WebkitBackdropFilter: 'blur(20px)',
                       color: GLASS_COLORS.question,
                       border: '1px solid',
                       borderColor: alpha(GLASS_COLORS.question, 0.3),
-                      fontSize: '1rem',
-                      height: { xs: 30, sm: 28 },
-                      width: { xs: 30, sm: 'auto' },
+                      fontSize: '0.9rem',
+                      height: { xs: 32, sm: 28 },
+                      width: { xs: 32, sm: 'auto' },
                       justifyContent: 'center',
+                      borderRadius: '8px',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.05), 0 0 0 1px rgba(255,255,255,0.3) inset',
+                      transition: 'all 0.2s ease',
                       '& .MuiChip-icon': {
-                        fontSize: { xs: '1.3rem', sm: '0.875rem' },
+                        fontSize: { xs: '1.2rem', sm: '0.9rem' },
                         color: GLASS_COLORS.question,
                         m: 0,
                       },
                       '& .MuiChip-label': {
                         display: { xs: 'none', sm: 'block' },
-                        px: 1,
+                        px: 1.5,
+                      },
+                      '&:hover': {
+                        background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.question, 0.25)} 0%, ${alpha(GLASS_COLORS.question, 0.15)} 100%)`,
+                        transform: 'translateY(-1px)',
+                        boxShadow: `0 4px 12px ${alpha(GLASS_COLORS.question, 0.15)}, 0 0 0 1px rgba(255,255,255,0.5) inset`,
+                        borderColor: alpha(GLASS_COLORS.question, 0.5),
                       },
                     }}
                   />
