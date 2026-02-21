@@ -13,7 +13,7 @@ import { QuestionDetailPage } from './pages/QuestionDetailPage';
 import { AdminPage } from './pages/AdminPage';
 import { UserProfilePage } from './pages/UserProfilePage';
 import { FavoritesPage } from './pages/FavoritesPage';
-import { RoadmapsPage } from './pages/RoadmapsPage';
+// import { RoadmapsPage } from './pages/RoadmapsPage';
 
 const theme = createTheme({
   palette: {
@@ -297,14 +297,14 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
-                <Route
+                {/* <Route
                   path="/roadmap"
                   element={
                     <ProtectedRoute>
                       <RoadmapsPage />
                     </ProtectedRoute>
                   }
-                />
+                /> */}
                 <Route
                   path="/favorites"
                   element={
