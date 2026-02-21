@@ -66,23 +66,27 @@ import type { User } from '../types';
 import { userService } from '../services/userService';
 import { ContentRenderer } from '../components/ContentRenderer';
 
-// Нейтральная цветовая палитра
-const NEUTRAL_COLORS = {
-  primary: '#2D3748',
-  secondary: '#4A5568',
-  accent: '#3182CE',
-  background: '#F7FAFC',
-  surface: '#FFFFFF',
-  textPrimary: '#1A202C',
-  textSecondary: '#718096',
-  border: '#E2E8F0',
-  success: '#38A169',
-  error: '#E53E3E',
-  gradientStart: '#EDF2F7',
-  gradientEnd: '#CBD5E0',
-  warning: '#D69E2E',
-  purple: '#805AD5',
-  blue: '#61DAFB',
+// Стеклянная цветовая палитра iOS 26 Liquid Glass
+const GLASS_COLORS = {
+  primary: 'rgba(10, 132, 255, 0.8)', // iOS синий с прозрачностью
+  secondary: 'rgba(94, 92, 230, 0.75)', // Фиолетово-синий
+  accent: 'rgba(90, 200, 250, 0.9)', // Голубой акцент
+  background: 'rgba(240, 244, 250, 0.4)', // Полупрозрачный фон
+  surface: 'rgba(255, 255, 255, 0.6)', // Стеклянная поверхность
+  surfaceDark: 'rgba(255, 255, 255, 0.8)', // Более плотное стекло
+  textPrimary: 'rgba(0, 0, 0, 0.8)',
+  textSecondary: 'rgba(60, 60, 67, 0.6)',
+  border: 'rgba(255, 255, 255, 0.5)', // Стеклянная граница
+  borderGlow: 'rgba(255, 255, 255, 0.8)',
+  success: 'rgba(52, 199, 89, 0.8)', // iOS зеленый
+  error: 'rgba(255, 59, 48, 0.8)', // iOS красный
+  warning: 'rgba(255, 149, 0, 0.8)', // iOS оранжевый
+  purple: 'rgba(175, 82, 222, 0.8)', // iOS фиолетовый
+  blue: 'rgba(0, 122, 255, 0.8)', // iOS синий
+  gradientStart: 'rgba(255, 255, 255, 0.3)',
+  gradientEnd: 'rgba(255, 255, 255, 0.1)',
+  glassOverlay: 'rgba(255, 255, 255, 0.2)',
+  glassHighlight: 'rgba(255, 255, 255, 0.5)',
 };
 
 interface Stats {
@@ -101,22 +105,22 @@ interface ApiCategory {
 
 const getCategoryColor = (categoryName: string): string => {
   const colorMap: Record<string, string> = {
-    'javascript': NEUTRAL_COLORS.warning,
-    'react': NEUTRAL_COLORS.blue,
-    'typescript': NEUTRAL_COLORS.accent,
-    'python': '#306998',
-    'java': '#007396',
-    'sql': '#F29111',
-    'system design': NEUTRAL_COLORS.success,
-    'algorithms': NEUTRAL_COLORS.purple,
-    'data structures': '#E44D26',
-    'behavioral': NEUTRAL_COLORS.error,
-    'html': '#E34F26',
-    'css': '#1572B6',
-    'node.js': '#339933',
-    'docker': '#2496ED',
-    'aws': '#FF9900',
-    'git': '#F05032',
+    'javascript': GLASS_COLORS.warning,
+    'react': GLASS_COLORS.blue,
+    'typescript': GLASS_COLORS.accent,
+    'python': 'rgba(48, 105, 152, 0.8)',
+    'java': 'rgba(0, 115, 150, 0.8)',
+    'sql': GLASS_COLORS.warning,
+    'system design': GLASS_COLORS.success,
+    'algorithms': GLASS_COLORS.purple,
+    'data structures': 'rgba(228, 77, 38, 0.8)',
+    'behavioral': GLASS_COLORS.error,
+    'html': 'rgba(227, 79, 38, 0.8)',
+    'css': 'rgba(21, 114, 182, 0.8)',
+    'node.js': 'rgba(51, 153, 51, 0.8)',
+    'docker': 'rgba(36, 150, 237, 0.8)',
+    'aws': GLASS_COLORS.warning,
+    'git': 'rgba(240, 80, 50, 0.8)',
   };
 
   const lowerName = categoryName.toLowerCase();
@@ -127,14 +131,12 @@ const getCategoryColor = (categoryName: string): string => {
   }
 
   const colors = [
-    NEUTRAL_COLORS.accent,
-    NEUTRAL_COLORS.success,
-    NEUTRAL_COLORS.warning,
-    NEUTRAL_COLORS.error,
-    NEUTRAL_COLORS.purple,
-    '#61DAFB',
-    '#E44D26',
-    '#306998',
+    GLASS_COLORS.accent,
+    GLASS_COLORS.success,
+    GLASS_COLORS.warning,
+    GLASS_COLORS.error,
+    GLASS_COLORS.purple,
+    GLASS_COLORS.blue,
   ];
   
   let hash = 0;
@@ -144,7 +146,7 @@ const getCategoryColor = (categoryName: string): string => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-const StatCard = memo(({ title, value, color, icon, onClick }: { 
+const GlassStatCard = memo(({ title, value, color, icon, onClick }: { 
   title: string; 
   value: number; 
   color: string; 
@@ -155,12 +157,15 @@ const StatCard = memo(({ title, value, color, icon, onClick }: {
     <Card 
       sx={{ 
         height: '100%',
-        minWidth: '160px',
-        background: NEUTRAL_COLORS.surface,
-        border: `1px solid ${NEUTRAL_COLORS.border}`,
+        minWidth: '230px',
+        background: GLASS_COLORS.surface,
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        border: '1px solid',
+        borderColor: GLASS_COLORS.border,
         borderRadius: 3,
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+        transition: 'all 0.4s cubic-bezier(0.2, 0, 0, 1)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.5) inset',
         cursor: onClick ? 'pointer' : 'default',
         position: 'relative',
         overflow: 'hidden',
@@ -172,13 +177,30 @@ const StatCard = memo(({ title, value, color, icon, onClick }: {
           top: 0,
           left: 0,
           right: 0,
-          height: '4px',
-          background: `linear-gradient(90deg, ${color} 0%, ${alpha(color, 0.5)} 100%)`,
+          height: '100%',
+          background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+          opacity: 0,
+          transition: 'opacity 0.4s ease',
+        },
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          top: -10,
+          left: -10,
+          right: -10,
+          bottom: -10,
+          background: `radial-gradient(circle at 30% 30%, ${color} 0%, transparent 70%)`,
+          opacity: 0.1,
+          zIndex: -1,
+          filter: 'blur(20px)',
         },
         '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
-          borderColor: alpha(color, 0.5),
+          transform: 'translateY(-4px) scale(1.02)',
+          boxShadow: `0 16px 48px ${alpha(color, 0.2)}, 0 0 0 2px ${GLASS_COLORS.borderGlow} inset`,
+          borderColor: GLASS_COLORS.borderGlow,
+          '&::before': {
+            opacity: 1,
+          },
         }
       }}
       onClick={onClick}
@@ -191,6 +213,8 @@ const StatCard = memo(({ title, value, color, icon, onClick }: {
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
+        position: 'relative',
+        zIndex: 1,
       }}>
         <Box sx={{ 
           mb: 2, 
@@ -198,10 +222,14 @@ const StatCard = memo(({ title, value, color, icon, onClick }: {
           display: 'inline-flex',
           p: 1.5,
           borderRadius: '50%',
-          backgroundColor: alpha(color, 0.1),
-          transition: 'transform 0.3s ease',
+          backgroundColor: alpha(color, 0.15),
+          backdropFilter: 'blur(10px)',
+          border: '1px solid',
+          borderColor: alpha(color, 0.3),
+          transition: 'all 0.3s ease',
           '&:hover': {
-            transform: 'scale(1.1)',
+            transform: 'scale(1.1) rotate(5deg)',
+            backgroundColor: alpha(color, 0.25),
           }
         }}>
           {icon}
@@ -209,24 +237,27 @@ const StatCard = memo(({ title, value, color, icon, onClick }: {
         <Typography 
           variant="h3" 
           sx={{ 
-            fontWeight: 800,
-            color: NEUTRAL_COLORS.textPrimary,
+            fontWeight: 700,
+            color: GLASS_COLORS.textPrimary,
             mb: 1,
-            fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
+            fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif',
             fontSize: { xs: '2rem', md: '2.5rem' },
             lineHeight: 1,
+            letterSpacing: '-0.02em',
+            textShadow: '0 2px 10px rgba(255,255,255,0.5)',
           }}
         >
           {value.toLocaleString()}
         </Typography>
         <Typography 
           variant="subtitle1" 
-          color={NEUTRAL_COLORS.textSecondary}
           sx={{ 
             fontWeight: 500, 
             fontSize: '0.95rem',
             textAlign: 'center',
             width: '100%',
+            color: GLASS_COLORS.textSecondary,
+            letterSpacing: '-0.01em',
           }}
         >
           {title}
@@ -236,7 +267,7 @@ const StatCard = memo(({ title, value, color, icon, onClick }: {
   </Grow>
 ));
 
-const CategoryCard = memo(({ category, onClick }: {
+const GlassCategoryCard = memo(({ category, onClick }: {
   category: ApiCategory;
   onClick: () => void;
 }) => {
@@ -248,14 +279,49 @@ const CategoryCard = memo(({ category, onClick }: {
         sx={{
           height: '100%',
           minWidth: 180,
-          background: NEUTRAL_COLORS.surface,
-          border: `1px solid ${NEUTRAL_COLORS.border}`,
-          borderRadius: 2,
-          transition: 'all 0.3s ease',
+          background: GLASS_COLORS.surface,
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          border: '1px solid',
+          borderColor: GLASS_COLORS.border,
+          borderRadius: 3,
+          transition: 'all 0.4s cubic-bezier(0.2, 0, 0, 1)',
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '100%',
+            background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+            opacity: 0,
+            transition: 'opacity 0.4s ease',
+          },
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            top: -20,
+            left: -20,
+            right: -20,
+            bottom: -20,
+            background: `radial-gradient(circle at 50% 50%, ${color} 0%, transparent 70%)`,
+            opacity: 0,
+            zIndex: -1,
+            filter: 'blur(30px)',
+            transition: 'opacity 0.4s ease',
+          },
           '&:hover': {
-            transform: 'translateY(-2px)',
-            boxShadow: `0 8px 20px ${alpha(color, 0.15)}`,
-            borderColor: color,
+            transform: 'translateY(-4px) scale(1.02)',
+            boxShadow: `0 16px 48px ${alpha(color, 0.2)}`,
+            borderColor: GLASS_COLORS.borderGlow,
+            '&::before': {
+              opacity: 1,
+            },
+            '&::after': {
+              opacity: 0.3,
+            },
           }
         }}
       >
@@ -265,9 +331,13 @@ const CategoryCard = memo(({ category, onClick }: {
               mb: 2,
               display: 'inline-flex',
               p: 2,
-              borderRadius: '12px',
-              backgroundColor: alpha(color, 0.1),
+              borderRadius: '16px',
+              backgroundColor: alpha(color, 0.15),
+              backdropFilter: 'blur(10px)',
+              border: '1px solid',
+              borderColor: alpha(color, 0.3),
               color: color,
+              transition: 'all 0.3s ease',
             }}>
               <CategoryIcon fontSize="large" />
             </Box>
@@ -275,19 +345,25 @@ const CategoryCard = memo(({ category, onClick }: {
               variant="h6" 
               sx={{ 
                 fontWeight: 600,
-                color: NEUTRAL_COLORS.textPrimary,
+                color: GLASS_COLORS.textPrimary,
                 mb: 1,
-                textTransform: 'capitalize'
+                textTransform: 'capitalize',
+                letterSpacing: '-0.01em',
               }}
             >
               {category.name}
             </Typography>
             <Typography 
               variant="body2" 
-              color={NEUTRAL_COLORS.textSecondary}
-              sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                gap: 0.5,
+                color: GLASS_COLORS.textSecondary,
+              }}
             >
-              <QuestionsIcon fontSize="small" />
+              <QuestionsIcon fontSize="small" sx={{ opacity: 0.7 }} />
               {category.question_count} вопросов
             </Typography>
             {!category.is_active && (
@@ -296,9 +372,12 @@ const CategoryCard = memo(({ category, onClick }: {
                 size="small"
                 sx={{
                   mt: 1,
-                  backgroundColor: alpha(NEUTRAL_COLORS.error, 0.1),
-                  color: NEUTRAL_COLORS.error,
-                  fontSize: '0.7rem'
+                  backgroundColor: alpha(GLASS_COLORS.error, 0.15),
+                  color: GLASS_COLORS.error,
+                  fontSize: '0.7rem',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid',
+                  borderColor: alpha(GLASS_COLORS.error, 0.3),
                 }}
               />
             )}
@@ -328,7 +407,7 @@ interface Answer {
   is_published: boolean;
 }
 
-const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose, isGuestMode = false }) => {
+const GlassQuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose, isGuestMode = false }) => {
   const navigate = useNavigate();
   const [step, setStep] = useState<'level' | 'countdown' | 'questions' | 'results'>('level');
   const [userLevel, setUserLevel] = useState<'beginner' | 'intermediate' | 'expert' | null>(null);
@@ -360,9 +439,7 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose, isGues
     const difficulty = getDifficultyByLevel(level);
     
     if (isGuestMode) {
-      // Статичные вопросы для гостей - ОТДЕЛЬНО ДЛЯ КАЖДОГО УРОВНЯ
       const allStaticQuestions: Record<string, Question[]> = {
-        // EASY - Python (для beginner)
         easy: [
           {
             id: 'python-easy-1',
@@ -408,7 +485,6 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose, isGues
           }
         ],
         
-        // MEDIUM - Python (для intermediate)
         medium: [
           {
             id: 'python-medium-1',
@@ -454,7 +530,6 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose, isGues
           }
         ],
         
-        // HARD - Python (для expert)
         hard: [
           {
             id: 'python-hard-1',
@@ -501,13 +576,10 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ open, onClose, isGues
         ]
       };
       
-      // Берем только вопросы нужной сложности
       const questionsForLevel = allStaticQuestions[difficulty] || [];
       setQuestions(questionsForLevel);
       
-      // Статичные ответы для демо - все в одном объекте
       const allStaticAnswers: Record<string, Answer> = {
-        // EASY - Python ответы
         'python-easy-1': {
           content: [
             {
@@ -605,7 +677,6 @@ finally:
           is_published: true
         },
 
-        // MEDIUM - Python ответы
         'python-medium-1': {
           content: [
             {
@@ -724,7 +795,6 @@ from multiprocessing import Pool
           is_published: true
         },
 
-        // HARD - Python ответы
         'python-hard-1': {
           content: [
             {
@@ -832,7 +902,6 @@ print(hash("hello"))  # Хеш-значение ключа
         }
       };
       
-      // Фильтруем ответы, оставляя только для выбранных вопросов
       const filteredAnswers: Record<string, Answer> = {};
       questionsForLevel.forEach(question => {
         if (allStaticAnswers[question.id]) {
@@ -845,7 +914,6 @@ print(hash("hello"))  # Хеш-значение ключа
       return;
     }
     
-    // Остальной код для авторизованных пользователей остается без изменений
     const allQuestions = await questionService.getQuestions(
       1,
       100,
@@ -991,13 +1059,13 @@ print(hash("hello"))  # Хеш-значение ключа
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'easy':
-        return NEUTRAL_COLORS.success;
+        return GLASS_COLORS.success;
       case 'medium':
-        return NEUTRAL_COLORS.warning;
+        return GLASS_COLORS.warning;
       case 'hard':
-        return NEUTRAL_COLORS.error;
+        return GLASS_COLORS.error;
       default:
-        return NEUTRAL_COLORS.secondary;
+        return GLASS_COLORS.secondary;
     }
   };
 
@@ -1030,13 +1098,12 @@ print(hash("hello"))  # Хеш-значение ключа
   const renderQuestionContent = (content: any[]) => {
     if (!content || content.length === 0) {
       return (
-        <Typography variant="body2" color={NEUTRAL_COLORS.textSecondary}>
+        <Typography variant="body2" sx={{ color: GLASS_COLORS.textSecondary }}>
           Содержимое вопроса отсутствует
         </Typography>
       );
     }
 
-    // Используем ContentRenderer как в QuestionDetailPage
     return (
       <Box
         sx={{
@@ -1058,13 +1125,12 @@ print(hash("hello"))  # Хеш-значение ключа
   const renderAnswerContent = (content: any[]) => {
     if (!content || content.length === 0) {
       return (
-        <Typography variant="body2" color={NEUTRAL_COLORS.textSecondary} fontStyle="italic">
+        <Typography variant="body2" sx={{ color: GLASS_COLORS.textSecondary, fontStyle: 'italic' }}>
           {isGuestMode ? 'Зарегистрируйтесь, чтобы увидеть полный ответ' : 'Ответ не найден'}
         </Typography>
       );
     }
 
-    // Используем ContentRenderer как в QuestionDetailPage
     return (
       <Box
         sx={{
@@ -1108,12 +1174,17 @@ print(hash("hello"))  # Хеш-значение ключа
       onClose={handleCloseModal}
       maxWidth="md"
       fullWidth
-      fullScreen={window.innerWidth < 600} // Полноэкранный режим на очень маленьких экранах
+      fullScreen={window.innerWidth < 600}
       PaperProps={{
         sx: {
-          borderRadius: { xs: 0, sm: 3 },
+          borderRadius: { xs: 0, sm: 4 },
           overflow: 'hidden',
-          bgcolor: NEUTRAL_COLORS.surface,
+          background: GLASS_COLORS.surfaceDark,
+          backdropFilter: 'blur(30px)',
+          WebkitBackdropFilter: 'blur(30px)',
+          border: '1px solid',
+          borderColor: GLASS_COLORS.border,
+          boxShadow: '0 24px 64px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.5) inset',
           minHeight: { xs: '100vh', sm: 'auto' },
           maxHeight: { xs: '100vh', sm: '90vh' },
           m: 0,
@@ -1121,10 +1192,13 @@ print(hash("hello"))  # Хеш-значение ключа
       }}
     >
       <DialogTitle sx={{ 
-        bgcolor: NEUTRAL_COLORS.accent,
+        background: alpha(GLASS_COLORS.primary, 0.9),
+        backdropFilter: 'blur(20px)',
         color: 'white',
         py: { xs: 2, sm: 3 },
         position: 'relative',
+        borderBottom: '1px solid',
+        borderColor: alpha('#FFFFFF', 0.2),
       }}>
         <Box sx={{ 
           display: 'flex', 
@@ -1140,8 +1214,9 @@ print(hash("hello"))  # Хеш-значение ключа
           }}>
             <BoltIcon sx={{ fontSize: { xs: 24, sm: 32 } }} />
             <Typography variant="h5" sx={{ 
-              fontWeight: 700,
-              fontSize: { xs: '1.125rem', sm: '1.5rem' }
+              fontWeight: 600,
+              fontSize: { xs: '1.125rem', sm: '1.5rem' },
+              letterSpacing: '-0.02em',
             }}>
               {step === 'level' && (isGuestMode ? 'Демо-режим' : 'Быстрый старт')}
               {step === 'countdown' && 'Приготовьтесь!'}
@@ -1153,10 +1228,13 @@ print(hash("hello"))  # Хеш-значение ключа
                 label="Гостевой режим" 
                 size="small" 
                 sx={{ 
-                  backgroundColor: 'rgba(255,255,255,0.2)',
+                  backgroundColor: alpha('#FFFFFF', 0.2),
                   color: 'white',
-                  fontWeight: 600,
-                  fontSize: { xs: '0.75rem', sm: '0.8125rem' }
+                  fontWeight: 500,
+                  fontSize: { xs: '0.75rem', sm: '0.8125rem' },
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid',
+                  borderColor: alpha('#FFFFFF', 0.3),
                 }} 
               />
             )}
@@ -1165,7 +1243,10 @@ print(hash("hello"))  # Хеш-значение ключа
             onClick={handleCloseModal} 
             sx={{ 
               color: 'white',
-              ml: 'auto'
+              ml: 'auto',
+              '&:hover': {
+                backgroundColor: alpha('#FFFFFF', 0.1),
+              }
             }}
           >
             <CloseIcon />
@@ -1187,8 +1268,9 @@ print(hash("hello"))  # Хеш-значение ключа
             }
             sx={{ 
               height: 4,
+              backgroundColor: alpha('#FFFFFF', 0.2),
               '& .MuiLinearProgress-bar': {
-                bgcolor: NEUTRAL_COLORS.accent,
+                background: `linear-gradient(90deg, ${GLASS_COLORS.primary}, ${GLASS_COLORS.secondary})`,
               }
             }}
           />
@@ -1198,8 +1280,10 @@ print(hash("hello"))  # Хеш-значение ключа
           <Box sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
             <Typography variant="h6" gutterBottom align="center" sx={{ 
               mb: { xs: 3, sm: 4 }, 
-              color: NEUTRAL_COLORS.textPrimary,
-              fontSize: { xs: '1rem', sm: '1.25rem' }
+              color: GLASS_COLORS.textPrimary,
+              fontSize: { xs: '1rem', sm: '1.25rem' },
+              fontWeight: 500,
+              letterSpacing: '-0.01em',
             }}>
               {isGuestMode 
                 ? 'Попробуйте демо-режим. Полный доступ — после регистрации'
@@ -1211,21 +1295,40 @@ print(hash("hello"))  # Хеш-значение ключа
                 <Grid item xs={12} sm={6} md={4} key={level}>
                   <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                     <Card
-                      elevation={userLevel === level ? 4 : 0}
+                      elevation={0}
                       sx={{
                         cursor: 'pointer',
-                        border: `2px solid ${userLevel === level ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.border}`,
-                        borderRadius: 2,
-                        transition: 'all 0.2s',
+                        background: GLASS_COLORS.surface,
+                        backdropFilter: 'blur(20px)',
+                        border: '2px solid',
+                        borderColor: userLevel === level ? GLASS_COLORS.primary : GLASS_COLORS.border,
+                        borderRadius: 3,
+                        transition: 'all 0.3s cubic-bezier(0.2, 0, 0, 1)',
                         width: '100%',
                         maxWidth: { xs: '280px', sm: '300px' },
                         minWidth: { xs: '180px', sm: '200px' },
                         display: 'flex',
                         flexDirection: 'column',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: '100%',
+                          background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+                          opacity: 0,
+                          transition: 'opacity 0.3s ease',
+                        },
                         '&:hover': {
-                          borderColor: NEUTRAL_COLORS.accent,
-                          transform: 'translateY(-4px)',
-                          boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
+                          transform: 'translateY(-4px) scale(1.02)',
+                          borderColor: GLASS_COLORS.primary,
+                          boxShadow: `0 16px 32px ${alpha(GLASS_COLORS.primary, 0.2)}`,
+                          '&::before': {
+                            opacity: 1,
+                          },
                         },
                       }}
                       onClick={() => handleCardClick(level)}
@@ -1239,16 +1342,18 @@ print(hash("hello"))  # Хеш-значение ключа
                         justifyContent: 'space-between',
                         alignItems: 'center',
                         minHeight: { xs: '220px', sm: '250px' },
-                        bgcolor: NEUTRAL_COLORS.background,
                       }}>
                         <Box>
                           <Box sx={{ 
                             mb: { xs: 1.5, sm: 2 },
-                            color: userLevel === level ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.textSecondary,
+                            color: userLevel === level ? GLASS_COLORS.primary : GLASS_COLORS.textSecondary,
                             display: 'inline-flex',
                             p: { xs: 1.5, sm: 2 },
                             borderRadius: '50%',
-                            bgcolor: userLevel === level ? alpha(NEUTRAL_COLORS.accent, 0.1) : alpha(NEUTRAL_COLORS.border, 0.3),
+                            backgroundColor: alpha(userLevel === level ? GLASS_COLORS.primary : GLASS_COLORS.border, 0.15),
+                            backdropFilter: 'blur(10px)',
+                            border: '1px solid',
+                            borderColor: alpha(userLevel === level ? GLASS_COLORS.primary : GLASS_COLORS.border, 0.3),
                           }}>
                             {React.cloneElement(getLevelIcon(level), { 
                               sx: { fontSize: { xs: 28, sm: 32 } } 
@@ -1259,12 +1364,13 @@ print(hash("hello"))  # Хеш-значение ключа
                             sx={{ 
                               fontWeight: 600, 
                               mb: 1, 
-                              color: NEUTRAL_COLORS.textPrimary,
+                              color: GLASS_COLORS.textPrimary,
                               minHeight: { xs: '50px', sm: '60px' },
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              fontSize: { xs: '1rem', sm: '1.125rem' }
+                              fontSize: { xs: '1rem', sm: '1.125rem' },
+                              letterSpacing: '-0.01em',
                             }}
                           >
                             {getLevelTitle(level)}
@@ -1275,12 +1381,15 @@ print(hash("hello"))  # Хеш-значение ключа
                           label={getDifficultyByLevel(level).toUpperCase()}
                           size="small"
                           sx={{
-                            bgcolor: alpha(getDifficultyColor(getDifficultyByLevel(level)), 0.1),
+                            backgroundColor: alpha(getDifficultyColor(getDifficultyByLevel(level)), 0.15),
                             color: getDifficultyColor(getDifficultyByLevel(level)),
-                            fontWeight: 600,
+                            fontWeight: 500,
                             minWidth: '50px',
                             justifyContent: 'center',
-                            fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                            fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                            backdropFilter: 'blur(10px)',
+                            border: '1px solid',
+                            borderColor: alpha(getDifficultyColor(getDifficultyByLevel(level)), 0.3),
                           }}
                         />
                       </CardContent>
@@ -1299,12 +1408,22 @@ print(hash("hello"))  # Хеш-значение ключа
                 sx={{
                   px: { xs: 4, sm: 6 },
                   py: { xs: 1, sm: 1.5 },
-                  borderRadius: 2,
+                  borderRadius: 3,
                   fontWeight: 600,
                   fontSize: { xs: '0.9375rem', sm: '1rem' },
-                  bgcolor: NEUTRAL_COLORS.accent,
+                  background: `linear-gradient(135deg, ${GLASS_COLORS.primary}, ${GLASS_COLORS.secondary})`,
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid',
+                  borderColor: alpha('#FFFFFF', 0.3),
+                  boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
                   '&:hover': {
-                    bgcolor: alpha(NEUTRAL_COLORS.accent, 0.9),
+                    background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.primary, 0.9)}, ${alpha(GLASS_COLORS.secondary, 0.9)})`,
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 12px 24px rgba(0,0,0,0.15)',
+                  },
+                  '&:disabled': {
+                    background: alpha('#FFFFFF', 0.1),
+                    color: alpha('#000000', 0.3),
                   },
                   width: { xs: '100%', sm: 'auto' },
                   maxWidth: { xs: '280px', sm: 'none' }
@@ -1330,12 +1449,15 @@ print(hash("hello"))  # Хеш-значение ключа
               <>
                 <CircularProgress size={80} sx={{ 
                   mb: 4, 
-                  color: NEUTRAL_COLORS.accent 
+                  color: GLASS_COLORS.primary,
                 }} />
-                <Typography variant="h6" gutterBottom color={NEUTRAL_COLORS.textPrimary}>
+                <Typography variant="h6" gutterBottom sx={{ 
+                  color: GLASS_COLORS.textPrimary,
+                  fontWeight: 500,
+                }}>
                   Загружаем вопросы...
                 </Typography>
-                <Typography variant="body2" color={NEUTRAL_COLORS.textSecondary}>
+                <Typography variant="body2" sx={{ color: GLASS_COLORS.textSecondary }}>
                   Подбираем идеальные вопросы для вашего уровня
                 </Typography>
               </>
@@ -1350,38 +1472,44 @@ print(hash("hello"))  # Хеш-значение ключа
                   alignItems: 'center',
                   justifyContent: 'center',
                   borderRadius: '50%',
-                  bgcolor: alpha(NEUTRAL_COLORS.accent, 0.1),
+                  background: alpha(GLASS_COLORS.primary, 0.15),
+                  backdropFilter: 'blur(20px)',
+                  border: '2px solid',
+                  borderColor: alpha(GLASS_COLORS.primary, 0.3),
                   position: 'relative',
                 }}>
                   <Box sx={{ 
                     position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    border: `4px solid ${NEUTRAL_COLORS.accent}`,
+                    top: -4,
+                    left: -4,
+                    right: -4,
+                    bottom: -4,
+                    border: '2px solid',
+                    borderColor: GLASS_COLORS.primary,
                     borderRadius: '50%',
-                    animation: 'pulse 2s infinite',
-                    '@keyframes pulse': {
-                      '0%': { transform: 'scale(1)', opacity: 1 },
-                      '50%': { transform: 'scale(1.1)', opacity: 0.7 },
-                      '100%': { transform: 'scale(1)', opacity: 1 },
+                    animation: 'glassPulse 2s infinite',
+                    '@keyframes glassPulse': {
+                      '0%': { transform: 'scale(1)', opacity: 0.5, borderColor: GLASS_COLORS.primary },
+                      '50%': { transform: 'scale(1.1)', opacity: 0.8, borderColor: GLASS_COLORS.secondary },
+                      '100%': { transform: 'scale(1)', opacity: 0.5, borderColor: GLASS_COLORS.primary },
                     }
                   }} />
                   <TimerIcon sx={{ 
                     fontSize: { xs: 60, sm: 70, md: 80 }, 
-                    color: NEUTRAL_COLORS.accent 
+                    color: GLASS_COLORS.primary,
                   }} />
                 </Box>
                 
                 <Typography variant="h4" gutterBottom sx={{ 
-                  fontWeight: 700, 
-                  color: NEUTRAL_COLORS.textPrimary,
-                  fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
+                  fontWeight: 600, 
+                  color: GLASS_COLORS.textPrimary,
+                  fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
+                  letterSpacing: '-0.02em',
                 }}>
                   Готовы?
                 </Typography>
-                <Typography variant="body1" color={NEUTRAL_COLORS.textSecondary} sx={{ 
+                <Typography variant="body1" sx={{ 
+                  color: GLASS_COLORS.textSecondary, 
                   mb: 4,
                   fontSize: { xs: '0.9375rem', sm: '1rem' },
                   px: { xs: 2, sm: 0 }
@@ -1399,12 +1527,17 @@ print(hash("hello"))  # Хеш-значение ключа
                   sx={{
                     px: { xs: 4, sm: 6 },
                     py: { xs: 1, sm: 1.5 },
-                    borderRadius: 2,
+                    borderRadius: 3,
                     fontWeight: 600,
                     fontSize: { xs: '0.9375rem', sm: '1.1rem' },
-                    bgcolor: NEUTRAL_COLORS.success,
+                    background: `linear-gradient(135deg, ${GLASS_COLORS.primary}, ${GLASS_COLORS.secondary})`,
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid',
+                    borderColor: alpha('#FFFFFF', 0.3),
                     '&:hover': {
-                      bgcolor: alpha(NEUTRAL_COLORS.success, 0.9),
+                      background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.primary, 0.9)}, ${alpha(GLASS_COLORS.secondary, 0.9)})`,
+                      transform: 'translateY(-2px)',
+                      boxShadow: `0 12px 24px ${alpha(GLASS_COLORS.success, 0.3)}`,
                     },
                     width: { xs: '100%', sm: 'auto' },
                     maxWidth: { xs: '280px', sm: 'none' },
@@ -1427,8 +1560,10 @@ print(hash("hello"))  # Хеш-значение ключа
               elevation={0}
               sx={{
                 p: { xs: 1.5, sm: 2 },
-                bgcolor: alpha(NEUTRAL_COLORS.accent, 0.05),
-                borderBottom: `1px solid ${NEUTRAL_COLORS.border}`,
+                background: GLASS_COLORS.surface,
+                backdropFilter: 'blur(20px)',
+                borderBottom: '1px solid',
+                borderColor: GLASS_COLORS.border,
               }}
             >
               <Box sx={{ 
@@ -1445,11 +1580,12 @@ print(hash("hello"))  # Хеш-значение ключа
                   mb: { xs: 1, sm: 0 }
                 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <TimerIcon sx={{ color: NEUTRAL_COLORS.accent }} />
+                    <TimerIcon sx={{ color: GLASS_COLORS.primary }} />
                     <Typography variant="h5" sx={{ 
-                      fontWeight: 700, 
-                      color: NEUTRAL_COLORS.accent,
-                      fontSize: { xs: '1.25rem', sm: '1.5rem' }
+                      fontWeight: 600, 
+                      color: GLASS_COLORS.primary,
+                      fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                      letterSpacing: '-0.02em',
                     }}>
                       {formatTime(timeLeft)}
                     </Typography>
@@ -1458,21 +1594,32 @@ print(hash("hello"))  # Хеш-значение ключа
                     label={`Вопрос ${currentQuestionIndex + 1} из ${questions.length}`}
                     size="small"
                     sx={{ 
-                      fontWeight: 600, 
-                      color: NEUTRAL_COLORS.accent,
-                      fontSize: { xs: '0.75rem', sm: '0.8125rem' }
+                      fontWeight: 500, 
+                      color: GLASS_COLORS.primary,
+                      fontSize: { xs: '0.75rem', sm: '0.8125rem' },
+                      backgroundColor: alpha(GLASS_COLORS.primary, 0.1),
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid',
+                      borderColor: alpha(GLASS_COLORS.primary, 0.3),
                     }}
                   />
                 </Box>
                 
                 <Button
                   variant="outlined"
-                  color="error"
                   startIcon={<RestartIcon />}
                   onClick={handleReset}
                   size="small"
                   sx={{
-                    fontSize: { xs: '0.75rem', sm: '0.8125rem' }
+                    fontSize: { xs: '0.75rem', sm: '0.8125rem' },
+                    color: GLASS_COLORS.error,
+                    borderColor: alpha(GLASS_COLORS.error, 0.5),
+                    backgroundColor: alpha(GLASS_COLORS.error, 0.05),
+                    backdropFilter: 'blur(10px)',
+                    '&:hover': {
+                      borderColor: GLASS_COLORS.error,
+                      backgroundColor: alpha(GLASS_COLORS.error, 0.1),
+                    }
                   }}
                 >
                   Сбросить
@@ -1484,7 +1631,7 @@ print(hash("hello"))  # Хеш-значение ключа
               flex: 1, 
               overflow: 'auto', 
               p: { xs: 2, sm: 3 }, 
-              bgcolor: NEUTRAL_COLORS.surface 
+              background: GLASS_COLORS.background,
             }}>
               {isLoading ? (
                 <Box sx={{ 
@@ -1493,7 +1640,7 @@ print(hash("hello"))  # Хеш-значение ключа
                   alignItems: 'center', 
                   height: '100%' 
                 }}>
-                  <CircularProgress />
+                  <CircularProgress sx={{ color: GLASS_COLORS.primary }} />
                 </Box>
               ) : questions.length > 0 && currentQuestionIndex < questions.length ? (
                 <>
@@ -1507,10 +1654,13 @@ print(hash("hello"))  # Хеш-значение ключа
                         label={questions[currentQuestionIndex].difficulty.toUpperCase()}
                         size="small"
                         sx={{
-                          bgcolor: alpha(getDifficultyColor(questions[currentQuestionIndex].difficulty), 0.1),
+                          backgroundColor: alpha(getDifficultyColor(questions[currentQuestionIndex].difficulty), 0.15),
                           color: getDifficultyColor(questions[currentQuestionIndex].difficulty),
-                          fontWeight: 600,
-                          fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                          fontWeight: 500,
+                          fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                          backdropFilter: 'blur(10px)',
+                          border: '1px solid',
+                          borderColor: alpha(getDifficultyColor(questions[currentQuestionIndex].difficulty), 0.3),
                         }}
                       />
                       {questions[currentQuestionIndex].category_name && (
@@ -1520,7 +1670,11 @@ print(hash("hello"))  # Хеш-значение ключа
                           size="small"
                           sx={{ 
                             fontWeight: 500,
-                            fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                            fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                            backgroundColor: GLASS_COLORS.surface,
+                            backdropFilter: 'blur(10px)',
+                            border: '1px solid',
+                            borderColor: GLASS_COLORS.border,
                           }}
                         />
                       )}
@@ -1529,36 +1683,45 @@ print(hash("hello"))  # Хеш-значение ключа
                     <Typography variant="h6" sx={{ 
                       fontWeight: 600, 
                       mb: 2, 
-                      color: NEUTRAL_COLORS.textPrimary,
-                      fontSize: { xs: '1rem', sm: '1.125rem' }
+                      color: GLASS_COLORS.textPrimary,
+                      fontSize: { xs: '1rem', sm: '1.125rem' },
+                      letterSpacing: '-0.01em',
                     }}>
                       {questions[currentQuestionIndex].title}
                     </Typography>
                     
                     {renderQuestionContent(questions[currentQuestionIndex].content)}
                   </Box>
-
                   <Box sx={{ 
                     display: 'flex', 
                     justifyContent: 'space-between', 
                     mt: 3, 
                     pt: 2, 
-                    borderTop: `1px solid ${NEUTRAL_COLORS.border}`,
+                    borderTop: '1px solid',
+                    borderColor: GLASS_COLORS.border,
                     flexDirection: { xs: 'column', sm: 'row' },
                     gap: { xs: 2, sm: 0 }
                   }}>
+                    {currentQuestionIndex > 0 && (
                     <Button
                       startIcon={<ChevronLeftIcon />}
                       onClick={handlePrevQuestion}
                       disabled={currentQuestionIndex === 0}
                       sx={{ 
-                        color: NEUTRAL_COLORS.textPrimary,
-                        width: { xs: '100%', sm: 'auto' }
+                        color: GLASS_COLORS.textPrimary,
+                        width: { xs: '100%', sm: 'auto' },
+                        backgroundColor: alpha(GLASS_COLORS.surface, 0.5),
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid',
+                        borderColor: GLASS_COLORS.border,
+                        '&:hover': {
+                          backgroundColor: GLASS_COLORS.surface,
+                        }
                       }}
                     >
                       Назад
                     </Button>
-                    
+                    )}
                     {currentQuestionIndex === questions.length - 1 ? (
                       <Button
                         variant="contained"
@@ -1572,7 +1735,14 @@ print(hash("hello"))  # Хеш-значение ключа
                         }}
                         sx={{ 
                           fontWeight: 600,
-                          width: { xs: '100%', sm: 'auto' }
+                          width: { xs: '100%', sm: 'auto' },
+                          background: `linear-gradient(135deg, ${GLASS_COLORS.primary}, ${GLASS_COLORS.secondary})`,
+                          backdropFilter: 'blur(10px)',
+                          border: '1px solid',
+                          borderColor: alpha('#FFFFFF', 0.3),
+                          '&:hover': {
+                            background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.primary, 0.9)}, ${alpha(GLASS_COLORS.secondary, 0.9)})`,
+                          }
                         }}
                       >
                         Завершить тест
@@ -1582,7 +1752,16 @@ print(hash("hello"))  # Хеш-значение ключа
                         variant="contained"
                         endIcon={<ChevronRightIcon />}
                         onClick={handleNextQuestion}
-                        sx={{ width: { xs: '100%', sm: 'auto' } }}
+                        sx={{ 
+                          width: { xs: '100%', sm: 'auto' },
+                          background: `linear-gradient(135deg, ${GLASS_COLORS.primary}, ${GLASS_COLORS.secondary})`,
+                          backdropFilter: 'blur(10px)',
+                          border: '1px solid',
+                          borderColor: alpha('#FFFFFF', 0.3),
+                          '&:hover': {
+                            background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.primary, 0.9)}, ${alpha(GLASS_COLORS.secondary, 0.9)})`,
+                          }
+                        }}
                       >
                         Следующий вопрос
                       </Button>
@@ -1590,7 +1769,7 @@ print(hash("hello"))  # Хеш-значение ключа
                   </Box>
                 </>
               ) : (
-                <Typography variant="body1" color={NEUTRAL_COLORS.textSecondary} align="center">
+                <Typography variant="body1" sx={{ color: GLASS_COLORS.textSecondary }} align="center">
                   Вопросы не найдены
                 </Typography>
               )}
@@ -1601,7 +1780,7 @@ print(hash("hello"))  # Хеш-значение ключа
         {step === 'results' && (
           <Box sx={{ 
             p: { xs: 2, sm: 3 }, 
-            bgcolor: NEUTRAL_COLORS.surface,
+            background: GLASS_COLORS.background,
             height: { xs: 'calc(100vh - 64px)', sm: 'auto' },
             overflow: 'auto'
           }}>
@@ -1609,30 +1788,34 @@ print(hash("hello"))  # Хеш-значение ключа
               textAlign: 'center', 
               mb: 4, 
               p: { xs: 2, sm: 3 }, 
-              bgcolor: alpha(NEUTRAL_COLORS.success, 0.1), 
-              borderRadius: 2 
+              background: alpha(GLASS_COLORS.success, 0.15),
+              backdropFilter: 'blur(20px)',
+              borderRadius: 3,
+              border: '1px solid',
+              borderColor: alpha(GLASS_COLORS.success, 0.3),
             }}>
               <CheckIcon sx={{ 
                 fontSize: { xs: 48, sm: 60 }, 
-                color: NEUTRAL_COLORS.success, 
+                color: GLASS_COLORS.success, 
                 mb: 2 
               }} />
               <Typography variant="h5" gutterBottom sx={{ 
-                fontWeight: 700, 
-                color: NEUTRAL_COLORS.textPrimary,
-                fontSize: { xs: '1.25rem', sm: '1.5rem' }
+                fontWeight: 600, 
+                color: GLASS_COLORS.textPrimary,
+                fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                letterSpacing: '-0.02em',
               }}>
                 Тест завершен!
               </Typography>
-              <Typography variant="body1" color={NEUTRAL_COLORS.textSecondary}>
+              <Typography variant="body1" sx={{ color: GLASS_COLORS.textSecondary }}>
                 Вы ответили на все вопросы за {formatTime((isGuestMode ? 300 : 600) - timeLeft)}
               </Typography>
               {isGuestMode && (
                 <Typography variant="body2" sx={{ 
                   mt: 2, 
-                  color: NEUTRAL_COLORS.accent, 
-                  fontWeight: 600,
-                  fontSize: { xs: '0.875rem', sm: '0.9375rem' }
+                  color: GLASS_COLORS.primary, 
+                  fontWeight: 500,
+                  fontSize: { xs: '0.875rem', sm: '0.9375rem' },
                 }}>
                   🔒 Полный доступ к 1156+ вопросам — после регистрации
                 </Typography>
@@ -1641,8 +1824,9 @@ print(hash("hello"))  # Хеш-значение ключа
 
             <Typography variant="h6" gutterBottom sx={{ 
               fontWeight: 600, 
-              color: NEUTRAL_COLORS.textPrimary,
-              fontSize: { xs: '1rem', sm: '1.125rem' }
+              color: GLASS_COLORS.textPrimary,
+              fontSize: { xs: '1rem', sm: '1.125rem' },
+              letterSpacing: '-0.01em',
             }}>
               Вопросы и ответы для проверки:
             </Typography>
@@ -1650,7 +1834,6 @@ print(hash("hello"))  # Хеш-значение ключа
             <Box sx={{ 
               maxHeight: { xs: 'calc(100vh - 400px)', sm: '400px' }, 
               overflow: 'auto', 
-              bgcolor: NEUTRAL_COLORS.background 
             }}>
               {questions.map((question, index) => (
                 <Paper
@@ -1658,22 +1841,28 @@ print(hash("hello"))  # Хеш-значение ключа
                   elevation={0}
                   sx={{
                     mb: 2,
-                    border: `1px solid ${NEUTRAL_COLORS.border}`,
+                    background: GLASS_COLORS.surface,
+                    backdropFilter: 'blur(20px)',
+                    border: '1px solid',
+                    borderColor: GLASS_COLORS.border,
                     borderRadius: 2,
                     overflow: 'hidden',
-                    bgcolor: NEUTRAL_COLORS.surface,
                   }}
                 >
                   <Box
                     sx={{
                       p: { xs: 1.5, sm: 2 },
-                      bgcolor: alpha(NEUTRAL_COLORS.accent, 0.05),
+                      background: alpha(GLASS_COLORS.primary, 0.05),
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: { xs: 'flex-start', sm: 'center' },
                       justifyContent: 'space-between',
                       flexDirection: { xs: 'column', sm: 'row' },
-                      gap: { xs: 1, sm: 0 }
+                      gap: { xs: 1, sm: 0 },
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        background: alpha(GLASS_COLORS.primary, 0.1),
+                      }
                     }}
                     onClick={() => handleToggleExpand(question.id)}
                   >
@@ -1685,9 +1874,9 @@ print(hash("hello"))  # Хеш-значение ключа
                       width: { xs: '100%', sm: 'auto' }
                     }}>
                       <Typography variant="subtitle1" sx={{ 
-                        fontWeight: 600, 
-                        color: NEUTRAL_COLORS.textPrimary,
-                        fontSize: { xs: '0.875rem', sm: '1rem' }
+                        fontWeight: 500, 
+                        color: GLASS_COLORS.textPrimary,
+                        fontSize: { xs: '0.875rem', sm: '1rem' },
                       }}>
                         Вопрос {index + 1}: {question.title}
                       </Typography>
@@ -1695,45 +1884,48 @@ print(hash("hello"))  # Хеш-значение ключа
                         label={question.difficulty.toUpperCase()}
                         size="small"
                         sx={{
-                          bgcolor: alpha(getDifficultyColor(question.difficulty), 0.1),
+                          backgroundColor: alpha(getDifficultyColor(question.difficulty), 0.15),
                           color: getDifficultyColor(question.difficulty),
-                          fontWeight: 600,
-                          fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                          fontWeight: 500,
+                          fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                          backdropFilter: 'blur(10px)',
+                          border: '1px solid',
+                          borderColor: alpha(getDifficultyColor(question.difficulty), 0.3),
                         }}
                       />
                     </Box>
                     {expandedQuestions.includes(question.id) ? 
-                      <ExpandLessIcon sx={{ mt: { xs: 1, sm: 0 } }} /> : 
-                      <ExpandMoreIcon sx={{ mt: { xs: 1, sm: 0 } }} />
+                      <ExpandLessIcon sx={{ color: GLASS_COLORS.textSecondary, mt: { xs: 1, sm: 0 } }} /> : 
+                      <ExpandMoreIcon sx={{ color: GLASS_COLORS.textSecondary, mt: { xs: 1, sm: 0 } }} />
                     }
                   </Box>
 
                   <Collapse in={expandedQuestions.includes(question.id)}>
-                    <Box sx={{ p: { xs: 2, sm: 3 }, bgcolor: NEUTRAL_COLORS.surface }}>
+                    <Box sx={{ p: { xs: 2, sm: 3 }, background: GLASS_COLORS.surfaceDark }}>
                       <Typography 
                         variant="subtitle2" 
                         gutterBottom 
                         sx={{ 
                           fontWeight: 600, 
-                          color: NEUTRAL_COLORS.textSecondary,
+                          color: GLASS_COLORS.textSecondary,
                           mb: 2,
-                          fontSize: { xs: '0.875rem', sm: '0.9375rem' }
+                          fontSize: { xs: '0.875rem', sm: '0.9375rem' },
                         }}
                       >
                         Вопрос:
                       </Typography>
                       {renderQuestionContent(question.content)}
                       
-                      <Divider sx={{ my: 3 }} />
+                      <Divider sx={{ my: 3, borderColor: GLASS_COLORS.border }} />
                       
                       <Typography 
                         variant="subtitle2" 
                         gutterBottom 
                         sx={{ 
                           fontWeight: 600, 
-                          color: NEUTRAL_COLORS.success,
+                          color: GLASS_COLORS.success,
                           mb: 2,
-                          fontSize: { xs: '0.875rem', sm: '0.9375rem' }
+                          fontSize: { xs: '0.875rem', sm: '0.9375rem' },
                         }}
                       >
                         Ответ:
@@ -1741,7 +1933,7 @@ print(hash("hello"))  # Хеш-значение ключа
                       {answers[question.id] ? (
                         renderAnswerContent(answers[question.id].content)
                       ) : (
-                        <Typography variant="body2" color={NEUTRAL_COLORS.textSecondary} fontStyle="italic">
+                        <Typography variant="body2" sx={{ color: GLASS_COLORS.textSecondary, fontStyle: 'italic' }}>
                           Ответ не найден
                         </Typography>
                       )}
@@ -1762,9 +1954,16 @@ print(hash("hello"))  # Хеш-значение ключа
                 variant="outlined"
                 onClick={handleReset}
                 sx={{ 
-                  fontWeight: 600, 
-                  color: NEUTRAL_COLORS.textPrimary,
-                  width: { xs: '100%', sm: 'auto' }
+                  fontWeight: 500, 
+                  color: GLASS_COLORS.textPrimary,
+                  width: { xs: '100%', sm: 'auto' },
+                  borderColor: GLASS_COLORS.border,
+                  backgroundColor: GLASS_COLORS.surface,
+                  backdropFilter: 'blur(10px)',
+                  '&:hover': {
+                    borderColor: GLASS_COLORS.primary,
+                    backgroundColor: alpha(GLASS_COLORS.primary, 0.05),
+                  }
                 }}
               >
                 Пройти еще раз
@@ -1777,9 +1976,15 @@ print(hash("hello"))  # Хеш-значение ключа
                     navigate('/register');
                   }}
                   sx={{ 
-                    fontWeight: 600, 
-                    bgcolor: NEUTRAL_COLORS.success,
-                    width: { xs: '100%', sm: 'auto' }
+                    fontWeight: 500, 
+                    background: `linear-gradient(135deg, ${GLASS_COLORS.success}, ${alpha(GLASS_COLORS.success, 0.8)})`,
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid',
+                    borderColor: alpha('#FFFFFF', 0.3),
+                    width: { xs: '100%', sm: 'auto' },
+                    '&:hover': {
+                      background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.success, 0.9)}, ${alpha(GLASS_COLORS.success, 0.7)})`,
+                    }
                   }}
                 >
                   Зарегистрироваться для полного доступа
@@ -1789,8 +1994,15 @@ print(hash("hello"))  # Хеш-значение ключа
                   variant="contained"
                   onClick={handleCloseModal}
                   sx={{ 
-                    fontWeight: 600,
-                    width: { xs: '100%', sm: 'auto' }
+                    fontWeight: 500,
+                    width: { xs: '100%', sm: 'auto' },
+                    background: `linear-gradient(135deg, ${GLASS_COLORS.primary}, ${GLASS_COLORS.secondary})`,
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid',
+                    borderColor: alpha('#FFFFFF', 0.3),
+                    '&:hover': {
+                      background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.primary, 0.9)}, ${alpha(GLASS_COLORS.secondary, 0.9)})`,
+                    }
                   }}
                 >
                   Закрыть
@@ -1804,10 +2016,13 @@ print(hash("hello"))  # Хеш-значение ключа
       {step !== 'results' && step !== 'countdown' && (
         <DialogActions sx={{ 
           p: { xs: 1.5, sm: 2 }, 
-          bgcolor: alpha(NEUTRAL_COLORS.background, 0.5) 
+          background: alpha(GLASS_COLORS.background, 0.5),
+          backdropFilter: 'blur(10px)',
+          borderTop: '1px solid',
+          borderColor: GLASS_COLORS.border,
         }}>
           <Box sx={{ flex: 1 }} />
-          <Typography variant="caption" color={NEUTRAL_COLORS.textSecondary}>
+          <Typography variant="caption" sx={{ color: GLASS_COLORS.textSecondary }}>
             {isGuestMode 
               ? 'Демо-режим • 3 вопроса • 5 минут' 
               : 'Быстрый старт • 5 вопросов • 10 минут'}
@@ -1818,7 +2033,7 @@ print(hash("hello"))  # Хеш-значение ключа
   );
 };
 
-const QuickStartCard = memo(({ isAuthenticated }: { isAuthenticated: boolean }) => {
+const GlassQuickStartCard = memo(({ isAuthenticated }: { isAuthenticated: boolean }) => {
   const [quickStartOpen, setQuickStartOpen] = useState(false);
   const navigate = useNavigate();
   
@@ -1831,18 +2046,32 @@ const QuickStartCard = memo(({ isAuthenticated }: { isAuthenticated: boolean }) 
       <Zoom in timeout={1200}>
         <Card
           sx={{
-            background: `linear-gradient(135deg, ${alpha(NEUTRAL_COLORS.accent, 0.9)} 0%, ${alpha(NEUTRAL_COLORS.accent, 0.7)} 100%)`,
+            background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.primary, 0.9)} 0%, ${alpha(GLASS_COLORS.secondary, 0.7)} 100%)`,
+            backdropFilter: 'blur(20px)',
+            border: '1px solid',
+            borderColor: GLASS_COLORS.borderGlow,
             color: 'white',
-            borderRadius: { xs: 2, sm: 3 },
+            borderRadius: { xs: 3, sm: 4 },
             overflow: 'hidden',
             position: 'relative',
-            boxShadow: `0 10px 30px ${alpha(NEUTRAL_COLORS.accent, 0.3)}`,
+            boxShadow: `0 16px 32px ${alpha(GLASS_COLORS.primary, 0.3)}, 0 0 0 1px rgba(255, 255, 255, 0.5) inset`,
             '&:hover': {
-              boxShadow: `0 15px 40px ${alpha(NEUTRAL_COLORS.accent, 0.4)}`,
-              transform: 'translateY(-2px)',
+              boxShadow: `0 24px 48px ${alpha(GLASS_COLORS.primary, 0.4)}, 0 0 0 2px rgba(255, 255, 255, 0.6) inset`,
+              transform: 'translateY(-4px) scale(1.01)',
             },
-            transition: 'all 0.3s ease',
+            transition: 'all 0.4s cubic-bezier(0.2, 0, 0, 1)',
             cursor: 'pointer',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: -20,
+              left: -20,
+              right: -20,
+              bottom: -20,
+              background: `radial-gradient(circle at 30% 30%, ${GLASS_COLORS.glassHighlight} 0%, transparent 70%)`,
+              opacity: 0.5,
+              zIndex: 0,
+            },
           }}
           onClick={handleClick}
         >
@@ -1865,8 +2094,9 @@ const QuickStartCard = memo(({ isAuthenticated }: { isAuthenticated: boolean }) 
               }}>
                 <BoltIcon sx={{ fontSize: { xs: 28, sm: 32 } }} />
                 <Typography variant="h5" sx={{ 
-                  fontWeight: 700,
-                  fontSize: { xs: '1.25rem', sm: '1.5rem' }
+                  fontWeight: 600,
+                  fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                  letterSpacing: '-0.02em',
                 }}>
                   Быстрый старт
                 </Typography>
@@ -1877,10 +2107,13 @@ const QuickStartCard = memo(({ isAuthenticated }: { isAuthenticated: boolean }) 
                   label="Для гостей" 
                   size="small" 
                   sx={{ 
-                    backgroundColor: 'rgba(255,255,255,0.2)',
+                    backgroundColor: alpha('#FFFFFF', 0.2),
                     color: 'white',
-                    fontWeight: 600,
-                    fontSize: { xs: '0.75rem', sm: '0.8125rem' }
+                    fontWeight: 500,
+                    fontSize: { xs: '0.75rem', sm: '0.8125rem' },
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid',
+                    borderColor: alpha('#FFFFFF', 0.3),
                   }} 
                 />
               )}
@@ -1938,7 +2171,7 @@ const QuickStartCard = memo(({ isAuthenticated }: { isAuthenticated: boolean }) 
                 endIcon={<ChevronRightIcon />}
                 sx={{
                   backgroundColor: 'white',
-                  color: NEUTRAL_COLORS.accent,
+                  color: GLASS_COLORS.primary,
                   fontWeight: 600,
                   px: { xs: 2.5, sm: 3 },
                   py: { xs: 0.75, sm: 1 },
@@ -1946,8 +2179,12 @@ const QuickStartCard = memo(({ isAuthenticated }: { isAuthenticated: boolean }) 
                   fontSize: { xs: '0.875rem', sm: '0.9375rem' },
                   width: { xs: '100%', sm: 'auto' },
                   minWidth: { xs: 'auto', sm: '120px' },
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid',
+                  borderColor: alpha('#FFFFFF', 0.5),
                   '&:hover': {
                     backgroundColor: alpha('#FFFFFF', 0.9),
+                    transform: 'translateX(4px)',
                   }
                 }}
               >
@@ -1958,7 +2195,7 @@ const QuickStartCard = memo(({ isAuthenticated }: { isAuthenticated: boolean }) 
         </Card>
       </Zoom>
 
-      <QuickStartModal
+      <GlassQuickStartModal
         open={quickStartOpen}
         onClose={() => setQuickStartOpen(false)}
         isGuestMode={!isAuthenticated}
@@ -1985,13 +2222,16 @@ const ScrollToTop = memo(() => {
           position: 'fixed',
           bottom: 32,
           right: 32,
-          backgroundColor: NEUTRAL_COLORS.surface,
-          color: NEUTRAL_COLORS.accent,
-          border: `1px solid ${NEUTRAL_COLORS.border}`,
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          background: GLASS_COLORS.surface,
+          backdropFilter: 'blur(20px)',
+          color: GLASS_COLORS.primary,
+          border: '1px solid',
+          borderColor: GLASS_COLORS.border,
+          boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)',
           '&:hover': {
-            backgroundColor: NEUTRAL_COLORS.background,
-            transform: 'translateY(-2px)',
+            background: GLASS_COLORS.surfaceDark,
+            transform: 'translateY(-4px)',
+            boxShadow: '0 12px 24px rgba(0, 0, 0, 0.15)',
           },
           transition: 'all 0.3s ease',
         }}
@@ -2101,10 +2341,10 @@ export const HomePage: React.FC = () => {
   return (
     <Box sx={{ 
       minHeight: '100vh',
-      background: `linear-gradient(135deg, ${NEUTRAL_COLORS.background} 0%, ${NEUTRAL_COLORS.gradientEnd} 100%)`,
+      background: 'linear-gradient(135deg, #E0F0FF 0%, #D0E4FF 50%, #B8D8FF 100%)',
       position: 'relative',
       overflow: 'hidden',
-      fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
+      fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif',
       '&::before': {
         content: '""',
         position: 'absolute',
@@ -2113,9 +2353,11 @@ export const HomePage: React.FC = () => {
         right: 0,
         bottom: 0,
         background: `
-          radial-gradient(circle at 15% 50%, ${alpha(NEUTRAL_COLORS.gradientStart, 0.4)} 0%, transparent 50%),
-          radial-gradient(circle at 85% 30%, ${alpha(NEUTRAL_COLORS.gradientEnd, 0.2)} 0%, transparent 50%)
+          radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.4) 0%, transparent 40%),
+          radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.3) 0%, transparent 50%),
+          radial-gradient(circle at 40% 80%, rgba(200, 220, 255, 0.5) 0%, transparent 60%)
         `,
+        pointerEvents: 'none',
       }
     }}>
         <Fade in>
@@ -2123,9 +2365,11 @@ export const HomePage: React.FC = () => {
             position="sticky" 
             elevation={0}
             sx={{ 
-              backgroundColor: alpha(NEUTRAL_COLORS.surface, 0.95),
-              backdropFilter: 'blur(12px)',
-              borderBottom: `1px solid ${NEUTRAL_COLORS.border}`,
+              background: GLASS_COLORS.surface,
+              backdropFilter: 'blur(30px)',
+              WebkitBackdropFilter: 'blur(30px)',
+              borderBottom: '1px solid',
+              borderColor: GLASS_COLORS.border,
               transition: 'all 0.3s ease',
             }}
           >
@@ -2139,31 +2383,34 @@ export const HomePage: React.FC = () => {
                   variant="h6" 
                   sx={{ 
                     flexGrow: 1,
-                    fontWeight: 900,
-                    color: NEUTRAL_COLORS.textPrimary,
+                    fontWeight: 700,
+                    color: GLASS_COLORS.textPrimary,
                     fontSize: '1.45rem',
                     cursor: 'pointer',
-                    letterSpacing: '-0.025em',
+                    letterSpacing: '-0.02em',
                     display: 'flex',
                     alignItems: 'center',
                     '&:hover': { 
-                      color: NEUTRAL_COLORS.accent,
+                      color: GLASS_COLORS.primary,
                       opacity: 0.9 
                     }
                   }}
                   onClick={() => handleNavigation('/')}
                 >
-                  Interview<span style={{ color: NEUTRAL_COLORS.accent }}>Box</span>
+                  Interview<span style={{ color: GLASS_COLORS.primary }}>Box</span>
                   <span style={{
                     fontSize: '0.75rem',
-                    fontWeight: 700,
-                    color: NEUTRAL_COLORS.accent,
+                    fontWeight: 500,
+                    color: GLASS_COLORS.primary,
                     marginLeft: '6px',
-                    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+                    backgroundColor: alpha('#FFFFFF', 0.3),
                     padding: '2px 6px',
-                    borderRadius: '4px',
+                    borderRadius: '6px',
                     alignSelf: 'flex-start',
-                    marginTop: '2px'
+                    marginTop: '2px',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid',
+                    borderColor: alpha(GLASS_COLORS.primary, 0.3),
                   }}>
                     beta
                   </span>
@@ -2178,14 +2425,17 @@ export const HomePage: React.FC = () => {
                           onClick={() => handleNavigation('/profile')}
                           sx={{ 
                             fontWeight: 500,
-                            backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
-                            color: NEUTRAL_COLORS.textPrimary,
+                            backgroundColor: alpha(GLASS_COLORS.primary, 0.1),
+                            color: GLASS_COLORS.textPrimary,
                             cursor: 'pointer',
+                            backdropFilter: 'blur(10px)',
+                            border: '1px solid',
+                            borderColor: alpha(GLASS_COLORS.primary, 0.2),
                             '& .MuiChip-label': {
                               px: 1.5,
                             },
                             '&:hover': {
-                              backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.2),
+                              backgroundColor: alpha(GLASS_COLORS.primary, 0.2),
                             }
                           }}
                         />
@@ -2195,9 +2445,12 @@ export const HomePage: React.FC = () => {
                             onClick={() => handleNavigation('/admin')}
                             size="medium"
                             sx={{ 
-                              fontWeight: 600,
-                              backgroundColor: alpha(NEUTRAL_COLORS.success, 0.1),
-                              color: NEUTRAL_COLORS.success,
+                              fontWeight: 500,
+                              backgroundColor: alpha(GLASS_COLORS.success, 0.1),
+                              color: GLASS_COLORS.success,
+                              backdropFilter: 'blur(10px)',
+                              border: '1px solid',
+                              borderColor: alpha(GLASS_COLORS.success, 0.3),
                             }}
                           />
                         )}
@@ -2207,10 +2460,13 @@ export const HomePage: React.FC = () => {
                     onClick={handleLogout}
                     size="medium"
                     sx={{
-                      backgroundColor: alpha(NEUTRAL_COLORS.error, 0.1),
-                      color: NEUTRAL_COLORS.error,
+                      backgroundColor: alpha(GLASS_COLORS.error, 0.1),
+                      color: GLASS_COLORS.error,
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid',
+                      borderColor: alpha(GLASS_COLORS.error, 0.3),
                       '&:hover': {
-                        backgroundColor: alpha(NEUTRAL_COLORS.error, 0.2),
+                        backgroundColor: alpha(GLASS_COLORS.error, 0.2),
                       },
                       width: 40,
                       height: 40
@@ -2239,11 +2495,66 @@ export const HomePage: React.FC = () => {
                 size="medium"
                 sx={{ 
                   mb: 3,
-                  fontWeight: 600,
-                  backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
-                  color: NEUTRAL_COLORS.accent,
+                  fontWeight: 500,
+                  letterSpacing: '-0.01em',
+                  background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.primary, 0.15)} 0%, ${alpha(GLASS_COLORS.secondary, 0.1)} 100%)`,
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  color: GLASS_COLORS.primary,
                   fontSize: '0.875rem',
-                  py: 1,
+                  py: 1.5,
+                  px: 2,
+                  border: '1.5px solid',
+                  borderColor: alpha(GLASS_COLORS.primary, 0.3),
+                  borderRadius: '30px',
+                  boxShadow: `0 4px 15px -3px ${alpha(GLASS_COLORS.primary, 0.2)}, 0 0 0 1px rgba(255, 255, 255, 0.3) inset`,
+                  position: 'relative',
+                  overflow: 'hidden',
+                  transition: 'all 0.4s cubic-bezier(0.2, 0, 0, 1)',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '50%',
+                    background: `linear-gradient(180deg, ${alpha('#FFFFFF', 0.4)} 0%, transparent 100%)`,
+                    opacity: 0.5,
+                    transition: 'opacity 0.3s ease',
+                  },
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    top: -5,
+                    left: -5,
+                    right: -5,
+                    bottom: -5,
+                    background: `radial-gradient(circle at 30% 30%, ${alpha(GLASS_COLORS.primary, 0.3)} 0%, transparent 70%)`,
+                    opacity: 0,
+                    zIndex: -1,
+                    filter: 'blur(15px)',
+                    transition: 'opacity 0.4s ease',
+                  },
+                  '&:hover': {
+                    transform: 'translateY(-2px) scale(1.02)',
+                    boxShadow: `0 8px 20px -5px ${alpha(GLASS_COLORS.primary, 0.4)}, 0 0 0 2px rgba(255, 255, 255, 0.5) inset`,
+                    borderColor: alpha(GLASS_COLORS.primary, 0.6),
+                    '&::after': {
+                      opacity: 0.6,
+                    },
+                    '&::before': {
+                      opacity: 0.7,
+                    }
+                  },
+                  '& .MuiChip-label': {
+                    px: 1,
+                    fontWeight: 500,
+                    textShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                  },
+                  '& .MuiChip-icon': {
+                    mr: 0.5,
+                    ml: 0,
+                  }
                 }}
               />
               
@@ -2252,18 +2563,19 @@ export const HomePage: React.FC = () => {
                 component="h1" 
                 gutterBottom
                 sx={{ 
-                  fontWeight: 800,
+                  fontWeight: 700,
                   mb: 3,
-                  color: NEUTRAL_COLORS.textPrimary,
-                  letterSpacing: '-0.025em',
+                  color: GLASS_COLORS.textPrimary,
+                  letterSpacing: '-0.02em',
                   lineHeight: 1.2,
-                  fontSize: { xs: '2.5rem', md: '3.75rem' }
+                  fontSize: { xs: '2.5rem', md: '3.75rem' },
+                  textShadow: '0 4px 20px rgba(255,255,255,0.5)',
                 }}
               >
                 Успешно пройдите собеседование
                 <br />
                 <Box component="span" sx={{ 
-                  background: `linear-gradient(135deg, ${NEUTRAL_COLORS.accent} 0%, ${alpha(NEUTRAL_COLORS.accent, 0.8)} 100%)`,
+                  background: `linear-gradient(135deg, ${GLASS_COLORS.primary} 0%, ${GLASS_COLORS.secondary} 100%)`,
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
@@ -2276,12 +2588,12 @@ export const HomePage: React.FC = () => {
                 variant={isMobile ? 'h6' : 'h5'} 
                 sx={{ 
                   mb: 4, 
-                  color: NEUTRAL_COLORS.textSecondary,
+                  color: GLASS_COLORS.textSecondary,
                   maxWidth: '780px',
                   mx: 'auto',
                   lineHeight: 1.6,
                   fontWeight: 400,
-                  fontSize: { xs: '1.125rem', md: '1.5rem' }
+                  fontSize: { xs: '1.125rem', md: '1.5rem' },
                 }}
               >
                 Закрывайте слабые места. Большая база из {stats.questions || 1156}+ вопросов с ответами, которые прошли отбор. Ваш прогресс — под контролем.
@@ -2294,7 +2606,6 @@ export const HomePage: React.FC = () => {
               display: 'flex', 
               gap: 3, 
               justifyContent: 'center', 
-              mb: 8,
               flexDirection: { xs: 'column', sm: 'row' },
               alignItems: 'center'
             }}>
@@ -2308,16 +2619,65 @@ export const HomePage: React.FC = () => {
                     sx={{
                       px: 5,
                       py: 1.8,
-                      borderRadius: 2,
-                      fontWeight: 700,
+                      borderRadius: '40px', // Более скругленные углы как в iOS
+                      fontWeight: 600,
                       fontSize: '1.1rem',
-                      background: `linear-gradient(135deg, ${NEUTRAL_COLORS.accent} 0%, ${alpha(NEUTRAL_COLORS.accent, 0.9)} 100%)`,
-                      boxShadow: '0 4px 20px rgba(49, 130, 206, 0.3)',
-                      '&:hover': {
-                        boxShadow: '0 8px 30px rgba(49, 130, 206, 0.4)',
-                        transform: 'translateY(-2px)',
+                      letterSpacing: '-0.01em',
+                      background: `linear-gradient(135deg, ${GLASS_COLORS.primary} 0%, ${GLASS_COLORS.secondary} 100%)`,
+                      backdropFilter: 'blur(20px)',
+                      WebkitBackdropFilter: 'blur(20px)',
+                      border: '1.5px solid',
+                      borderColor: alpha('#FFFFFF', 0.5),
+                      boxShadow: `0 10px 25px -5px ${alpha(GLASS_COLORS.primary, 0.4)}, 0 0 0 1px rgba(255, 255, 255, 0.3) inset`,
+                      position: 'relative',
+                      overflow: 'hidden',
+                      transition: 'all 0.4s cubic-bezier(0.2, 0, 0, 1)',
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: '50%',
+                        background: `linear-gradient(180deg, ${alpha('#FFFFFF', 0.4)} 0%, transparent 100%)`,
+                        opacity: 0.5,
+                        transition: 'opacity 0.3s ease',
                       },
-                      transition: 'all 0.3s ease',
+                      '&::after': {
+                        content: '""',
+                        position: 'absolute',
+                        top: -10,
+                        left: -10,
+                        right: -10,
+                        bottom: -10,
+                        background: `radial-gradient(circle at 30% 30%, ${alpha(GLASS_COLORS.primary, 0.4)} 0%, transparent 70%)`,
+                        opacity: 0,
+                        zIndex: -1,
+                        filter: 'blur(20px)',
+                        transition: 'opacity 0.4s ease',
+                      },
+                      '&:hover': {
+                        boxShadow: `0 20px 30px -8px ${alpha(GLASS_COLORS.primary, 0.6)}, 0 0 0 2px rgba(255, 255, 255, 0.6) inset`,
+                        transform: 'translateY(-3px) scale(1.02)',
+                        borderColor: alpha('#FFFFFF', 0.8),
+                        '&::after': {
+                          opacity: 0.7,
+                        },
+                        '&::before': {
+                          opacity: 0.8,
+                        }
+                      },
+                      '&:active': {
+                        transform: 'translateY(0) scale(0.98)',
+                        boxShadow: `0 5px 15px -3px ${alpha(GLASS_COLORS.primary, 0.4)}`,
+                      },
+                      '& .MuiButton-startIcon': {
+                        marginRight: 1.5,
+                        '& svg': {
+                          fontSize: '1.3rem',
+                          filter: 'drop-shadow(0 2px 5px rgba(0,0,0,0.2))',
+                        }
+                      }
                     }}
                   >
                     Начать обучение
@@ -2333,16 +2693,66 @@ export const HomePage: React.FC = () => {
                     sx={{
                       px: 5,
                       py: 1.8,
-                      borderRadius: 2,
-                      fontWeight: 700,
+                      borderRadius: '40px',
+                      fontWeight: 600,
                       fontSize: '1.1rem',
-                      background: `linear-gradient(135deg, ${NEUTRAL_COLORS.accent} 0%, ${alpha(NEUTRAL_COLORS.accent, 0.9)} 100%)`,
-                      boxShadow: '0 4px 20px rgba(49, 130, 206, 0.3)',
-                      '&:hover': {
-                        boxShadow: '0 8px 30px rgba(49, 130, 206, 0.4)',
-                        transform: 'translateY(-2px)',
+                      letterSpacing: '-0.01em',
+                      background: `linear-gradient(135deg, ${GLASS_COLORS.primary} 0%, ${GLASS_COLORS.secondary} 100%)`,
+                      backdropFilter: 'blur(20px)',
+                      WebkitBackdropFilter: 'blur(20px)',
+                      border: '1.5px solid',
+                      borderColor: alpha('#FFFFFF', 0.5),
+                      boxShadow: `0 10px 25px -5px ${alpha(GLASS_COLORS.primary, 0.4)}, 0 0 0 1px rgba(255, 255, 255, 0.3) inset`,
+                      position: 'relative',
+                      overflow: 'hidden',
+                      transition: 'all 0.4s cubic-bezier(0.2, 0, 0, 1)',
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: '50%',
+                        background: `linear-gradient(180deg, ${alpha('#FFFFFF', 0.4)} 0%, transparent 100%)`,
+                        opacity: 0.5,
+                        transition: 'opacity 0.3s ease',
                       },
-                      transition: 'all 0.3s ease',
+                      '&::after': {
+                        content: '""',
+                        position: 'absolute',
+                        top: -10,
+                        left: -10,
+                        right: -10,
+                        bottom: -10,
+                        background: `radial-gradient(circle at 30% 30%, ${alpha(GLASS_COLORS.primary, 0.4)} 0%, transparent 70%)`,
+                        opacity: 0,
+                        zIndex: -1,
+                        filter: 'blur(20px)',
+                        transition: 'opacity 0.4s ease',
+                      },
+                      '&:hover': {
+                        background: `linear-gradient(180deg, ${alpha('#0d03d5ff', 0.4)} 0%, transparent 100%)`,
+                        boxShadow: `0 20px 30px -8px ${alpha(GLASS_COLORS.primary, 0.6)}, 0 0 0 2px rgba(255, 255, 255, 0.6) inset`,
+                        transform: 'translateY(-3px) scale(1.02)',
+                        borderColor: alpha('#FFFFFF', 0.8),
+                        '&::after': {
+                          opacity: 0.7,
+                        },
+                        '&::before': {
+                          opacity: 0.8,
+                        }
+                      },
+                      '&:active': {
+                        transform: 'translateY(0) scale(0.98)',
+                        boxShadow: `0 5px 15px -3px ${alpha(GLASS_COLORS.primary, 0.4)}`,
+                      },
+                      '& .MuiButton-startIcon': {
+                        marginRight: 1.5,
+                        '& svg': {
+                          fontSize: '1.3rem',
+                          filter: 'drop-shadow(0 2px 5px rgba(0,0,0,0.2))',
+                        }
+                      }
                     }}
                   >
                     Начать обучение
@@ -2355,52 +2765,24 @@ export const HomePage: React.FC = () => {
         {!isAuthenticated && (
           <Fade in timeout={1500}>
             <Box sx={{ 
-              mt: { xs: 3, sm: 4, md: 4 }, // Отступы для разных экранов
+              mt: { xs: 3, sm: 4, md: 4 },
               textAlign: 'center',
-              px: { xs: 2, sm: 3 } // Горизонтальные отступы для мобильных
+              px: { xs: 2, sm: 3 }
             }}>
               <Typography 
                 variant="body2" 
                 sx={{ 
-                  mb: { xs: 1.5, sm: 2 }, // Отступ снизу адаптивный
-                  color: NEUTRAL_COLORS.textSecondary,
+                  mb: { xs: 1.5, sm: 2 },
+                  color: GLASS_COLORS.textSecondary,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: { xs: 0.5, sm: 1, md: 1.5 }, // Расстояние между элементами
-                  flexWrap: { xs: 'wrap', sm: 'nowrap' }, // На мобильных - перенос строк
-                  flexDirection: { xs: 'column', sm: 'row' }, // На мобильных - вертикально
-                  fontSize: { xs: '0.875rem', sm: '0.9375rem' } // Размер шрифта
+                  gap: { xs: 0.5, sm: 1, md: 1.5 },
+                  flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  fontSize: { xs: '0.875rem', sm: '0.9375rem' }
                 }}
               >
-                {/* Первая фича - на мобильных может быть отдельно */}
-                <Box 
-                  sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center',
-                    gap: 0.5,
-                    mb: { xs: 0.5, sm: 0 } // Отступ снизу только на мобильных
-                  }}
-                >
-                  <CheckIcon fontSize="small" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }} /> 
-                  <Box component="span" sx={{ whiteSpace: 'nowrap' }}>
-                    Различные вопросы
-                  </Box>
-                </Box>
-                
-                {/* Разделитель - скрываем на мобильных */}
-                <Box 
-                  component="span" 
-                  sx={{ 
-                    display: { xs: 'none', sm: 'inline' },
-                    mx: 0.5,
-                    color: NEUTRAL_COLORS.border
-                  }}
-                >
-                  •
-                </Box>
-                
-                {/* Вторая фича */}
                 <Box 
                   sx={{ 
                     display: 'flex', 
@@ -2409,25 +2791,48 @@ export const HomePage: React.FC = () => {
                     mb: { xs: 0.5, sm: 0 }
                   }}
                 >
-                  <CheckIcon fontSize="small" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }} /> 
+                  <CheckIcon fontSize="small" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' }, color: GLASS_COLORS.success }} /> 
                   <Box component="span" sx={{ whiteSpace: 'nowrap' }}>
-                    Удобное отслеживание
+                    Различные вопросы
                   </Box>
                 </Box>
                 
-                {/* Разделитель - скрываем на мобильных */}
                 <Box 
                   component="span" 
                   sx={{ 
                     display: { xs: 'none', sm: 'inline' },
                     mx: 0.5,
-                    color: NEUTRAL_COLORS.border
+                    color: GLASS_COLORS.border
                   }}
                 >
                   •
                 </Box>
                 
-                {/* Третья фича */}
+                <Box 
+                  sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    gap: 0.5,
+                    mb: { xs: 0.5, sm: 0 }
+                  }}
+                >
+                  <CheckIcon fontSize="small" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' }, color: GLASS_COLORS.success }} /> 
+                  <Box component="span" sx={{ whiteSpace: 'nowrap' }}>
+                    Удобное отслеживание
+                  </Box>
+                </Box>
+                
+                <Box 
+                  component="span" 
+                  sx={{ 
+                    display: { xs: 'none', sm: 'inline' },
+                    mx: 0.5,
+                    color: GLASS_COLORS.border
+                  }}
+                >
+                  •
+                </Box>
+                
                 <Box 
                   sx={{ 
                     display: 'flex', 
@@ -2435,7 +2840,7 @@ export const HomePage: React.FC = () => {
                     gap: 0.5
                   }}
                 >
-                  <CheckIcon fontSize="small" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }} /> 
+                  <CheckIcon fontSize="small" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' }, color: GLASS_COLORS.success }} /> 
                   <Box component="span" sx={{ whiteSpace: 'nowrap' }}>
                     Развернутые ответы
                   </Box>
@@ -2447,102 +2852,177 @@ export const HomePage: React.FC = () => {
 
           <Fade in timeout={1500}>
             <Box 
-              sx={{ 
+              sx={{
                 display: 'flex', 
                 justifyContent: 'center',
                 mt: 4,
                 cursor: 'pointer',
-                animation: 'bounce 2s infinite',
-                '@keyframes bounce': {
+                animation: 'glassBounce 2s infinite',
+                '@keyframes glassBounce': {
                   '0%, 100%': { transform: 'translateY(0)' },
                   '50%': { transform: 'translateY(-10px)' },
                 }
               }}
               onClick={scrollToFeatures}
             >
-              <ArrowDownIcon sx={{ fontSize: 40, color: NEUTRAL_COLORS.accent }} />
+              <ArrowDownIcon sx={{ fontSize: 40, color: GLASS_COLORS.primary }} />
             </Box>
           </Fade>
         </Box>
 
         <Box sx={{ mb: 10, px: { xs: 2, sm: 3 } }} ref={featuresRef}>
           <Fade in timeout={1200}>
+          <Box sx={{ position: 'relative', mb: 6 }}>
+            {/* Декоративные элементы фона */}
+            <Box
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: '150%',
+                height: '100%',
+                background: `radial-gradient(circle at 30% 30%, ${alpha(GLASS_COLORS.primary, 0.1)} 0%, transparent 50%),
+                            radial-gradient(circle at 70% 70%, ${alpha(GLASS_COLORS.secondary, 0.1)} 0%, transparent 50%)`,
+                filter: 'blur(40px)',
+                zIndex: 0,
+              }}
+            />
+
             <Typography 
               variant="h4" 
               sx={{ 
-                mb: 6, 
+                position: 'relative',
+                zIndex: 1,
                 fontWeight: 700,
-                color: NEUTRAL_COLORS.textPrimary,
+                color: GLASS_COLORS.textPrimary,
                 textAlign: 'center',
-                fontSize: '2rem'
+                fontSize: { xs: '1.8rem', sm: '2.2rem', md: '2.5rem' },
+                letterSpacing: '-0.02em',
+                lineHeight: 1.3,
+                textShadow: '0 4px 20px rgba(255,255,255,0.3)',
+                display: 'inline-block',
+                width: '100%',
+                '& span': {
+                  position: 'relative',
+                  display: 'inline-block',
+                  color: GLASS_COLORS.primary,
+                  background: `linear-gradient(135deg, ${GLASS_COLORS.primary} 0%, ${GLASS_COLORS.secondary} 100%)`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  textShadow: `0 0 30px ${alpha(GLASS_COLORS.primary, 0.5)}`,
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    bottom: '-4px',
+                    left: 0,
+                    width: '100%',
+                    height: '3px',
+                    background: `linear-gradient(90deg, transparent 0%, ${GLASS_COLORS.primary} 20%, ${GLASS_COLORS.secondary} 80%, transparent 100%)`,
+                    borderRadius: '3px',
+                    opacity: 0.6,
+                    filter: 'blur(1px)',
+                  }
+                }
               }}
             >
-              Почему выбрать Interview<span style={{ color: NEUTRAL_COLORS.accent }}>Box</span>?
+              <Box sx={{ position: 'relative' }}>
+                Почему выбрать{' '}
+                <Box
+                  component="span"
+                  sx={{
+                    position: 'relative',
+                    display: 'inline-block',
+                    '&:hover': {
+                      '&::before': {
+                        opacity: 0.8,
+                        transform: 'scale(1.5)',
+                      }
+                    },
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '100%',
+                      height: '100%',
+                      background: `radial-gradient(circle, ${alpha(GLASS_COLORS.primary, 0.3)} 0%, transparent 70%)`,
+                      filter: 'blur(15px)',
+                      opacity: 0,
+                      transition: 'all 0.4s ease',
+                      zIndex: -1,
+                    }
+                  }}
+                >
+                  Interview<span style={{ color: GLASS_COLORS.primary }}>Box</span>
+                </Box>
+                ?
+              </Box>
             </Typography>
-          </Fade>
-
+          </Box>
+        </Fade>
           <Grid container spacing={3} justifyContent="center" sx={{ mb: 8 }}>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={4} md={3}>
               <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                <StatCard
+                <GlassStatCard
                   title="Вопросов"
-                  value={stats.questions || "1156"}
-                  color={NEUTRAL_COLORS.accent}
+                  value={stats.questions || 1156}
+                  color={GLASS_COLORS.primary}
                   icon={<QuestionsIcon sx={{ fontSize: 32 }} />}
                 />
               </Box>
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
               <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                <StatCard
+                <GlassStatCard
                   title="Категорий"
-                  value={stats.categories || "26"}
-                  color={NEUTRAL_COLORS.success}
+                  value={stats.categories || 26}
+                  color={GLASS_COLORS.success}
                   icon={<CategoryIcon sx={{ fontSize: 32 }} />}
                 />
               </Box>
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
               <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                <StatCard
+                <GlassStatCard
                   title="Пользователей"
-                  value={users.length + 56 || "135"}
-                  color={NEUTRAL_COLORS.warning}
+                  value={users.length + 56 || 135}
+                  color={GLASS_COLORS.warning}
                   icon={<PeopleIcon sx={{ fontSize: 32 }} />}
                 />
               </Box>
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
               <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                <StatCard
+                <GlassStatCard
                   title="Успешность"
                   value={100}
-                  color={NEUTRAL_COLORS.purple}
+                  color={GLASS_COLORS.purple}
                   icon={<TrendingIcon sx={{ fontSize: 32 }} />}
                 />
               </Box>
             </Grid>
           </Grid>
 
-          {/* Быстрый старт карточка (для всех) */}
           <Box sx={{ mb: { xs: 4, sm: 6, md: 8 } }}>
-            <QuickStartCard isAuthenticated={isAuthenticated} />
+            <GlassQuickStartCard isAuthenticated={isAuthenticated} />
           </Box>
 
-          {/* Отзывы для неавторизованных - исправленные цвета */}
           {!isAuthenticated && (
           <Box sx={{ mb: 12, position: 'relative' }}>
-            {/* Декоративные элементы */}
             <Box
               sx={{
                 position: 'absolute',
                 top: -50,
                 left: '10%',
-                width: 100,
-                height: 100,
+                width: 200,
+                height: 200,
                 borderRadius: '50%',
-                background: `radial-gradient(circle, ${alpha(NEUTRAL_COLORS.accent, 0.1)} 0%, transparent 70%)`,
+                background: `radial-gradient(circle, ${alpha(GLASS_COLORS.primary, 0.2)} 0%, transparent 70%)`,
                 zIndex: 0,
+                filter: 'blur(40px)',
               }}
             />
             <Box
@@ -2550,11 +3030,12 @@ export const HomePage: React.FC = () => {
                 position: 'absolute',
                 bottom: -30,
                 right: '15%',
-                width: 150,
-                height: 150,
+                width: 250,
+                height: 250,
                 borderRadius: '50%',
-                background: `radial-gradient(circle, ${alpha(NEUTRAL_COLORS.purple, 0.05)} 0%, transparent 70%)`,
+                background: `radial-gradient(circle, ${alpha(GLASS_COLORS.purple, 0.15)} 0%, transparent 70%)`,
                 zIndex: 0,
+                filter: 'blur(50px)',
               }}
             />
 
@@ -2565,17 +3046,18 @@ export const HomePage: React.FC = () => {
                     variant="h3" 
                     sx={{ 
                       mb: 2, 
-                      fontWeight: 800,
-                      color: NEUTRAL_COLORS.textPrimary,
+                      fontWeight: 700,
+                      color: GLASS_COLORS.textPrimary,
                       textAlign: 'center',
                       fontSize: { xs: '2rem', md: '2.5rem' },
+                      letterSpacing: '-0.02em',
                       position: 'relative',
                       '&::after': {
                         content: '""',
                         display: 'block',
                         width: 60,
                         height: 4,
-                        background: `linear-gradient(90deg, ${NEUTRAL_COLORS.accent}, ${NEUTRAL_COLORS.purple})`,
+                        background: `linear-gradient(90deg, ${GLASS_COLORS.primary}, ${GLASS_COLORS.purple})`,
                         margin: '16px auto 0',
                         borderRadius: 2,
                       }
@@ -2589,7 +3071,7 @@ export const HomePage: React.FC = () => {
                     sx={{ 
                       mb: 6, 
                       fontWeight: 400,
-                      color: NEUTRAL_COLORS.textSecondary,
+                      color: GLASS_COLORS.textSecondary,
                       textAlign: 'center',
                       maxWidth: '600px',
                       mx: 'auto',
@@ -2609,54 +3091,51 @@ export const HomePage: React.FC = () => {
                       sx={{ 
                         p: 4, 
                         height: '100%', 
-                        backgroundColor: NEUTRAL_COLORS.surface,
-                        border: `1px solid ${NEUTRAL_COLORS.border}`,
+                        background: GLASS_COLORS.surface,
+                        backdropFilter: 'blur(20px)',
+                        border: '1px solid',
+                        borderColor: GLASS_COLORS.border,
                         borderRadius: 3,
                         position: 'relative',
                         overflow: 'hidden',
-                        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                        transition: 'all 0.4s cubic-bezier(0.2, 0, 0, 1)',
                         '&::before': {
                           content: '""',
                           position: 'absolute',
                           top: 0,
                           left: 0,
                           right: 0,
-                          height: '4px',
-                          background: `linear-gradient(90deg, ${NEUTRAL_COLORS.accent}, ${alpha(NEUTRAL_COLORS.accent, 0.5)})`,
+                          height: '100%',
+                          background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+                          opacity: 0,
+                          transition: 'opacity 0.4s ease',
+                        },
+                        '&::after': {
+                          content: '""',
+                          position: 'absolute',
+                          top: -20,
+                          left: -20,
+                          right: -20,
+                          bottom: -20,
+                          background: `radial-gradient(circle at 30% 30%, ${GLASS_COLORS.primary} 0%, transparent 70%)`,
+                          opacity: 0,
+                          zIndex: -1,
+                          filter: 'blur(30px)',
+                          transition: 'opacity 0.4s ease',
                         },
                         '&:hover': {
-                          transform: 'translateY(-8px)',
-                          boxShadow: `0 20px 40px ${alpha(NEUTRAL_COLORS.accent, 0.15)}`,
-                          borderColor: NEUTRAL_COLORS.accent,
-                          '& .company-badge': {
-                            transform: 'scale(1.1)',
-                            boxShadow: `0 8px 25px ${alpha(NEUTRAL_COLORS.accent, 0.3)}`,
-                          },
-                          '& .quote-icon': {
+                          transform: 'translateY(-8px) scale(1.02)',
+                          boxShadow: `0 24px 48px ${alpha(GLASS_COLORS.primary, 0.2)}`,
+                          borderColor: GLASS_COLORS.borderGlow,
+                          '&::before': {
                             opacity: 1,
-                            transform: 'translateY(0)',
-                          }
+                          },
+                          '&::after': {
+                            opacity: 0.3,
+                          },
                         }
                       }}
                     >
-                      {/* Иконка цитаты */}
-                      <Box 
-                        className="quote-icon"
-                        sx={{
-                          position: 'absolute',
-                          top: 20,
-                          right: 20,
-                          opacity: 0.3,
-                          transform: 'translateY(-10px)',
-                          transition: 'all 0.3s ease',
-                        }}
-                      >
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M10 7H6C5.46957 7 4.96086 7.21071 4.58579 7.58579C4.21071 7.96086 4 8.46957 4 9V14C4 14.5304 4.21071 15.0391 4.58579 15.4142C4.96086 15.7893 5.46957 16 6 16H9V19C9 19.5304 9.21071 20.0391 9.58579 20.4142C9.96086 20.7893 10.4696 21 11 21C11.5304 21 12.0391 20.7893 12.4142 20.4142C12.7893 20.0391 13 19.5304 13 19V16C13 15.4696 12.7893 14.9609 12.4142 14.5858C12.0391 14.2107 11.5304 14 11 14H10V7Z" fill={alpha(NEUTRAL_COLORS.accent, 0.2)} />
-                          <path d="M20 7H16C15.4696 7 14.9609 7.21071 14.5858 7.58579C14.2107 7.96086 14 8.46957 14 9V14C14 14.5304 14.2107 15.0391 14.5858 15.4142C14.9609 15.7893 15.4696 16 16 16H19V19C19 19.5304 19.2107 20.0391 19.5858 20.4142C19.9609 20.7893 20.4696 21 21 21C21.5304 21 22.0391 20.7893 22.4142 20.4142C22.7893 20.0391 23 19.5304 23 19V16C23 15.4696 22.7893 14.9609 22.4142 14.5858C22.0391 14.2107 21.5304 14 21 14H20V7Z" fill={alpha(NEUTRAL_COLORS.accent, 0.2)} />
-                        </svg>
-                      </Box>
-
                       <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                         <Box sx={{ 
                           position: 'relative',
@@ -2669,39 +3148,40 @@ export const HomePage: React.FC = () => {
                             width: 12,
                             height: 12,
                             borderRadius: '50%',
-                            backgroundColor: NEUTRAL_COLORS.accent,
-                            border: `2px solid ${NEUTRAL_COLORS.surface}`,
+                            backgroundColor: GLASS_COLORS.success,
+                            border: '2px solid',
+                            borderColor: GLASS_COLORS.surface,
                           }
                         }}>
                           <Box sx={{ 
                             width: 56, 
                             height: 56, 
                             borderRadius: '50%', 
-                            background: `linear-gradient(135deg, ${NEUTRAL_COLORS.accent}, ${alpha(NEUTRAL_COLORS.accent, 0.7)})`,
+                            background: `linear-gradient(135deg, ${GLASS_COLORS.primary}, ${GLASS_COLORS.secondary})`,
                             display: 'flex', 
                             alignItems: 'center', 
                             justifyContent: 'center',
                             fontSize: '1.5rem',
-                            fontWeight: 700,
+                            fontWeight: 600,
                             color: 'white',
-                            boxShadow: `0 4px 15px ${alpha(NEUTRAL_COLORS.accent, 0.3)}`,
+                            boxShadow: `0 4px 12px ${alpha(GLASS_COLORS.primary, 0.3)}`,
                           }}>
                             А
                           </Box>
                         </Box>
                         
                         <Box>
-                          <Typography variant="h6" sx={{ fontWeight: 700, color: NEUTRAL_COLORS.textPrimary, mb: 0.5 }}>
+                          <Typography variant="h6" sx={{ fontWeight: 600, color: GLASS_COLORS.textPrimary, mb: 0.5, letterSpacing: '-0.01em' }}>
                             Алексей
                           </Typography>
-                          <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Typography variant="body2" sx={{ color: GLASS_COLORS.textSecondary, display: 'flex', alignItems: 'center', gap: 0.5 }}>
                             <TrendingUpIcon fontSize="small" /> Senior Frontend Developer
                           </Typography>
                         </Box>
                       </Box>
 
                       <Typography variant="body1" sx={{ 
-                        color: NEUTRAL_COLORS.textPrimary, 
+                        color: GLASS_COLORS.textPrimary, 
                         lineHeight: 1.7,
                         fontStyle: 'italic',
                         position: 'relative',
@@ -2711,7 +3191,7 @@ export const HomePage: React.FC = () => {
                           position: 'absolute',
                           left: -10,
                           top: -5,
-                          color: NEUTRAL_COLORS.accent,
+                          color: GLASS_COLORS.primary,
                           fontSize: '1.5rem',
                           opacity: 0.5
                         }
@@ -2729,53 +3209,51 @@ export const HomePage: React.FC = () => {
                       sx={{ 
                         p: 4, 
                         height: '100%', 
-                        backgroundColor: NEUTRAL_COLORS.surface,
-                        border: `1px solid ${NEUTRAL_COLORS.border}`,
+                        background: GLASS_COLORS.surface,
+                        backdropFilter: 'blur(20px)',
+                        border: '1px solid',
+                        borderColor: GLASS_COLORS.border,
                         borderRadius: 3,
                         position: 'relative',
                         overflow: 'hidden',
-                        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                        transition: 'all 0.4s cubic-bezier(0.2, 0, 0, 1)',
                         '&::before': {
                           content: '""',
                           position: 'absolute',
                           top: 0,
                           left: 0,
                           right: 0,
-                          height: '4px',
-                          background: `linear-gradient(90deg, ${NEUTRAL_COLORS.success}, ${alpha(NEUTRAL_COLORS.success, 0.5)})`,
+                          height: '100%',
+                          background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+                          opacity: 0,
+                          transition: 'opacity 0.4s ease',
+                        },
+                        '&::after': {
+                          content: '""',
+                          position: 'absolute',
+                          top: -20,
+                          left: -20,
+                          right: -20,
+                          bottom: -20,
+                          background: `radial-gradient(circle at 30% 30%, ${GLASS_COLORS.success} 0%, transparent 70%)`,
+                          opacity: 0,
+                          zIndex: -1,
+                          filter: 'blur(30px)',
+                          transition: 'opacity 0.4s ease',
                         },
                         '&:hover': {
-                          transform: 'translateY(-8px)',
-                          boxShadow: `0 20px 40px ${alpha(NEUTRAL_COLORS.success, 0.15)}`,
-                          borderColor: NEUTRAL_COLORS.success,
-                          '& .company-badge': {
-                            transform: 'scale(1.1)',
-                            boxShadow: `0 8px 25px ${alpha(NEUTRAL_COLORS.success, 0.3)}`,
-                          },
-                          '& .quote-icon': {
+                          transform: 'translateY(-8px) scale(1.02)',
+                          boxShadow: `0 24px 48px ${alpha(GLASS_COLORS.success, 0.2)}`,
+                          borderColor: GLASS_COLORS.borderGlow,
+                          '&::before': {
                             opacity: 1,
-                            transform: 'translateY(0)',
-                          }
+                          },
+                          '&::after': {
+                            opacity: 0.3,
+                          },
                         }
                       }}
                     >
-                      <Box 
-                        className="quote-icon"
-                        sx={{
-                          position: 'absolute',
-                          top: 20,
-                          right: 20,
-                          opacity: 0.3,
-                          transform: 'translateY(-10px)',
-                          transition: 'all 0.3s ease',
-                        }}
-                      >
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M10 7H6C5.46957 7 4.96086 7.21071 4.58579 7.58579C4.21071 7.96086 4 8.46957 4 9V14C4 14.5304 4.21071 15.0391 4.58579 15.4142C4.96086 15.7893 5.46957 16 6 16H9V19C9 19.5304 9.21071 20.0391 9.58579 20.4142C9.96086 20.7893 10.4696 21 11 21C11.5304 21 12.0391 20.7893 12.4142 20.4142C12.7893 20.0391 13 19.5304 13 19V16C13 15.4696 12.7893 14.9609 12.4142 14.5858C12.0391 14.2107 11.5304 14 11 14H10V7Z" fill={alpha(NEUTRAL_COLORS.success, 0.2)} />
-                          <path d="M20 7H16C15.4696 7 14.9609 7.21071 14.5858 7.58579C14.2107 7.96086 14 8.46957 14 9V14C14 14.5304 14.2107 15.0391 14.5858 15.4142C14.9609 15.7893 15.4696 16 16 16H19V19C19 19.5304 19.2107 20.0391 19.5858 20.4142C19.9609 20.7893 20.4696 21 21 21C21.5304 21 22.0391 20.7893 22.4142 20.4142C22.7893 20.0391 23 19.5304 23 19V16C23 15.4696 22.7893 14.9609 22.4142 14.5858C22.0391 14.2107 21.5304 14 21 14H20V7Z" fill={alpha(NEUTRAL_COLORS.success, 0.2)} />
-                        </svg>
-                      </Box>
-
                       <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                         <Box sx={{ 
                           position: 'relative',
@@ -2788,39 +3266,40 @@ export const HomePage: React.FC = () => {
                             width: 12,
                             height: 12,
                             borderRadius: '50%',
-                            backgroundColor: NEUTRAL_COLORS.success,
-                            border: `2px solid ${NEUTRAL_COLORS.surface}`,
+                            backgroundColor: GLASS_COLORS.success,
+                            border: '2px solid',
+                            borderColor: GLASS_COLORS.surface,
                           }
                         }}>
                           <Box sx={{ 
                             width: 56, 
                             height: 56, 
                             borderRadius: '50%', 
-                            background: `linear-gradient(135deg, ${NEUTRAL_COLORS.success}, ${alpha(NEUTRAL_COLORS.success, 0.7)})`,
+                            background: `linear-gradient(135deg, ${GLASS_COLORS.success}, ${alpha(GLASS_COLORS.success, 0.7)})`,
                             display: 'flex', 
                             alignItems: 'center', 
                             justifyContent: 'center',
                             fontSize: '1.5rem',
-                            fontWeight: 700,
+                            fontWeight: 600,
                             color: 'white',
-                            boxShadow: `0 4px 15px ${alpha(NEUTRAL_COLORS.success, 0.3)}`,
+                            boxShadow: `0 4px 12px ${alpha(GLASS_COLORS.success, 0.3)}`,
                           }}>
                             М
                           </Box>
                         </Box>
                         
                         <Box>
-                          <Typography variant="h6" sx={{ fontWeight: 700, color: NEUTRAL_COLORS.textPrimary, mb: 0.5 }}>
+                          <Typography variant="h6" sx={{ fontWeight: 600, color: GLASS_COLORS.textPrimary, mb: 0.5, letterSpacing: '-0.01em' }}>
                             Мария
                           </Typography>
-                          <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Typography variant="body2" sx={{ color: GLASS_COLORS.textSecondary, display: 'flex', alignItems: 'center', gap: 0.5 }}>
                             <SchoolIcon fontSize="small" /> Junior Backend Developer
                           </Typography>
                         </Box>
                       </Box>
 
                       <Typography variant="body1" sx={{ 
-                        color: NEUTRAL_COLORS.textPrimary, 
+                        color: GLASS_COLORS.textPrimary, 
                         lineHeight: 1.7,
                         fontStyle: 'italic',
                         position: 'relative',
@@ -2830,7 +3309,7 @@ export const HomePage: React.FC = () => {
                           position: 'absolute',
                           left: -10,
                           top: -5,
-                          color: NEUTRAL_COLORS.success,
+                          color: GLASS_COLORS.success,
                           fontSize: '1.5rem',
                           opacity: 0.5
                         }
@@ -2848,53 +3327,51 @@ export const HomePage: React.FC = () => {
                       sx={{ 
                         p: 4, 
                         height: '100%', 
-                        backgroundColor: NEUTRAL_COLORS.surface,
-                        border: `1px solid ${NEUTRAL_COLORS.border}`,
+                        background: GLASS_COLORS.surface,
+                        backdropFilter: 'blur(20px)',
+                        border: '1px solid',
+                        borderColor: GLASS_COLORS.border,
                         borderRadius: 3,
                         position: 'relative',
                         overflow: 'hidden',
-                        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                        transition: 'all 0.4s cubic-bezier(0.2, 0, 0, 1)',
                         '&::before': {
                           content: '""',
                           position: 'absolute',
                           top: 0,
                           left: 0,
                           right: 0,
-                          height: '4px',
-                          background: `linear-gradient(90deg, ${NEUTRAL_COLORS.purple}, ${alpha(NEUTRAL_COLORS.purple, 0.5)})`,
+                          height: '100%',
+                          background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+                          opacity: 0,
+                          transition: 'opacity 0.4s ease',
+                        },
+                        '&::after': {
+                          content: '""',
+                          position: 'absolute',
+                          top: -20,
+                          left: -20,
+                          right: -20,
+                          bottom: -20,
+                          background: `radial-gradient(circle at 30% 30%, ${GLASS_COLORS.purple} 0%, transparent 70%)`,
+                          opacity: 0,
+                          zIndex: -1,
+                          filter: 'blur(30px)',
+                          transition: 'opacity 0.4s ease',
                         },
                         '&:hover': {
-                          transform: 'translateY(-8px)',
-                          boxShadow: `0 20px 40px ${alpha(NEUTRAL_COLORS.purple, 0.15)}`,
-                          borderColor: NEUTRAL_COLORS.purple,
-                          '& .company-badge': {
-                            transform: 'scale(1.1)',
-                            boxShadow: `0 8px 25px ${alpha(NEUTRAL_COLORS.purple, 0.3)}`,
-                          },
-                          '& .quote-icon': {
+                          transform: 'translateY(-8px) scale(1.02)',
+                          boxShadow: `0 24px 48px ${alpha(GLASS_COLORS.purple, 0.2)}`,
+                          borderColor: GLASS_COLORS.borderGlow,
+                          '&::before': {
                             opacity: 1,
-                            transform: 'translateY(0)',
-                          }
+                          },
+                          '&::after': {
+                            opacity: 0.3,
+                          },
                         }
                       }}
                     >
-                      <Box 
-                        className="quote-icon"
-                        sx={{
-                          position: 'absolute',
-                          top: 20,
-                          right: 20,
-                          opacity: 0.3,
-                          transform: 'translateY(-10px)',
-                          transition: 'all 0.3s ease',
-                        }}
-                      >
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M10 7H6C5.46957 7 4.96086 7.21071 4.58579 7.58579C4.21071 7.96086 4 8.46957 4 9V14C4 14.5304 4.21071 15.0391 4.58579 15.4142C4.96086 15.7893 5.46957 16 6 16H9V19C9 19.5304 9.21071 20.0391 9.58579 20.4142C9.96086 20.7893 10.4696 21 11 21C11.5304 21 12.0391 20.7893 12.4142 20.4142C12.7893 20.0391 13 19.5304 13 19V16C13 15.4696 12.7893 14.9609 12.4142 14.5858C12.0391 14.2107 11.5304 14 11 14H10V7Z" fill={alpha(NEUTRAL_COLORS.purple, 0.2)} />
-                          <path d="M20 7H16C15.4696 7 14.9609 7.21071 14.5858 7.58579C14.2107 7.96086 14 8.46957 14 9V14C14 14.5304 14.2107 15.0391 14.5858 15.4142C14.9609 15.7893 15.4696 16 16 16H19V19C19 19.5304 19.2107 20.0391 19.5858 20.4142C19.9609 20.7893 20.4696 21 21 21C21.5304 21 22.0391 20.7893 22.4142 20.4142C22.7893 20.0391 23 19.5304 23 19V16C23 15.4696 22.7893 14.9609 22.4142 14.5858C22.0391 14.2107 21.5304 14 21 14H20V7Z" fill={alpha(NEUTRAL_COLORS.purple, 0.2)} />
-                        </svg>
-                      </Box>
-
                       <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                         <Box sx={{ 
                           position: 'relative',
@@ -2907,39 +3384,40 @@ export const HomePage: React.FC = () => {
                             width: 12,
                             height: 12,
                             borderRadius: '50%',
-                            backgroundColor: NEUTRAL_COLORS.purple,
-                            border: `2px solid ${NEUTRAL_COLORS.surface}`,
+                            backgroundColor: GLASS_COLORS.purple,
+                            border: '2px solid',
+                            borderColor: GLASS_COLORS.surface,
                           }
                         }}>
                           <Box sx={{ 
                             width: 56, 
                             height: 56, 
                             borderRadius: '50%', 
-                            background: `linear-gradient(135deg, ${NEUTRAL_COLORS.purple}, ${alpha(NEUTRAL_COLORS.purple, 0.7)})`,
+                            background: `linear-gradient(135deg, ${GLASS_COLORS.purple}, ${alpha(GLASS_COLORS.purple, 0.7)})`,
                             display: 'flex', 
                             alignItems: 'center', 
                             justifyContent: 'center',
                             fontSize: '1.5rem',
-                            fontWeight: 700,
+                            fontWeight: 600,
                             color: 'white',
-                            boxShadow: `0 4px 15px ${alpha(NEUTRAL_COLORS.purple, 0.3)}`,
+                            boxShadow: `0 4px 12px ${alpha(GLASS_COLORS.purple, 0.3)}`,
                           }}>
                             Д
                           </Box>
                         </Box>
                         
                         <Box>
-                          <Typography variant="h6" sx={{ fontWeight: 700, color: NEUTRAL_COLORS.textPrimary, mb: 0.5 }}>
+                          <Typography variant="h6" sx={{ fontWeight: 600, color: GLASS_COLORS.textPrimary, mb: 0.5, letterSpacing: '-0.01em' }}>
                             Дмитрий
                           </Typography>
-                          <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Typography variant="body2" sx={{ color: GLASS_COLORS.textSecondary, display: 'flex', alignItems: 'center', gap: 0.5 }}>
                             <WorkIcon fontSize="small" /> Team Lead
                           </Typography>
                         </Box>
                       </Box>
 
                       <Typography variant="body1" sx={{ 
-                        color: NEUTRAL_COLORS.textPrimary, 
+                        color: GLASS_COLORS.textPrimary, 
                         lineHeight: 1.7,
                         fontStyle: 'italic',
                         position: 'relative',
@@ -2949,7 +3427,7 @@ export const HomePage: React.FC = () => {
                           position: 'absolute',
                           left: -10,
                           top: -5,
-                          color: NEUTRAL_COLORS.purple,
+                          color: GLASS_COLORS.purple,
                           fontSize: '1.5rem',
                           opacity: 0.5
                         }
@@ -2964,7 +3442,6 @@ export const HomePage: React.FC = () => {
           </Box>
         )}
 
-          {/* Как это работает для неавторизованных - в одну линию */}
           {!isAuthenticated && (
             <Box sx={{ mb: 10 }}>
               <Typography 
@@ -2972,8 +3449,9 @@ export const HomePage: React.FC = () => {
                 sx={{ 
                   mb: 6, 
                   fontWeight: 700,
-                  color: NEUTRAL_COLORS.textPrimary,
-                  textAlign: 'center'
+                  color: GLASS_COLORS.textPrimary,
+                  textAlign: 'center',
+                  letterSpacing: '-0.02em',
                 }}
               >
                 Чтобы получить оффер надо сделать 3 простых шага
@@ -2987,22 +3465,40 @@ export const HomePage: React.FC = () => {
                 gap: 4,
                 mb: 6
               }}>
-                {/* Шаг 1 */}
                 <Box sx={{ 
                   flex: 1,
                   maxWidth: { md: '350px' },
                   p: 3,
                   textAlign: 'center',
-                  backgroundColor: NEUTRAL_COLORS.surface,
-                  border: `1px solid ${NEUTRAL_COLORS.border}`,
-                  borderRadius: 2,
+                  background: GLASS_COLORS.surface,
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid',
+                  borderColor: GLASS_COLORS.border,
+                  borderRadius: 3,
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  transition: 'all 0.3s ease',
+                  transition: 'all 0.4s cubic-bezier(0.2, 0, 0, 1)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '100%',
+                    background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+                    opacity: 0,
+                    transition: 'opacity 0.4s ease',
+                  },
                   '&:hover': {
-                    boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
-                    transform: 'translateY(-4px)',
+                    transform: 'translateY(-8px) scale(1.02)',
+                    boxShadow: `0 16px 32px ${alpha(GLASS_COLORS.primary, 0.15)}`,
+                    borderColor: GLASS_COLORS.borderGlow,
+                    '&::before': {
+                      opacity: 1,
+                    },
                   }
                 }}>
                   <Box sx={{ 
@@ -3012,9 +3508,12 @@ export const HomePage: React.FC = () => {
                     width: 80,
                     height: 80,
                     borderRadius: '50%',
-                    backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
+                    backgroundColor: alpha(GLASS_COLORS.primary, 0.15),
+                    backdropFilter: 'blur(10px)',
                     mb: 3,
                     position: 'relative',
+                    border: '1px solid',
+                    borderColor: alpha(GLASS_COLORS.primary, 0.3),
                     '&::before': {
                       content: '"1"',
                       position: 'absolute',
@@ -3023,41 +3522,61 @@ export const HomePage: React.FC = () => {
                       width: 30,
                       height: 30,
                       borderRadius: '50%',
-                      backgroundColor: NEUTRAL_COLORS.accent,
+                      background: `linear-gradient(135deg, ${GLASS_COLORS.primary}, ${GLASS_COLORS.secondary})`,
                       color: 'white',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontWeight: 700,
-                      fontSize: '0.875rem'
+                      fontWeight: 600,
+                      fontSize: '0.875rem',
+                      border: '2px solid',
+                      borderColor: GLASS_COLORS.surface,
                     }
                   }}>
-                    <LoginIcon sx={{ fontSize: 40, color: NEUTRAL_COLORS.accent }} />
+                    <LoginIcon sx={{ fontSize: 40, color: GLASS_COLORS.primary }} />
                   </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: NEUTRAL_COLORS.textPrimary }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: GLASS_COLORS.textPrimary, letterSpacing: '-0.01em' }}>
                     Зарегистрируйтесь
                   </Typography>
-                  <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary, flex: 1 }}>
+                  <Typography variant="body2" sx={{ color: GLASS_COLORS.textSecondary, flex: 1 }}>
                     Создайте аккаунт за 30 секунд. Это бесплатно и не требует подтверждения.
                   </Typography>
                 </Box>
 
-                {/* Шаг 2 */}
                 <Box sx={{ 
                   flex: 1,
                   maxWidth: { md: '350px' },
                   p: 3,
                   textAlign: 'center',
-                  backgroundColor: NEUTRAL_COLORS.surface,
-                  border: `1px solid ${NEUTRAL_COLORS.border}`,
-                  borderRadius: 2,
+                  background: GLASS_COLORS.surface,
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid',
+                  borderColor: GLASS_COLORS.border,
+                  borderRadius: 3,
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  transition: 'all 0.3s ease',
+                  transition: 'all 0.4s cubic-bezier(0.2, 0, 0, 1)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '100%',
+                    background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+                    opacity: 0,
+                    transition: 'opacity 0.4s ease',
+                  },
                   '&:hover': {
-                    boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
-                    transform: 'translateY(-4px)',
+                    transform: 'translateY(-8px) scale(1.02)',
+                    boxShadow: `0 16px 32px ${alpha(GLASS_COLORS.success, 0.15)}`,
+                    borderColor: GLASS_COLORS.borderGlow,
+                    '&::before': {
+                      opacity: 1,
+                    },
                   }
                 }}>
                   <Box sx={{ 
@@ -3067,9 +3586,12 @@ export const HomePage: React.FC = () => {
                     width: 80,
                     height: 80,
                     borderRadius: '50%',
-                    backgroundColor: alpha(NEUTRAL_COLORS.success, 0.1),
+                    backgroundColor: alpha(GLASS_COLORS.success, 0.15),
+                    backdropFilter: 'blur(10px)',
                     mb: 3,
                     position: 'relative',
+                    border: '1px solid',
+                    borderColor: alpha(GLASS_COLORS.success, 0.3),
                     '&::before': {
                       content: '"2"',
                       position: 'absolute',
@@ -3078,41 +3600,61 @@ export const HomePage: React.FC = () => {
                       width: 30,
                       height: 30,
                       borderRadius: '50%',
-                      backgroundColor: NEUTRAL_COLORS.success,
+                      background: `linear-gradient(135deg, ${GLASS_COLORS.success}, ${alpha(GLASS_COLORS.success, 0.7)})`,
                       color: 'white',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontWeight: 700,
-                      fontSize: '0.875rem'
+                      fontWeight: 600,
+                      fontSize: '0.875rem',
+                      border: '2px solid',
+                      borderColor: GLASS_COLORS.surface,
                     }
                   }}>
-                    <CategoryIcon sx={{ fontSize: 40, color: NEUTRAL_COLORS.success }} />
+                    <CategoryIcon sx={{ fontSize: 40, color: GLASS_COLORS.success }} />
                   </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: NEUTRAL_COLORS.textPrimary }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: GLASS_COLORS.textPrimary, letterSpacing: '-0.01em' }}>
                     Выберите категории
                   </Typography>
-                  <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary, flex: 1 }}>
+                  <Typography variant="body2" sx={{ color: GLASS_COLORS.textSecondary, flex: 1 }}>
                     Отметьте технологии, которые вам нужны для подготовки.
                   </Typography>
                 </Box>
 
-                {/* Шаг 3 */}
                 <Box sx={{ 
                   flex: 1,
                   maxWidth: { md: '350px' },
                   p: 3,
                   textAlign: 'center',
-                  backgroundColor: NEUTRAL_COLORS.surface,
-                  border: `1px solid ${NEUTRAL_COLORS.border}`,
-                  borderRadius: 2,
+                  background: GLASS_COLORS.surface,
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid',
+                  borderColor: GLASS_COLORS.border,
+                  borderRadius: 3,
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  transition: 'all 0.3s ease',
+                  transition: 'all 0.4s cubic-bezier(0.2, 0, 0, 1)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '100%',
+                    background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+                    opacity: 0,
+                    transition: 'opacity 0.4s ease',
+                  },
                   '&:hover': {
-                    boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
-                    transform: 'translateY(-4px)',
+                    transform: 'translateY(-8px) scale(1.02)',
+                    boxShadow: `0 16px 32px ${alpha(GLASS_COLORS.purple, 0.15)}`,
+                    borderColor: GLASS_COLORS.borderGlow,
+                    '&::before': {
+                      opacity: 1,
+                    },
                   }
                 }}>
                   <Box sx={{ 
@@ -3122,9 +3664,12 @@ export const HomePage: React.FC = () => {
                     width: 80,
                     height: 80,
                     borderRadius: '50%',
-                    backgroundColor: alpha(NEUTRAL_COLORS.purple, 0.1),
+                    backgroundColor: alpha(GLASS_COLORS.purple, 0.15),
+                    backdropFilter: 'blur(10px)',
                     mb: 3,
                     position: 'relative',
+                    border: '1px solid',
+                    borderColor: alpha(GLASS_COLORS.purple, 0.3),
                     '&::before': {
                       content: '"3"',
                       position: 'absolute',
@@ -3133,21 +3678,23 @@ export const HomePage: React.FC = () => {
                       width: 30,
                       height: 30,
                       borderRadius: '50%',
-                      backgroundColor: NEUTRAL_COLORS.purple,
+                      background: `linear-gradient(135deg, ${GLASS_COLORS.purple}, ${alpha(GLASS_COLORS.purple, 0.7)})`,
                       color: 'white',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontWeight: 700,
-                      fontSize: '0.875rem'
+                      fontWeight: 600,
+                      fontSize: '0.875rem',
+                      border: '2px solid',
+                      borderColor: GLASS_COLORS.surface,
                     }
                   }}>
-                    <StartLearningIcon sx={{ fontSize: 40, color: NEUTRAL_COLORS.purple }} />
+                    <StartLearningIcon sx={{ fontSize: 40, color: GLASS_COLORS.purple }} />
                   </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: NEUTRAL_COLORS.textPrimary }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: GLASS_COLORS.textPrimary, letterSpacing: '-0.01em' }}>
                     Начните практиковаться
                   </Typography>
-                  <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary, flex: 1 }}>
+                  <Typography variant="body2" sx={{ color: GLASS_COLORS.textSecondary, flex: 1 }}>
                     Отвечайте на вопросы, проверяйте ответы и отслеживайте прогресс.
                   </Typography>
                 </Box>
@@ -3160,25 +3707,63 @@ export const HomePage: React.FC = () => {
               <Typography 
                 variant="h5" 
                 sx={{ 
+                  justifyContent: 'center',
                   mb: 4, 
                   fontWeight: 600,
-                  color: NEUTRAL_COLORS.textPrimary,
+                  color: GLASS_COLORS.textPrimary,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 1
+                  gap: 1.5,
+                  letterSpacing: '-0.02em',
+                  fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
+                  position: 'relative',
+                  paddingLeft: '12px',
+                  textShadow: '0 2px 10px rgba(255,255,255,0.5)',
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    left: '2px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: '2px',
+                    height: '40%',
+                    background: alpha('#FFFFFF', 0.8),
+                    borderRadius: '4px',
+                    filter: 'blur(2px)',
+                  }
                 }}
               >
-                <StarIcon sx={{ color: NEUTRAL_COLORS.warning }} />
-                Популярные категории
+                <Box 
+                  component="span"
+                  sx={{
+                    background: `linear-gradient(135deg, ${GLASS_COLORS.textPrimary} 0%, ${alpha(GLASS_COLORS.primary, 0.8)} 100%)`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    position: 'relative',
+                    '&::after': {
+                      content: '""',
+                      position: 'absolute',
+                      bottom: '-4px',
+                      left: 0,
+                      width: '100%',
+                      height: '2px',
+                      background: `linear-gradient(90deg, ${GLASS_COLORS.primary} 0%, transparent 100%)`,
+                      borderRadius: '2px',
+                      opacity: 0.5,
+                    }
+                  }}
+                >
+                  Популярные категории
+                </Box>
               </Typography>
               
               {isLoading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                  <CircularProgress sx={{ color: NEUTRAL_COLORS.accent }} />
+                  <CircularProgress sx={{ color: GLASS_COLORS.primary }} />
                 </Box>
               ) : categories.length > 0 ? (
                 <>
-                  {/* Для мобильных - горизонтальный скролл */}
                   <Box 
                     sx={{ 
                       display: { xs: 'flex', lg: 'none' },
@@ -3186,16 +3771,16 @@ export const HomePage: React.FC = () => {
                       overflowX: 'auto',
                       pb: 2,
                       scrollbarWidth: 'thin',
-                      scrollbarColor: `${NEUTRAL_COLORS.border} transparent`,
+                      scrollbarColor: `${GLASS_COLORS.border} transparent`,
                       '&::-webkit-scrollbar': {
                         height: 4,
                       },
                       '&::-webkit-scrollbar-track': {
-                        background: alpha(NEUTRAL_COLORS.background, 0.5),
+                        background: alpha(GLASS_COLORS.background, 0.5),
                         borderRadius: 2,
                       },
                       '&::-webkit-scrollbar-thumb': {
-                        background: alpha(NEUTRAL_COLORS.textSecondary, 0.3),
+                        background: alpha(GLASS_COLORS.textSecondary, 0.3),
                         borderRadius: 2,
                       },
                     }}
@@ -3208,25 +3793,19 @@ export const HomePage: React.FC = () => {
                             xs: 'calc(50% - 8px)', 
                             sm: 'calc(33.333% - 8px)', 
                             md: 'calc(25% - 8px)',
-                            lg: 'calc(20% - 8px)' // 5 карточек на 900px+
+                            lg: 'calc(20% - 8px)'
                           },
                           flexShrink: 0,
                         }}
                       >
-                        <CategoryCard
+                        <GlassCategoryCard
                           category={category}
-                          sx={{
-                            height: '100%',
-                            p: 2,
-                            borderRadius: 2,
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                          }}
+                          onClick={() => navigate(`/questions?category=${category.slug}`)}
                         />
                       </Box>
                     ))}
                   </Box>
 
-                  {/* Для планшетов и десктопов - сетка */}
                   <Grid 
                     container 
                     spacing={2} 
@@ -3246,18 +3825,9 @@ export const HomePage: React.FC = () => {
                           display: 'flex',
                         }}
                       >
-                        <CategoryCard
+                        <GlassCategoryCard
                           category={category}
-                          sx={{
-                            flex: 1,
-                            p: { sm: 2, md: 2.5 },
-                            borderRadius: { sm: 2, md: 2.5 },
-                            transition: 'all 0.2s ease',
-                            '&:hover': {
-                              transform: 'translateY(-2px)',
-                              boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
-                            }
-                          }}
+                          onClick={() => navigate(`/questions?category=${category.slug}`)}
                         />
                       </Grid>
                     ))}
@@ -3266,7 +3836,7 @@ export const HomePage: React.FC = () => {
               ) : (
                 <Typography 
                   sx={{ 
-                    color: NEUTRAL_COLORS.textSecondary,
+                    color: GLASS_COLORS.textSecondary,
                     textAlign: 'center',
                     py: 4 
                   }}
@@ -3281,82 +3851,125 @@ export const HomePage: React.FC = () => {
 
       <Fade in timeout={1500}>
         <Box sx={{ 
-          py: 6, 
-          borderTop: `1px solid ${NEUTRAL_COLORS.border}`,
-          backgroundColor: NEUTRAL_COLORS.surface,
-          backdropFilter: 'blur(8px)'
+          py: 4,
+          borderTop: '1px solid',
+          borderColor: alpha(GLASS_COLORS.border, 0.3),
+          background: GLASS_COLORS.surface,
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          position: 'relative',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '1px',
+            background: `linear-gradient(90deg, transparent 0%, ${GLASS_COLORS.primary} 20%, ${GLASS_COLORS.secondary} 50%, ${GLASS_COLORS.primary} 80%, transparent 100%)`,
+            opacity: 0.3,
+          }
         }}>
           <Container maxWidth="lg">
-            <Grid container spacing={4}>
-              <Grid item xs={12} md={6}>
+            <Box sx={{ 
+              display: 'flex',
+              flexDirection: { xs: 'column', md: 'row' },
+              justifyContent: 'space-between',
+              alignItems: { xs: 'flex-start', md: 'center' },
+              gap: 3
+            }}>
+              {/* Левая часть - логотип и описание */}
+              <Box sx={{ flex: 1 }}>
                 <Typography 
                   variant="h6" 
                   sx={{ 
-                    fontWeight: 900,
-                    color: NEUTRAL_COLORS.textPrimary,
-                    fontSize: '1.45rem',
+                    fontWeight: 600,
+                    color: GLASS_COLORS.textPrimary,
+                    fontSize: '1.35rem',
                     cursor: 'pointer',
-                    letterSpacing: '-0.025em',
-                    display: 'flex',
+                    letterSpacing: '-0.02em',
+                    display: 'inline-flex',
                     alignItems: 'center',
-                    mb: 2,
+                    mb: 1,
+                    transition: 'all 0.2s ease',
                     '&:hover': { 
-                      color: NEUTRAL_COLORS.accent,
-                      opacity: 0.9 
+                      color: GLASS_COLORS.primary,
+                      transform: 'translateX(2px)',
                     }
                   }}
                   onClick={() => handleNavigation('/')}
                 >
-                  Interview<span style={{ color: NEUTRAL_COLORS.accent }}>Box</span>
+                  Interview<span style={{ color: GLASS_COLORS.primary }}>Box</span>
                 </Typography>
                 <Typography 
                   variant="body2" 
                   sx={{ 
-                    color: NEUTRAL_COLORS.textSecondary, 
-                    mb: 3,
-                    maxWidth: '400px'
+                    color: alpha(GLASS_COLORS.textSecondary, 0.8),
+                    maxWidth: '320px',
+                    fontSize: '0.9rem',
+                    lineHeight: 1.5
                   }}
                 >
-                  Платформа для подготовки к техническим собеседованиям
+                  Готовься к собеседованиям эффективно
                 </Typography>
+              </Box>
+
+              {/* Правая часть - информация и кнопка */}
+              <Box sx={{ 
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { xs: 'flex-start', sm: 'center' },
+                gap: 3
+              }}>
+                <Box sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      color: alpha(GLASS_COLORS.textSecondary, 0.7),
+                      fontSize: '0.85rem',
+                      mb: 0.5
+                    }}
+                  >
+                    © 2026 InterviewBox
+                  </Typography>
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      color: alpha(GLASS_COLORS.textSecondary, 0.5),
+                      fontSize: '0.75rem',
+                      display: 'block'
+                    }}
+                  >
+                    v1.0.0
+                  </Typography>
+                </Box>
+
                 <Button
                   variant="contained"
-                  endIcon={<ChevronRightIcon />}
+                  size="small"
+                  endIcon={<ChevronRightIcon sx={{ fontSize: 16 }} />}
                   onClick={() => navigate('/questions')}
                   sx={{
-                    background: `linear-gradient(135deg, ${NEUTRAL_COLORS.accent} 0%, ${alpha(NEUTRAL_COLORS.accent, 0.9)} 100%)`,
-                    borderRadius: 2,
-                    fontWeight: 600,
-                    px: 4,
-                    py: 1.5,
+                    background: `linear-gradient(135deg, ${GLASS_COLORS.primary} 0%, ${GLASS_COLORS.secondary} 100%)`,
+                    borderRadius: '30px',
+                    fontWeight: 500,
+                    fontSize: '0.85rem',
+                    px: 3,
+                    py: 1,
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid',
+                    borderColor: alpha('#FFFFFF', 0.3),
+                    boxShadow: `0 4px 10px ${alpha(GLASS_COLORS.primary, 0.2)}`,
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      transform: 'translateX(2px)',
+                      boxShadow: `0 6px 15px ${alpha(GLASS_COLORS.primary, 0.3)}`,
+                    }
                   }}
                 >
-                  Начни практиковаться сейчас
+                  Практиковаться
                 </Button>
-              </Grid>
-              
-              <Grid item xs={12} md={6}>
-                <Typography 
-                  variant="body2" 
-                  sx={{ 
-                    color: NEUTRAL_COLORS.textSecondary, 
-                    mb: 1,
-                    fontSize: '0.875rem'
-                  }}
-                >
-                  © 2026 InterviewBox. Все права защищены.
-                </Typography>
-                <Typography 
-                  variant="caption" 
-                  sx={{ 
-                    color: alpha(NEUTRAL_COLORS.textSecondary, 0.7),
-                    fontSize: '0.75rem'
-                  }}
-                >
-                  Платформа подготовки к собеседованиям • v1.0.0
-                </Typography>
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
           </Container>
         </Box>
       </Fade>

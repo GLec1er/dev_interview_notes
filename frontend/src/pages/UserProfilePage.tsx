@@ -52,26 +52,34 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { questionCompletionService } from '../services/questionCompletionService';
 
-// Нейтральная цветовая палитра
-const NEUTRAL_COLORS = {
-  primary: '#2D3748',
-  secondary: '#4A5568',
-  accent: '#3182CE',
-  background: '#F7FAFC',
-  surface: '#FFFFFF',
-  textPrimary: '#1A202C',
-  textSecondary: '#718096',
-  border: '#E2E8F0',
-  success: '#38A169',
-  warning: '#DD6B20',
-  error: '#E53E3E',
-  info: '#3182CE',
-  easy: '#38A169',
-  medium: '#D69E2E',
-  hard: '#E53E3E',
-  gold: '#D4AF37',
-  silver: '#6b6b6bff',
-  bronze: '#CD7F32',
+// Стеклянная цветовая палитра iOS 26 Liquid Glass
+const GLASS_COLORS = {
+  primary: 'rgba(10, 132, 255, 0.8)', // iOS синий с прозрачностью
+  secondary: 'rgba(94, 92, 230, 0.75)', // Фиолетово-синий
+  accent: 'rgba(90, 200, 250, 0.9)', // Голубой акцент
+  background: 'rgba(240, 244, 250, 0.4)', // Полупрозрачный фон
+  surface: 'rgba(255, 255, 255, 0.6)', // Стеклянная поверхность
+  surfaceDark: 'rgba(255, 255, 255, 0.8)', // Более плотное стекло
+  textPrimary: 'rgba(0, 0, 0, 0.8)',
+  textSecondary: 'rgba(60, 60, 67, 0.6)',
+  border: 'rgba(255, 255, 255, 0.5)', // Стеклянная граница
+  borderGlow: 'rgba(255, 255, 255, 0.8)',
+  success: 'rgba(52, 199, 89, 0.8)', // iOS зеленый
+  error: 'rgba(255, 59, 48, 0.8)', // iOS красный
+  warning: 'rgba(255, 149, 0, 0.8)', // iOS оранжевый
+  purple: 'rgba(175, 82, 222, 0.8)', // iOS фиолетовый
+  blue: 'rgba(0, 122, 255, 0.8)', // iOS синий
+  info: 'rgba(90, 200, 250, 0.8)',
+  gradientStart: 'rgba(255, 255, 255, 0.3)',
+  gradientEnd: 'rgba(255, 255, 255, 0.1)',
+  glassOverlay: 'rgba(255, 255, 255, 0.2)',
+  glassHighlight: 'rgba(255, 255, 255, 0.5)',
+  easy: 'rgba(52, 199, 89, 0.8)',
+  medium: 'rgba(255, 149, 0, 0.8)',
+  hard: 'rgba(255, 59, 48, 0.8)',
+  gold: 'rgba(212, 175, 55, 0.8)',
+  silver: 'rgba(107, 107, 107, 0.7)',
+  bronze: 'rgba(205, 127, 50, 0.7)',
 };
 
 // Типы ачивок
@@ -88,29 +96,64 @@ interface Achievement {
   category?: 'progress' | 'category' | 'difficulty';
 }
 
-// Компонент ачивки с фиксированной высотой
-const AchievementCard: React.FC<{ achievement: Achievement }> = ({ achievement }) => (
+// Компонент ачивки в стеклянном стиле
+const GlassAchievementCard: React.FC<{ achievement: Achievement }> = ({ achievement }) => (
   <Paper
     elevation={0}
     sx={{
       p: 1.5,
-      borderRadius: 2,
-      border: `1.5px solid ${achievement.unlocked ? alpha(achievement.color, 0.5) : alpha(NEUTRAL_COLORS.border, 0.3)}`,
-      backgroundColor: achievement.unlocked ? alpha(achievement.color, 0.04) : alpha(NEUTRAL_COLORS.background, 0.3),
-      position: 'relative',
-      overflow: 'hidden',
+      borderRadius: 3,
+      background: GLASS_COLORS.surface,
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
+      border: '1.5px solid',
+      borderColor: achievement.unlocked ? alpha(achievement.color, 0.5) : GLASS_COLORS.border,
       height: '100%',
-      minHeight: 180, // Уменьшенная высота
+      minHeight: 180,
       display: 'flex',
       flexDirection: 'column',
-      transition: 'all 0.2s ease',
+      transition: 'all 0.4s cubic-bezier(0.2, 0, 0, 1)',
+      position: 'relative',
+      overflow: 'hidden',
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '100%',
+        background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+        opacity: 0,
+        transition: 'opacity 0.4s ease',
+        pointerEvents: 'none',
+      },
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        top: -20,
+        left: -20,
+        right: -20,
+        bottom: -20,
+        background: `radial-gradient(circle at 30% 30%, ${achievement.color} 0%, transparent 70%)`,
+        opacity: achievement.unlocked ? 0.2 : 0,
+        zIndex: -1,
+        filter: 'blur(30px)',
+        transition: 'opacity 0.4s ease',
+      },
       '&:hover': {
-        transform: 'translateY(-2px)',
-        boxShadow: `0 4px 12px ${alpha(achievement.unlocked ? achievement.color : NEUTRAL_COLORS.accent, 0.1)}`,
+        transform: 'translateY(-4px)',
+        boxShadow: `0 16px 32px ${alpha(achievement.unlocked ? achievement.color : GLASS_COLORS.primary, 0.15)}`,
+        borderColor: achievement.unlocked ? achievement.color : GLASS_COLORS.borderGlow,
+        '&::before': {
+          opacity: 1,
+        },
+        '&::after': {
+          opacity: 0.3,
+        },
       },
     }}
   >
-    {/* Иконка ачивки - уменьшенная */}
+    {/* Иконка ачивки */}
     <Box
       sx={{
         position: 'relative',
@@ -128,23 +171,25 @@ const AchievementCard: React.FC<{ achievement: Achievement }> = ({ achievement }
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: achievement.unlocked
-            ? alpha(achievement.color, 0.1)
-            : alpha(NEUTRAL_COLORS.textSecondary, 0.08),
-          border: `2px solid ${achievement.unlocked ? achievement.color : alpha(NEUTRAL_COLORS.textSecondary, 0.3)}`,
+          background: achievement.unlocked
+            ? alpha(achievement.color, 0.15)
+            : alpha(GLASS_COLORS.background, 0.5),
+          backdropFilter: 'blur(10px)',
+          border: '2px solid',
+          borderColor: achievement.unlocked ? achievement.color : alpha(GLASS_COLORS.textSecondary, 0.3),
           position: 'relative',
         }}
       >
         <Box
           sx={{
             fontSize: 22,
-            color: achievement.unlocked ? achievement.color : NEUTRAL_COLORS.textSecondary,
+            color: achievement.unlocked ? achievement.color : GLASS_COLORS.textSecondary,
           }}
         >
           {achievement.icon}
         </Box>
 
-        {/* Индикатор разблокировки - уменьшенный */}
+        {/* Индикатор разблокировки */}
         {achievement.unlocked && (
           <Box
             sx={{
@@ -154,32 +199,35 @@ const AchievementCard: React.FC<{ achievement: Achievement }> = ({ achievement }
               width: 20,
               height: 20,
               borderRadius: '50%',
-              backgroundColor: NEUTRAL_COLORS.gold,
+              background: `linear-gradient(135deg, ${GLASS_COLORS.gold}, ${alpha(GLASS_COLORS.gold, 0.7)})`,
+              backdropFilter: 'blur(10px)',
+              border: '1px solid',
+              borderColor: alpha('#FFFFFF', 0.3),
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              border: `2px solid ${alpha(achievement.color, 0.1)}`,
-              boxShadow: '0 1px 4px rgba(0, 0, 0, 0.15)',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
               zIndex: 2,
             }}
           >
-            <StarIcon sx={{ fontSize: 10, color: NEUTRAL_COLORS.surface }} />
+            <StarIcon sx={{ fontSize: 10, color: 'white' }} />
           </Box>
         )}
       </Box>
     </Box>
 
-    {/* Название и описание - уменьшенные */}
+    {/* Название и описание */}
     <Box sx={{ flex: 1, mb: 1.5 }}>
       <Typography
         variant="subtitle2"
         sx={{
           fontWeight: 600,
-          color: achievement.unlocked ? NEUTRAL_COLORS.textPrimary : NEUTRAL_COLORS.textSecondary,
+          color: achievement.unlocked ? GLASS_COLORS.textPrimary : GLASS_COLORS.textSecondary,
           textAlign: 'center',
           mb: 0.5,
           fontSize: '0.85rem',
           lineHeight: 1.2,
+          letterSpacing: '-0.01em',
         }}
       >
         {achievement.title}
@@ -188,7 +236,7 @@ const AchievementCard: React.FC<{ achievement: Achievement }> = ({ achievement }
       <Typography
         variant="caption"
         sx={{
-          color: achievement.unlocked ? alpha(NEUTRAL_COLORS.textSecondary, 0.8) : alpha(NEUTRAL_COLORS.textSecondary, 0.6),
+          color: achievement.unlocked ? alpha(GLASS_COLORS.textSecondary, 0.8) : alpha(GLASS_COLORS.textSecondary, 0.6),
           textAlign: 'center',
           display: 'block',
           fontSize: '0.7rem',
@@ -199,13 +247,13 @@ const AchievementCard: React.FC<{ achievement: Achievement }> = ({ achievement }
       </Typography>
     </Box>
 
-    {/* Прогресс - компактный */}
+    {/* Прогресс */}
     <Box sx={{ mt: 'auto' }}>
       <Box sx={{ mb: 0.75 }}>
         <Typography
           variant="caption"
           sx={{
-            color: achievement.unlocked ? achievement.color : NEUTRAL_COLORS.textSecondary,
+            color: achievement.unlocked ? achievement.color : GLASS_COLORS.textSecondary,
             fontWeight: 500,
             display: 'block',
             textAlign: 'center',
@@ -221,8 +269,9 @@ const AchievementCard: React.FC<{ achievement: Achievement }> = ({ achievement }
           sx={{
             height: 4,
             borderRadius: 2,
-            backgroundColor: alpha(NEUTRAL_COLORS.border, 0.2),
+            backgroundColor: alpha(GLASS_COLORS.border, 0.5),
             overflow: 'hidden',
+            backdropFilter: 'blur(10px)',
           }}
         >
           <Box
@@ -230,8 +279,9 @@ const AchievementCard: React.FC<{ achievement: Achievement }> = ({ achievement }
               width: `${(achievement.progress / achievement.target) * 100}%`,
               height: '100%',
               borderRadius: 2,
-              backgroundColor: achievement.unlocked ? achievement.color : NEUTRAL_COLORS.accent,
+              background: `linear-gradient(90deg, ${achievement.unlocked ? achievement.color : GLASS_COLORS.primary}, ${alpha(achievement.unlocked ? achievement.color : GLASS_COLORS.primary, 0.6)})`,
               transition: 'width 0.6s ease-out',
+              boxShadow: `0 2px 8px ${alpha(achievement.unlocked ? achievement.color : GLASS_COLORS.primary, 0.3)}`,
             }}
           />
         </Box>
@@ -240,8 +290,8 @@ const AchievementCard: React.FC<{ achievement: Achievement }> = ({ achievement }
   </Paper>
 );
 
-// Компонент текстового поля со стилями
-const StyledInputField = ({
+// Компонент текстового поля в стеклянном стиле
+const GlassInputField = ({
   label,
   type = 'text',
   value,
@@ -256,12 +306,12 @@ const StyledInputField = ({
   <FormControl fullWidth variant="outlined">
     <InputLabel
       sx={{
-        color: NEUTRAL_COLORS.textSecondary,
+        color: GLASS_COLORS.textSecondary,
         '&.Mui-focused': {
-          color: NEUTRAL_COLORS.accent,
+          color: GLASS_COLORS.primary,
         },
         '&.Mui-error': {
-          color: NEUTRAL_COLORS.error,
+          color: GLASS_COLORS.error,
         },
       }}
     >
@@ -276,32 +326,33 @@ const StyledInputField = ({
       label={label}
       readOnly={readOnly}
       startAdornment={startIcon ? (
-        <Box sx={{ color: NEUTRAL_COLORS.textSecondary, mr: 1 }}>
+        <Box sx={{ color: GLASS_COLORS.textSecondary, mr: 1 }}>
           {startIcon}
         </Box>
       ) : undefined}
       sx={{
-        borderRadius: 2,
-        backgroundColor: readOnly ? alpha(NEUTRAL_COLORS.background, 0.5) : NEUTRAL_COLORS.surface,
+        borderRadius: 3,
+        background: readOnly ? alpha(GLASS_COLORS.background, 0.5) : GLASS_COLORS.surface,
+        backdropFilter: 'blur(10px)',
         '& .MuiOutlinedInput-input': {
-          color: NEUTRAL_COLORS.textPrimary,
+          color: GLASS_COLORS.textPrimary,
           '&:read-only': {
-            color: NEUTRAL_COLORS.textSecondary,
+            color: GLASS_COLORS.textSecondary,
           },
         },
         '& .MuiOutlinedInput-notchedOutline': {
-          borderColor: NEUTRAL_COLORS.border,
+          borderColor: GLASS_COLORS.border,
           borderWidth: 1.5,
         },
         '&:hover .MuiOutlinedInput-notchedOutline': {
-          borderColor: readOnly ? NEUTRAL_COLORS.border : NEUTRAL_COLORS.accent,
+          borderColor: readOnly ? GLASS_COLORS.border : GLASS_COLORS.primary,
         },
         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-          borderColor: NEUTRAL_COLORS.accent,
+          borderColor: GLASS_COLORS.primary,
           borderWidth: 2,
         },
         '&.Mui-error .MuiOutlinedInput-notchedOutline': {
-          borderColor: NEUTRAL_COLORS.error,
+          borderColor: GLASS_COLORS.error,
         },
       }}
       {...props}
@@ -311,7 +362,7 @@ const StyledInputField = ({
         variant="caption"
         sx={{
           mt: 0.5,
-          color: error ? NEUTRAL_COLORS.error : NEUTRAL_COLORS.textSecondary,
+          color: error ? GLASS_COLORS.error : GLASS_COLORS.textSecondary,
           fontSize: '0.75rem',
         }}
       >
@@ -321,7 +372,8 @@ const StyledInputField = ({
   </FormControl>
 );
 
-const StyledButton = ({
+// Стилизованная кнопка в стеклянном стиле
+const GlassButton = ({
   children,
   variant = 'contained',
   startIcon,
@@ -344,37 +396,43 @@ const StyledButton = ({
     sx={{
       textTransform: 'none',
       fontWeight: 600,
-      borderRadius: 2,
+      borderRadius: 3,
       py: 1.5,
       fontSize: '1rem',
-      letterSpacing: '0.3px',
-      transition: 'all 0.2s ease',
-      fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
+      letterSpacing: '-0.01em',
+      transition: 'all 0.3s ease',
+      fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif',
       ...(variant === 'contained' && {
-        background: `linear-gradient(135deg, ${NEUTRAL_COLORS.accent} 0%, ${alpha(NEUTRAL_COLORS.accent, 0.9)} 100%)`,
-        boxShadow: '0 2px 10px rgba(49, 130, 206, 0.2)',
+        background: `linear-gradient(135deg, ${GLASS_COLORS.primary} 0%, ${alpha(GLASS_COLORS.primary, 0.7)} 100%)`,
+        backdropFilter: 'blur(10px)',
+        border: '1px solid',
+        borderColor: alpha('#FFFFFF', 0.3),
+        boxShadow: `0 4px 12px ${alpha(GLASS_COLORS.primary, 0.2)}`,
         '&:hover': {
-          boxShadow: '0 4px 20px rgba(49, 130, 206, 0.3)',
-          transform: 'translateY(-1px)',
+          background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.primary, 0.9)}, ${alpha(GLASS_COLORS.primary, 0.6)})`,
+          transform: 'translateY(-2px)',
+          boxShadow: `0 8px 20px ${alpha(GLASS_COLORS.primary, 0.3)}`,
         },
         '&:disabled': {
-          background: alpha(NEUTRAL_COLORS.secondary, 0.2),
-          color: alpha(NEUTRAL_COLORS.textSecondary, 0.5),
+          background: alpha(GLASS_COLORS.surface, 0.5),
+          color: alpha(GLASS_COLORS.textSecondary, 0.5),
         },
       }),
       ...(variant === 'outlined' && {
         borderWidth: 1.5,
-        borderColor: NEUTRAL_COLORS.border,
-        color: NEUTRAL_COLORS.textPrimary,
+        borderColor: GLASS_COLORS.border,
+        color: GLASS_COLORS.textPrimary,
+        background: GLASS_COLORS.surface,
+        backdropFilter: 'blur(10px)',
         '&:hover': {
-          borderColor: NEUTRAL_COLORS.accent,
-          backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+          borderColor: GLASS_COLORS.primary,
+          background: alpha(GLASS_COLORS.primary, 0.1),
         },
       }),
       ...(variant === 'text' && {
-        color: NEUTRAL_COLORS.accent,
+        color: GLASS_COLORS.primary,
         '&:hover': {
-          backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+          background: alpha(GLASS_COLORS.primary, 0.1),
         },
       }),
     }}
@@ -383,8 +441,8 @@ const StyledButton = ({
   </Button>
 );
 
-// Компонент для отображения информационного поля (только для чтения)
-const InfoField = ({
+// Компонент для отображения информационного поля в стеклянном стиле
+const GlassInfoField = ({
   label,
   value,
   icon,
@@ -398,16 +456,35 @@ const InfoField = ({
   <Box
     sx={{
       p: 2.5,
-      borderRadius: 2,
-      backgroundColor: alpha(NEUTRAL_COLORS.background, 0.5),
-      border: `1px solid ${NEUTRAL_COLORS.border}`,
+      borderRadius: 3,
+      background: GLASS_COLORS.surface,
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
+      border: '1px solid',
+      borderColor: GLASS_COLORS.border,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      transition: 'all 0.2s ease',
+      transition: 'all 0.3s ease',
+      position: 'relative',
+      overflow: 'hidden',
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '100%',
+        background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+        opacity: 0,
+        transition: 'opacity 0.3s ease',
+        pointerEvents: 'none',
+      },
       '&:hover': {
-        backgroundColor: alpha(NEUTRAL_COLORS.background, 0.8),
-        borderColor: alpha(NEUTRAL_COLORS.accent, 0.3),
+        borderColor: alpha(GLASS_COLORS.primary, 0.5),
+        '&::before': {
+          opacity: 1,
+        },
       },
     }}
   >
@@ -417,8 +494,11 @@ const InfoField = ({
           sx={{
             p: 1,
             borderRadius: '50%',
-            backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
-            color: NEUTRAL_COLORS.accent,
+            background: alpha(GLASS_COLORS.primary, 0.15),
+            backdropFilter: 'blur(10px)',
+            border: '1px solid',
+            borderColor: alpha(GLASS_COLORS.primary, 0.3),
+            color: GLASS_COLORS.primary,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -432,7 +512,7 @@ const InfoField = ({
         <Typography
           variant="caption"
           sx={{
-            color: NEUTRAL_COLORS.textSecondary,
+            color: GLASS_COLORS.textSecondary,
             display: 'block',
             mb: 0.5,
             fontWeight: 500,
@@ -446,7 +526,7 @@ const InfoField = ({
         <Typography
           variant="body1"
           sx={{
-            color: NEUTRAL_COLORS.textPrimary,
+            color: GLASS_COLORS.textPrimary,
             fontWeight: 500,
             fontSize: '1rem',
           }}
@@ -459,7 +539,7 @@ const InfoField = ({
       <Tooltip title="Подтверждено">
         <VerifiedIcon
           sx={{
-            color: NEUTRAL_COLORS.success,
+            color: GLASS_COLORS.success,
             fontSize: 20,
             flexShrink: 0,
             ml: 1,
@@ -470,8 +550,8 @@ const InfoField = ({
   </Box>
 );
 
-// Компонент статистической карточки
-const StatCard = ({ 
+// Компонент статистической карточки в стеклянном стиле
+const GlassStatCard = ({ 
   title, 
   value, 
   subtitle, 
@@ -490,17 +570,52 @@ const StatCard = ({
     elevation={0}
     sx={{
       p: 3,
-      borderRadius: 2,
-      backgroundColor: alpha(color, 0.05),
-      border: `1px solid ${alpha(color, 0.2)}`,
+      borderRadius: 4,
+      background: GLASS_COLORS.surface,
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
+      border: '1px solid',
+      borderColor: alpha(color, 0.3),
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      transition: 'all 0.3s ease',
+      transition: 'all 0.4s cubic-bezier(0.2, 0, 0, 1)',
+      position: 'relative',
+      overflow: 'hidden',
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '100%',
+        background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+        opacity: 0,
+        transition: 'opacity 0.4s ease',
+      },
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        top: -20,
+        left: -20,
+        right: -20,
+        bottom: -20,
+        background: `radial-gradient(circle at 30% 30%, ${color} 0%, transparent 70%)`,
+        opacity: 0.1,
+        zIndex: -1,
+        filter: 'blur(30px)',
+        transition: 'opacity 0.4s ease',
+      },
       '&:hover': {
         transform: 'translateY(-4px)',
-        boxShadow: `0 8px 24px ${alpha(color, 0.15)}`,
-        borderColor: alpha(color, 0.4),
+        boxShadow: `0 16px 32px ${alpha(color, 0.15)}`,
+        borderColor: alpha(color, 0.5),
+        '&::before': {
+          opacity: 1,
+        },
+        '&::after': {
+          opacity: 0.2,
+        },
       },
     }}
   >
@@ -509,7 +624,10 @@ const StatCard = ({
         sx={{
           p: 1.5,
           borderRadius: '50%',
-          backgroundColor: alpha(color, 0.1),
+          background: alpha(color, 0.15),
+          backdropFilter: 'blur(10px)',
+          border: '1px solid',
+          borderColor: alpha(color, 0.3),
           color: color,
           display: 'flex',
           alignItems: 'center',
@@ -523,7 +641,8 @@ const StatCard = ({
         variant="subtitle1"
         sx={{
           fontWeight: 600,
-          color: NEUTRAL_COLORS.textPrimary,
+          color: GLASS_COLORS.textPrimary,
+          letterSpacing: '-0.01em',
         }}
       >
         {title}
@@ -533,14 +652,12 @@ const StatCard = ({
     <Typography
       variant="h3"
       sx={{
-        fontWeight: 800,
+        fontWeight: 700,
         color: color,
         mb: 1,
         fontSize: { xs: '2rem', md: '2.5rem' },
-        background: percentage ? `linear-gradient(135deg, ${color} 0%, ${alpha(color, 0.7)} 100%)` : 'none',
-        backgroundClip: percentage ? 'text' : 'none',
-        WebkitBackgroundClip: percentage ? 'text' : 'none',
-        WebkitTextFillColor: percentage ? 'transparent' : 'inherit',
+        letterSpacing: '-0.02em',
+        textShadow: `0 4px 12px ${alpha(color, 0.3)}`,
       }}
     >
       {percentage ? `${value}%` : value}
@@ -549,7 +666,7 @@ const StatCard = ({
     <Typography
       variant="body2"
       sx={{
-        color: NEUTRAL_COLORS.textSecondary,
+        color: GLASS_COLORS.textSecondary,
         flexGrow: 1,
       }}
     >
@@ -595,7 +712,7 @@ export const UserProfilePage: React.FC = () => {
       title: 'Новичок',
       description: 'Выполните 25% всех вопросов',
       icon: <SchoolIcon />,
-      color: NEUTRAL_COLORS.accent,
+      color: GLASS_COLORS.accent,
       progress: Math.min(stats.overall_percentage, 25),
       target: 25,
       unlocked: stats.overall_percentage >= 25,
@@ -608,7 +725,7 @@ export const UserProfilePage: React.FC = () => {
       title: 'Знаток',
       description: 'Выполните 50% всех вопросов',
       icon: <BrainIcon />,
-      color: NEUTRAL_COLORS.bronze,
+      color: GLASS_COLORS.bronze,
       progress: Math.min(stats.overall_percentage, 50),
       target: 50,
       unlocked: stats.overall_percentage >= 50,
@@ -621,7 +738,7 @@ export const UserProfilePage: React.FC = () => {
       title: 'Эксперт',
       description: 'Выполните 75% всех вопросов',
       icon: <TrophyIcon />,
-      color: NEUTRAL_COLORS.silver,
+      color: GLASS_COLORS.silver,
       progress: Math.min(stats.overall_percentage, 75),
       target: 75,
       unlocked: stats.overall_percentage >= 75,
@@ -634,7 +751,7 @@ export const UserProfilePage: React.FC = () => {
       title: 'Мастер',
       description: 'Выполните 100% всех вопросов',
       icon: <SparklesIcon />,
-      color: NEUTRAL_COLORS.gold,
+      color: GLASS_COLORS.gold,
       progress: Math.min(stats.overall_percentage, 100),
       target: 100,
       unlocked: stats.overall_percentage >= 100,
@@ -649,7 +766,7 @@ export const UserProfilePage: React.FC = () => {
         title: 'Мастер простых',
         description: `Выполните все легкие вопросы (${stats.total_easy})`,
         icon: <BoltIcon />,
-        color: NEUTRAL_COLORS.easy,
+        color: GLASS_COLORS.easy,
         progress: stats.easy_completed,
         target: stats.total_easy,
         unlocked: stats.easy_completed >= stats.total_easy,
@@ -664,7 +781,7 @@ export const UserProfilePage: React.FC = () => {
         title: 'Мастер средних',
         description: `Выполните все средние вопросы (${stats.total_medium})`,
         icon: <BarChartIcon />,
-        color: NEUTRAL_COLORS.medium,
+        color: GLASS_COLORS.medium,
         progress: stats.medium_completed,
         target: stats.total_medium,
         unlocked: stats.medium_completed >= stats.total_medium,
@@ -679,7 +796,7 @@ export const UserProfilePage: React.FC = () => {
         title: 'Мастер сложных',
         description: `Выполните все сложные вопросы (${stats.total_hard})`,
         icon: <SpeedIcon />,
-        color: NEUTRAL_COLORS.hard,
+        color: GLASS_COLORS.hard,
         progress: stats.hard_completed,
         target: stats.total_hard,
         unlocked: stats.hard_completed >= stats.total_hard,
@@ -691,43 +808,34 @@ export const UserProfilePage: React.FC = () => {
     // Ачивки по категориям (первые 5 категорий с наилучшим прогрессом)
     const topCategories = [...categoryStats]
       .sort((a, b) => b.percentage - a.percentage)
-      .slice(0, 5); // Изменено с 3 на 5
+      .slice(0, 5);
 
     topCategories.forEach((category, index) => {
       if (category.total_count > 0) {
         // Определяем цвета для 5 категорий
         const categoryColors = [
-          NEUTRAL_COLORS.gold,     // 1-е место
-          NEUTRAL_COLORS.silver,   // 2-е место
-          NEUTRAL_COLORS.bronze,   // 3-е место
-          '#2b55c1ff',               // 4-е место (сине-серый)
-          '#d23d6fff',               // 5-е место (фиолетовый)
+          GLASS_COLORS.gold,
+          GLASS_COLORS.silver,
+          GLASS_COLORS.bronze,
+          'rgba(43, 85, 193, 0.7)',
+          'rgba(210, 61, 111, 0.7)',
         ];
         
         // Определяем иконки для разных позиций
         const categoryIcons = [
-          <TrophyIcon />,           // 1-е место
-          <EmojiEventsIcon />,      // 2-е место
-          <StarIcon />,             // 3-е место
-          <CategoryIcon />,         // 4-е место
-          <CategoryIcon />,         // 5-е место
-        ];
-        
-        // Определяем названия для ачивок
-        const achievementTitles = [
-          `${category.category_name}`,    // 1-е место
-          `${category.category_name}`,  // 2-е место
-          `${category.category_name}`, // 3-е место
-          `${category.category_name}`, // 4-е место
-          `${category.category_name}`,  // 5-е место
+          <TrophyIcon />,
+          <EmojiEventsIcon />,
+          <StarIcon />,
+          <CategoryIcon />,
+          <CategoryIcon />,
         ];
         
         newAchievements.push({
           id: `category_top_${index + 1}`,
-          title: achievementTitles[index] || `Топ ${index + 1} в ${category.category_name}`,
+          title: category.category_name,
           description: `Достигните 100% в категории`,
           icon: categoryIcons[index] || <CategoryIcon />,
-          color: categoryColors[index] || NEUTRAL_COLORS.secondary,
+          color: categoryColors[index] || GLASS_COLORS.secondary,
           progress: category.percentage,
           target: 90,
           unlocked: category.percentage >= 100,
@@ -829,29 +937,68 @@ export const UserProfilePage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: `linear-gradient(135deg, ${NEUTRAL_COLORS.background} 0%, ${alpha(NEUTRAL_COLORS.background, 0.8)} 100%)`,
+          background: 'linear-gradient(135deg, #E0F0FF 0%, #D0E4FF 50%, #B8D8FF 100%)',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: `
+              radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.4) 0%, transparent 40%),
+              radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.3) 0%, transparent 50%)
+            `,
+            pointerEvents: 'none',
+          },
         }}
       >
-        <CircularProgress size={48} sx={{ color: NEUTRAL_COLORS.accent }} />
+        <CircularProgress size={48} sx={{ color: GLASS_COLORS.primary }} />
       </Box>
     );
   }
 
   if (!user) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/')}
-          sx={{ mb: 2, color: NEUTRAL_COLORS.accent }}
-        >
-          Вернуться на главную
-        </Button>
-        
-        <Alert severity="error" sx={{ borderRadius: 3 }}>
-          Пользователь не найден. Пожалуйста, авторизуйтесь.
-        </Alert>
-      </Container>
+      <Box sx={{ 
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #E0F0FF 0%, #D0E4FF 50%, #B8D8FF 100%)',
+        py: 4,
+      }}>
+        <Container maxWidth="lg">
+          <Button
+            startIcon={<ArrowBackIcon />}
+            onClick={() => navigate('/')}
+            sx={{ 
+              mb: 2, 
+              color: GLASS_COLORS.primary,
+              background: GLASS_COLORS.surface,
+              backdropFilter: 'blur(10px)',
+              borderRadius: 3,
+              border: '1px solid',
+              borderColor: GLASS_COLORS.border,
+              px: 3,
+              py: 1,
+              '&:hover': {
+                background: alpha(GLASS_COLORS.primary, 0.1),
+              }
+            }}
+          >
+            Вернуться на главную
+          </Button>
+          
+          <Alert severity="error" sx={{ 
+            borderRadius: 3,
+            background: alpha(GLASS_COLORS.error, 0.15),
+            backdropFilter: 'blur(10px)',
+            border: '1px solid',
+            borderColor: alpha(GLASS_COLORS.error, 0.3),
+            color: GLASS_COLORS.error,
+          }}>
+            Пользователь не найден. Пожалуйста, авторизуйтесь.
+          </Alert>
+        </Container>
+      </Box>
     );
   }
 
@@ -859,9 +1006,25 @@ export const UserProfilePage: React.FC = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: `linear-gradient(135deg, ${NEUTRAL_COLORS.background} 0%, ${alpha(NEUTRAL_COLORS.background, 0.8)} 100%)`,
-        py: 4,
+        background: 'linear-gradient(135deg, #E0F0FF 0%, #D0E4FF 50%, #B8D8FF 100%)',
         position: 'relative',
+        overflow: 'hidden',
+        fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif',
+        py: 4,
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: `
+            radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.4) 0%, transparent 40%),
+            radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.3) 0%, transparent 50%),
+            radial-gradient(circle at 40% 80%, rgba(200, 220, 255, 0.5) 0%, transparent 60%)
+          `,
+          pointerEvents: 'none',
+        },
       }}
     >
       <Container maxWidth="lg">
@@ -880,20 +1043,23 @@ export const UserProfilePage: React.FC = () => {
             startIcon={<ArrowBackIcon />}
             onClick={() => navigate('/questions')}
             sx={{
-              borderRadius: 2,
-              backgroundColor: NEUTRAL_COLORS.accent,
-              color: NEUTRAL_COLORS.surface,
+              borderRadius: 3,
+              background: GLASS_COLORS.surface,
+              backdropFilter: 'blur(10px)',
+              border: '1px solid',
+              borderColor: GLASS_COLORS.border,
+              color: GLASS_COLORS.primary,
               px: 3,
               py: 1,
               fontWeight: 600,
               '&:hover': {
-                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.9),
+                background: alpha(GLASS_COLORS.primary, 0.1),
+                borderColor: GLASS_COLORS.primary,
                 transform: 'translateY(-1px)',
-                boxShadow: `0 4px 12px ${alpha(NEUTRAL_COLORS.accent, 0.3)}`,
               },
-              transition: 'all 0.2s',
+              transition: 'all 0.3s ease',
             }}
-            variant="contained"
+            variant="text"
           >
             Назад
           </Button>
@@ -903,20 +1069,22 @@ export const UserProfilePage: React.FC = () => {
             startIcon={<FavoriteIcon />}
             onClick={() => navigate('/favorites')}
             sx={{
-              borderRadius: 2,
-              backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
-              color: NEUTRAL_COLORS.accent,
-              border: `2px solid ${alpha(NEUTRAL_COLORS.accent, 0.3)}`,
+              borderRadius: 3,
+              background: GLASS_COLORS.surface,
+              backdropFilter: 'blur(10px)',
+              border: '1px solid',
+              borderColor: alpha(GLASS_COLORS.primary, 0.5),
+              color: GLASS_COLORS.primary,
               px: 3,
               py: 1,
               fontWeight: 600,
               '&:hover': {
-                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.2),
-                borderColor: alpha(NEUTRAL_COLORS.accent, 0.6),
+                background: alpha(GLASS_COLORS.primary, 0.1),
+                borderColor: GLASS_COLORS.primary,
                 transform: 'translateY(-1px)',
-                boxShadow: `0 4px 12px ${alpha(NEUTRAL_COLORS.accent, 0.2)}`,
+                boxShadow: `0 4px 12px ${alpha(GLASS_COLORS.primary, 0.2)}`,
               },
-              transition: 'all 0.2s',
+              transition: 'all 0.3s ease',
             }}
             variant="outlined"
           >
@@ -931,8 +1099,12 @@ export const UserProfilePage: React.FC = () => {
               severity="error"
               sx={{
                 mb: 3,
-                borderRadius: 2,
-                border: `1px solid ${alpha(NEUTRAL_COLORS.error, 0.2)}`,
+                borderRadius: 3,
+                background: alpha(GLASS_COLORS.error, 0.15),
+                backdropFilter: 'blur(10px)',
+                border: '1px solid',
+                borderColor: alpha(GLASS_COLORS.error, 0.3),
+                color: GLASS_COLORS.error,
               }}
               onClose={() => {
                 clearError();
@@ -950,8 +1122,12 @@ export const UserProfilePage: React.FC = () => {
               severity="success"
               sx={{
                 mb: 3,
-                borderRadius: 2,
-                border: `1px solid ${alpha(NEUTRAL_COLORS.success, 0.2)}`,
+                borderRadius: 3,
+                background: alpha(GLASS_COLORS.success, 0.15),
+                backdropFilter: 'blur(10px)',
+                border: '1px solid',
+                borderColor: alpha(GLASS_COLORS.success, 0.3),
+                color: GLASS_COLORS.success,
               }}
               onClose={() => setSuccessMessage('')}
             >
@@ -960,33 +1136,57 @@ export const UserProfilePage: React.FC = () => {
           </Fade>
         )}
 
-        {/* Кнопка для просмотра ачивок - привлекательная и мотивирующая */}
+        {/* Кнопка для просмотра ачивок в стеклянном стиле */}
         {!isMobileFilter && !isLoadingStats && achievements.length > 0 && (
           <Paper
             elevation={0}
             sx={{
               p: 3,
-              borderRadius: 3,
-              border: `2px solid ${alpha(NEUTRAL_COLORS.gold, 0.3)}`,
-              backgroundColor: alpha(NEUTRAL_COLORS.gold, 0.05),
+              borderRadius: 4,
+              border: '1px solid',
+              borderColor: alpha(GLASS_COLORS.gold, 0.5),
+              background: GLASS_COLORS.surface,
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
               mb: 3,
               position: 'relative',
               overflow: 'hidden',
-              cursor: { xs: 'default', md: 'pointer' }, // На мобильных курсор обычный
-              transition: 'all 0.3s ease',
+              cursor: { xs: 'default', md: 'pointer' },
+              transition: 'all 0.4s cubic-bezier(0.2, 0, 0, 1)',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '100%',
+                background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+                opacity: 0.3,
+                pointerEvents: 'none',
+              },
+              '&::after': {
+                content: '""',
+                position: 'absolute',
+                top: -50,
+                left: -50,
+                right: -50,
+                bottom: -50,
+                background: `radial-gradient(circle at 30% 30%, ${GLASS_COLORS.gold} 0%, transparent 70%)`,
+                opacity: 0.1,
+                zIndex: -1,
+                filter: 'blur(50px)',
+              },
               '&:hover': {
-                transform: { xs: 'none', md: 'translateY(-2px)' }, // На мобильных нет трансформации
+                transform: { xs: 'none', md: 'translateY(-4px)' },
                 boxShadow: { 
                   xs: 'none', 
-                  md: `0 8px 25px ${alpha(NEUTRAL_COLORS.gold, 0.15)}` 
+                  md: `0 16px 32px ${alpha(GLASS_COLORS.gold, 0.15)}` 
                 },
-                borderColor: { xs: `2px solid ${alpha(NEUTRAL_COLORS.gold, 0.3)}`, md: alpha(NEUTRAL_COLORS.gold, 0.5) },
-                backgroundColor: { xs: alpha(NEUTRAL_COLORS.gold, 0.05), md: alpha(NEUTRAL_COLORS.gold, 0.08) },
+                borderColor: { xs: alpha(GLASS_COLORS.gold, 0.5), md: alpha(GLASS_COLORS.gold, 0.8) },
               },
             }}
             onClick={() => {
-              // На мобильных не открываем, на десктопе - открываем
-              if (window.innerWidth >= 900) { // или используйте theme.breakpoints.up('md')
+              if (window.innerWidth >= 900) {
                 setIsAchievementsVisible(!isAchievementsVisible);
               }
             }}
@@ -999,9 +1199,11 @@ export const UserProfilePage: React.FC = () => {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                background: `radial-gradient(circle at 30% 50%, ${alpha(NEUTRAL_COLORS.gold, 0.1)} 0%, transparent 50%),
-                            radial-gradient(circle at 70% 20%, ${alpha(NEUTRAL_COLORS.silver, 0.08)} 0%, transparent 50%),
-                            radial-gradient(circle at 20% 80%, ${alpha(NEUTRAL_COLORS.bronze, 0.08)} 0%, transparent 50%)`,
+                background: `
+                  radial-gradient(circle at 30% 50%, ${alpha(GLASS_COLORS.gold, 0.1)} 0%, transparent 50%),
+                  radial-gradient(circle at 70% 20%, ${alpha(GLASS_COLORS.silver, 0.08)} 0%, transparent 50%),
+                  radial-gradient(circle at 20% 80%, ${alpha(GLASS_COLORS.bronze, 0.08)} 0%, transparent 50%)
+                `,
                 zIndex: 0,
               }}
             />
@@ -1013,29 +1215,31 @@ export const UserProfilePage: React.FC = () => {
                     sx={{
                       p: 1.5,
                       borderRadius: '50%',
-                      backgroundColor: alpha(NEUTRAL_COLORS.gold, 0.2),
-                      color: NEUTRAL_COLORS.gold,
+                      background: alpha(GLASS_COLORS.gold, 0.15),
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid',
+                      borderColor: alpha(GLASS_COLORS.gold, 0.3),
+                      color: GLASS_COLORS.gold,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      border: `2px solid ${alpha(NEUTRAL_COLORS.gold, 0.3)}`,
-                      boxShadow: `0 0 20px ${alpha(NEUTRAL_COLORS.gold, 0.3)}`,
+                      boxShadow: `0 0 20px ${alpha(GLASS_COLORS.gold, 0.3)}`,
                     }}
                   >
                     <TrophyIcon sx={{ fontSize: 28 }} />
                   </Box>
                   <Box>
-                    {/* Изменяем текст на мобильных */}
                     <Typography
                       variant="h5"
                       sx={{
-                        fontWeight: 800,
-                        color: NEUTRAL_COLORS.textPrimary,
-                        background: `linear-gradient(90deg, ${NEUTRAL_COLORS.gold} 0%, ${NEUTRAL_COLORS.silver} 50%, ${NEUTRAL_COLORS.bronze} 100%)`,
+                        fontWeight: 700,
+                        color: GLASS_COLORS.textPrimary,
+                        background: `linear-gradient(90deg, ${GLASS_COLORS.gold} 0%, ${GLASS_COLORS.silver} 50%, ${GLASS_COLORS.bronze} 100%)`,
                         backgroundClip: 'text',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                         fontSize: { xs: '1.4rem', md: '1.6rem' },
+                        letterSpacing: '-0.02em',
                       }}
                     >
                       {isAchievementsVisible && window.innerWidth >= 900 
@@ -1047,7 +1251,7 @@ export const UserProfilePage: React.FC = () => {
                     <Typography
                       variant="body2"
                       sx={{
-                        color: NEUTRAL_COLORS.textSecondary,
+                        color: GLASS_COLORS.textSecondary,
                         mt: 0.5,
                         fontWeight: 500,
                       }}
@@ -1062,7 +1266,7 @@ export const UserProfilePage: React.FC = () => {
                 </Box>
 
                 <Box sx={{ 
-                  display: { xs: 'none', md: 'flex' }, // Скрываем прогресс и стрелку на мобильных
+                  display: { xs: 'none', md: 'flex' },
                   alignItems: 'center', 
                   gap: 2 
                 }}>
@@ -1073,18 +1277,20 @@ export const UserProfilePage: React.FC = () => {
                       width: 60,
                       height: 60,
                       borderRadius: '50%',
-                      backgroundColor: alpha(NEUTRAL_COLORS.background, 0.8),
+                      background: GLASS_COLORS.surface,
+                      backdropFilter: 'blur(10px)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      border: `2px solid ${alpha(NEUTRAL_COLORS.gold, 0.3)}`,
+                      border: '1px solid',
+                      borderColor: alpha(GLASS_COLORS.gold, 0.3),
                     }}
                   >
                     <Typography
                       variant="h6"
                       sx={{
-                        fontWeight: 800,
-                        color: NEUTRAL_COLORS.gold,
+                        fontWeight: 700,
+                        color: GLASS_COLORS.gold,
                         fontSize: '1.1rem',
                       }}
                     >
@@ -1097,24 +1303,28 @@ export const UserProfilePage: React.FC = () => {
                       thickness={4}
                       sx={{
                         position: 'absolute',
-                        color: NEUTRAL_COLORS.gold,
+                        color: GLASS_COLORS.gold,
                         top: -2,
                         left: -2,
+                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
                       }}
                     />
                   </Box>
 
-                  {/* Иконка стрелки - показываем только на десктопе */}
+                  {/* Иконка стрелки */}
                   <IconButton
                     sx={{
-                      backgroundColor: alpha(NEUTRAL_COLORS.gold, 0.2),
-                      color: NEUTRAL_COLORS.gold,
+                      background: alpha(GLASS_COLORS.gold, 0.15),
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid',
+                      borderColor: alpha(GLASS_COLORS.gold, 0.3),
+                      color: GLASS_COLORS.gold,
                       '&:hover': {
-                        backgroundColor: alpha(NEUTRAL_COLORS.gold, 0.3),
+                        background: alpha(GLASS_COLORS.gold, 0.25),
                         transform: 'scale(1.1)',
                       },
-                      transition: 'all 0.2s ease',
-                      display: { xs: 'none', md: 'flex' }, // Скрываем на мобильных
+                      transition: 'all 0.3s ease',
+                      display: { xs: 'none', md: 'flex' },
                     }}
                   >
                     {isAchievementsVisible ? <ExpandLessIcon /> : <ExpandMoreIcon />}
@@ -1125,7 +1335,7 @@ export const UserProfilePage: React.FC = () => {
                 <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center' }}>
                   <InfoIcon 
                     sx={{ 
-                      color: NEUTRAL_COLORS.gold,
+                      color: GLASS_COLORS.gold,
                       fontSize: 32,
                     }} 
                   />
@@ -1142,12 +1352,26 @@ export const UserProfilePage: React.FC = () => {
               elevation={0}
               sx={{
                 p: { xs: 2, md: 3 },
-                borderRadius: 3,
-                border: `1px solid ${NEUTRAL_COLORS.border}`,
-                backgroundColor: NEUTRAL_COLORS.surface,
+                borderRadius: 4,
+                background: GLASS_COLORS.surface,
+                backdropFilter: 'blur(30px)',
+                WebkitBackdropFilter: 'blur(30px)',
+                border: '1px solid',
+                borderColor: GLASS_COLORS.border,
                 mb: 3,
                 position: 'relative',
                 overflow: 'hidden',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: '100%',
+                  background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+                  opacity: 0.5,
+                  pointerEvents: 'none',
+                },
               }}
             >
               {/* Фоновые элементы */}
@@ -1159,7 +1383,7 @@ export const UserProfilePage: React.FC = () => {
                   width: 120,
                   height: 120,
                   borderRadius: '50%',
-                  backgroundColor: alpha(NEUTRAL_COLORS.gold, 0.03),
+                  background: alpha(GLASS_COLORS.gold, 0.03),
                   zIndex: 0,
                 }}
               />
@@ -1172,8 +1396,11 @@ export const UserProfilePage: React.FC = () => {
                       sx={{
                         p: 1,
                         borderRadius: '50%',
-                        backgroundColor: alpha(NEUTRAL_COLORS.gold, 0.1),
-                        color: NEUTRAL_COLORS.gold,
+                        background: alpha(GLASS_COLORS.gold, 0.15),
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid',
+                        borderColor: alpha(GLASS_COLORS.gold, 0.3),
+                        color: GLASS_COLORS.gold,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -1186,8 +1413,9 @@ export const UserProfilePage: React.FC = () => {
                         variant="h5"
                         sx={{
                           fontWeight: 700,
-                          color: NEUTRAL_COLORS.textPrimary,
+                          color: GLASS_COLORS.textPrimary,
                           fontSize: { xs: '1.25rem', md: '1.5rem' },
+                          letterSpacing: '-0.01em',
                         }}
                       >
                         {unlockedAchievements} из {totalAchievements} разблокировано
@@ -1202,8 +1430,9 @@ export const UserProfilePage: React.FC = () => {
                     sx={{
                       height: 6,
                       borderRadius: 3,
-                      backgroundColor: alpha(NEUTRAL_COLORS.border, 0.2),
+                      backgroundColor: alpha(GLASS_COLORS.border, 0.5),
                       overflow: 'hidden',
+                      backdropFilter: 'blur(10px)',
                     }}
                   >
                     <Box
@@ -1211,8 +1440,9 @@ export const UserProfilePage: React.FC = () => {
                         width: `${(unlockedAchievements / totalAchievements) * 100}%`,
                         height: '100%',
                         borderRadius: 3,
-                        background: `linear-gradient(90deg, ${NEUTRAL_COLORS.bronze} 0%, ${NEUTRAL_COLORS.silver} 50%, ${NEUTRAL_COLORS.gold} 100%)`,
+                        background: `linear-gradient(90deg, ${GLASS_COLORS.bronze} 0%, ${GLASS_COLORS.silver} 50%, ${GLASS_COLORS.gold} 100%)`,
                         transition: 'width 1s ease-out',
+                        boxShadow: `0 2px 8px ${alpha(GLASS_COLORS.gold, 0.3)}`,
                       }}
                     />
                   </Box>
@@ -1229,11 +1459,11 @@ export const UserProfilePage: React.FC = () => {
                 }, {} as Record<string, Achievement[]>)
               ).map(([category, categoryAchievements]) => {
                 const categoryInfo = {
-                  progress: { title: 'Общий прогресс', icon: <TrendingUpIcon />, color: NEUTRAL_COLORS.success },
-                  category: { title: 'По категориям - достигните 100% в каждой категории', icon: <CategoryIcon />, color: NEUTRAL_COLORS.info },
-                  difficulty: { title: 'По сложности', icon: <SpeedIcon />, color: NEUTRAL_COLORS.warning },
-                  other: { title: 'Другие', icon: <EmojiEventsIcon />, color: NEUTRAL_COLORS.secondary },
-                }[category] || { title: category, icon: <EmojiEventsIcon />, color: NEUTRAL_COLORS.secondary };
+                  progress: { title: 'Общий прогресс', icon: <TrendingUpIcon />, color: GLASS_COLORS.success },
+                  category: { title: 'По категориям - достигните 100% в каждой категории', icon: <CategoryIcon />, color: GLASS_COLORS.info },
+                  difficulty: { title: 'По сложности', icon: <SpeedIcon />, color: GLASS_COLORS.warning },
+                  other: { title: 'Другие', icon: <EmojiEventsIcon />, color: GLASS_COLORS.secondary },
+                }[category] || { title: category, icon: <EmojiEventsIcon />, color: GLASS_COLORS.secondary };
 
                 return (
                   <Box key={category} sx={{ mb: 3 }}>
@@ -1245,15 +1475,19 @@ export const UserProfilePage: React.FC = () => {
                         gap: 1.5,
                         mb: 1.5,
                         p: 1,
-                        borderRadius: 1,
-                        backgroundColor: alpha(categoryInfo.color, 0.05),
+                        borderRadius: 2,
+                        background: alpha(categoryInfo.color, 0.1),
+                        backdropFilter: 'blur(10px)',
                       }}
                     >
                       <Box
                         sx={{
                           p: 0.75,
                           borderRadius: '50%',
-                          backgroundColor: alpha(categoryInfo.color, 0.1),
+                          background: alpha(categoryInfo.color, 0.15),
+                          backdropFilter: 'blur(10px)',
+                          border: '1px solid',
+                          borderColor: alpha(categoryInfo.color, 0.3),
                           color: categoryInfo.color,
                           display: 'flex',
                           alignItems: 'center',
@@ -1266,7 +1500,8 @@ export const UserProfilePage: React.FC = () => {
                         variant="subtitle1"
                         sx={{
                           fontWeight: 600,
-                          color: NEUTRAL_COLORS.textPrimary,
+                          color: GLASS_COLORS.textPrimary,
+                          letterSpacing: '-0.01em',
                         }}
                       >
                         {categoryInfo.title}
@@ -1275,28 +1510,30 @@ export const UserProfilePage: React.FC = () => {
                         label={categoryAchievements.length}
                         size="small"
                         sx={{
-                          backgroundColor: alpha(categoryInfo.color, 0.1),
+                          background: alpha(categoryInfo.color, 0.15),
+                          backdropFilter: 'blur(10px)',
                           color: categoryInfo.color,
                           fontWeight: 600,
                           height: 20,
                           fontSize: '0.7rem',
+                          border: '1px solid',
+                          borderColor: alpha(categoryInfo.color, 0.3),
                         }}
                       />
                     </Box>
 
                     {/* Сетка ачивок категории */}
-                    {/* Сетка ачивок категории - настройка для 5 элементов */}
                     <Grid container spacing={2}>
                       {categoryAchievements.map((achievement) => (
                         <Grid 
                           item 
                           xs={6} 
                           sm={4} 
-                          md={2.4} // Было 2.4 для 3 категорий, для 5 лучше использовать 2.4
+                          md={2.4} 
                           lg={2.4} 
                           key={achievement.id}
                         >
-                          <AchievementCard achievement={achievement} />
+                          <GlassAchievementCard achievement={achievement} />
                         </Grid>
                       ))}
                     </Grid>
@@ -1307,15 +1544,31 @@ export const UserProfilePage: React.FC = () => {
           )}
         </Collapse>
 
-        {/* Основная карточка профиля */}
+        {/* Основная карточка профиля в стеклянном стиле */}
         <Paper
           elevation={0}
           sx={{
             p: { xs: 3, md: 5 },
-            borderRadius: 3,
-            border: `1px solid ${NEUTRAL_COLORS.border}`,
-            backgroundColor: NEUTRAL_COLORS.surface,
+            borderRadius: 4,
+            background: GLASS_COLORS.surface,
+            backdropFilter: 'blur(30px)',
+            WebkitBackdropFilter: 'blur(30px)',
+            border: '1px solid',
+            borderColor: GLASS_COLORS.border,
             mb: 4,
+            position: 'relative',
+            overflow: 'hidden',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '100%',
+              background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+              opacity: 0.5,
+              pointerEvents: 'none',
+            },
           }}
         >
           {/* Заголовок с кнопкой редактирования */}
@@ -1326,7 +1579,8 @@ export const UserProfilePage: React.FC = () => {
               justifyContent: 'space-between',
               mb: 4,
               pb: 3,
-              borderBottom: `1px solid ${alpha(NEUTRAL_COLORS.border, 0.5)}`,
+              borderBottom: '1px solid',
+              borderColor: GLASS_COLORS.border,
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -1334,8 +1588,11 @@ export const UserProfilePage: React.FC = () => {
                 sx={{
                   p: 1.5,
                   borderRadius: '50%',
-                  backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
-                  color: NEUTRAL_COLORS.accent,
+                  background: alpha(GLASS_COLORS.primary, 0.15),
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid',
+                  borderColor: alpha(GLASS_COLORS.primary, 0.3),
+                  color: GLASS_COLORS.primary,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -1347,9 +1604,10 @@ export const UserProfilePage: React.FC = () => {
                 <Typography
                   variant="h4"
                   sx={{
-                    fontWeight: 800,
-                    color: NEUTRAL_COLORS.textPrimary,
+                    fontWeight: 700,
+                    color: GLASS_COLORS.textPrimary,
                     fontSize: { xs: '1.75rem', md: '2.25rem' },
+                    letterSpacing: '-0.02em',
                   }}
                 >
                   Мой профиль
@@ -1357,7 +1615,7 @@ export const UserProfilePage: React.FC = () => {
                 <Typography
                   variant="body2"
                   sx={{
-                    color: NEUTRAL_COLORS.textSecondary,
+                    color: GLASS_COLORS.textSecondary,
                     mt: 0.5,
                   }}
                 >
@@ -1371,10 +1629,13 @@ export const UserProfilePage: React.FC = () => {
                 <IconButton
                   onClick={() => setIsEditing(true)}
                   sx={{
-                    backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
-                    color: NEUTRAL_COLORS.accent,
+                    background: alpha(GLASS_COLORS.primary, 0.15),
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid',
+                    borderColor: alpha(GLASS_COLORS.primary, 0.3),
+                    color: GLASS_COLORS.primary,
                     '&:hover': {
-                      backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.2),
+                      background: alpha(GLASS_COLORS.primary, 0.25),
                     },
                   }}
                 >
@@ -1390,7 +1651,7 @@ export const UserProfilePage: React.FC = () => {
             <Stack spacing={3}>
               {/* Аватар */}
               {user.avatar_url && (
-                <InfoField
+                <GlassInfoField
                   label="Аватар"
                   value={
                     <Box
@@ -1402,7 +1663,8 @@ export const UserProfilePage: React.FC = () => {
                         height: 80,
                         borderRadius: 2,
                         objectFit: 'cover',
-                        border: `2px solid ${NEUTRAL_COLORS.border}`,
+                        border: '1px solid',
+                        borderColor: GLASS_COLORS.border,
                       }}
                     />
                   }
@@ -1411,21 +1673,21 @@ export const UserProfilePage: React.FC = () => {
               )}
 
               {/* Имя */}
-              <InfoField
+              <GlassInfoField
                 label="Имя"
                 value={user.first_name}
                 icon={<PersonIcon />}
               />
 
               {/* Фамилия */}
-              <InfoField
+              <GlassInfoField
                 label="Фамилия"
                 value={user.last_name}
                 icon={<PersonIcon />}
               />
 
               {/* Email */}
-              <InfoField
+              <GlassInfoField
                 label="Email"
                 value={user.email}
                 icon={<EmailIcon />}
@@ -1436,9 +1698,12 @@ export const UserProfilePage: React.FC = () => {
               <Box
                 sx={{
                   p: 2.5,
-                  borderRadius: 2,
-                  backgroundColor: alpha(NEUTRAL_COLORS.background, 0.5),
-                  border: `1px solid ${NEUTRAL_COLORS.border}`,
+                  borderRadius: 3,
+                  background: GLASS_COLORS.surface,
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  border: '1px solid',
+                  borderColor: GLASS_COLORS.border,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
@@ -1449,8 +1714,11 @@ export const UserProfilePage: React.FC = () => {
                     sx={{
                       p: 1,
                       borderRadius: '50%',
-                      backgroundColor: alpha(NEUTRAL_COLORS.success, 0.1),
-                      color: NEUTRAL_COLORS.success,
+                      background: alpha(GLASS_COLORS.success, 0.15),
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid',
+                      borderColor: alpha(GLASS_COLORS.success, 0.3),
+                      color: GLASS_COLORS.success,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -1462,7 +1730,7 @@ export const UserProfilePage: React.FC = () => {
                     <Typography
                       variant="caption"
                       sx={{
-                        color: NEUTRAL_COLORS.textSecondary,
+                        color: GLASS_COLORS.textSecondary,
                         display: 'block',
                         mb: 0.5,
                         fontWeight: 500,
@@ -1476,7 +1744,7 @@ export const UserProfilePage: React.FC = () => {
                     <Typography
                       variant="body1"
                       sx={{
-                        color: NEUTRAL_COLORS.textPrimary,
+                        color: GLASS_COLORS.textPrimary,
                         fontWeight: 500,
                         fontSize: '1rem',
                       }}
@@ -1490,9 +1758,12 @@ export const UserProfilePage: React.FC = () => {
                     label="Admin"
                     size="small"
                     sx={{
-                      backgroundColor: alpha(NEUTRAL_COLORS.success, 0.1),
-                      color: NEUTRAL_COLORS.success,
+                      background: alpha(GLASS_COLORS.success, 0.15),
+                      backdropFilter: 'blur(10px)',
+                      color: GLASS_COLORS.success,
                       fontWeight: 600,
+                      border: '1px solid',
+                      borderColor: alpha(GLASS_COLORS.success, 0.3),
                     }}
                   />
                 )}
@@ -1502,9 +1773,12 @@ export const UserProfilePage: React.FC = () => {
               <Box
                 sx={{
                   p: 2.5,
-                  borderRadius: 2,
-                  backgroundColor: alpha(NEUTRAL_COLORS.background, 0.5),
-                  border: `1px solid ${NEUTRAL_COLORS.border}`,
+                  borderRadius: 3,
+                  background: GLASS_COLORS.surface,
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  border: '1px solid',
+                  borderColor: GLASS_COLORS.border,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
@@ -1515,11 +1789,17 @@ export const UserProfilePage: React.FC = () => {
                     sx={{
                       p: 1,
                       borderRadius: '50%',
-                      backgroundColor: alpha(
-                        user.is_active ? NEUTRAL_COLORS.success : NEUTRAL_COLORS.error,
-                        0.1
+                      background: alpha(
+                        user.is_active ? GLASS_COLORS.success : GLASS_COLORS.error,
+                        0.15
                       ),
-                      color: user.is_active ? NEUTRAL_COLORS.success : NEUTRAL_COLORS.error,
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid',
+                      borderColor: alpha(
+                        user.is_active ? GLASS_COLORS.success : GLASS_COLORS.error,
+                        0.3
+                      ),
+                      color: user.is_active ? GLASS_COLORS.success : GLASS_COLORS.error,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -1531,7 +1811,7 @@ export const UserProfilePage: React.FC = () => {
                     <Typography
                       variant="caption"
                       sx={{
-                        color: NEUTRAL_COLORS.textSecondary,
+                        color: GLASS_COLORS.textSecondary,
                         display: 'block',
                         mb: 0.5,
                         fontWeight: 500,
@@ -1545,7 +1825,7 @@ export const UserProfilePage: React.FC = () => {
                     <Typography
                       variant="body1"
                       sx={{
-                        color: NEUTRAL_COLORS.textPrimary,
+                        color: GLASS_COLORS.textPrimary,
                         fontWeight: 500,
                         fontSize: '1rem',
                       }}
@@ -1558,19 +1838,25 @@ export const UserProfilePage: React.FC = () => {
                   label={user.is_active ? 'Активен' : 'Неактивен'}
                   size="small"
                   sx={{
-                    backgroundColor: alpha(
-                      user.is_active ? NEUTRAL_COLORS.success : NEUTRAL_COLORS.error,
-                      0.1
+                    background: alpha(
+                      user.is_active ? GLASS_COLORS.success : GLASS_COLORS.error,
+                      0.15
                     ),
-                    color: user.is_active ? NEUTRAL_COLORS.success : NEUTRAL_COLORS.error,
+                    backdropFilter: 'blur(10px)',
+                    color: user.is_active ? GLASS_COLORS.success : GLASS_COLORS.error,
                     fontWeight: 600,
+                    border: '1px solid',
+                    borderColor: alpha(
+                      user.is_active ? GLASS_COLORS.success : GLASS_COLORS.error,
+                      0.3
+                    ),
                   }}
                 />
               </Box>
 
               {/* Последний вход */}
               {user.last_login && (
-                <InfoField
+                <GlassInfoField
                   label="Последний вход"
                   value={new Date(user.last_login).toLocaleString('ru-RU')}
                   icon={<ClockIcon />}
@@ -1580,37 +1866,27 @@ export const UserProfilePage: React.FC = () => {
           ) : (
             // Режим редактирования
             <Stack spacing={3}>
-              <StyledInputField
+              <GlassInputField
                 label="Имя"
                 type="text"
                 value={firstName}
                 onChange={(e: any) => setFirstName(e.target.value)}
                 disabled={isSaving}
-                startIcon={<PersonIcon sx={{ color: NEUTRAL_COLORS.textSecondary }} />}
+                startIcon={<PersonIcon sx={{ color: GLASS_COLORS.textSecondary }} />}
               />
 
-              <StyledInputField
+              <GlassInputField
                 label="Фамилия"
                 type="text"
                 value={lastName}
                 onChange={(e: any) => setLastName(e.target.value)}
                 disabled={isSaving}
-                startIcon={<PersonIcon sx={{ color: NEUTRAL_COLORS.textSecondary }} />}
+                startIcon={<PersonIcon sx={{ color: GLASS_COLORS.textSecondary }} />}
               />
-
-              {/* <StyledInputField
-                label="URL аватара (опционально)"
-                type="url"
-                value={avatarUrl}
-                onChange={(e: any) => setAvatarUrl(e.target.value)}
-                disabled={isSaving}
-                startIcon={<ImageIcon sx={{ color: NEUTRAL_COLORS.textSecondary }} />}
-                helperText="Введите полный URL изображения (например, https://example.com/avatar.jpg)"
-              /> */}
 
               {/* Кнопки действий */}
               <Box sx={{ display: 'flex', gap: 2, pt: 2 }}>
-                <StyledButton
+                <GlassButton
                   variant="contained"
                   startIcon={isSaving ? null : <SaveIcon />}
                   onClick={handleSaveChanges}
@@ -1622,9 +1898,9 @@ export const UserProfilePage: React.FC = () => {
                   ) : (
                     'Сохранить изменения'
                   )}
-                </StyledButton>
+                </GlassButton>
 
-                <StyledButton
+                <GlassButton
                   variant="outlined"
                   startIcon={<CancelIcon />}
                   onClick={handleCancel}
@@ -1632,33 +1908,52 @@ export const UserProfilePage: React.FC = () => {
                   fullWidth
                 >
                   Отмена
-                </StyledButton>
+                </GlassButton>
               </Box>
             </Stack>
           )}
         </Paper>
 
-        {/* Статистика выполнения */}
+        {/* Статистика выполнения в стеклянном стиле */}
         {!isLoadingStats && completionStats && (
           <Paper
             elevation={0}
             sx={{
               p: { xs: 3, md: 4 },
-              borderRadius: 3,
-              border: `1px solid ${NEUTRAL_COLORS.border}`,
-              backgroundColor: NEUTRAL_COLORS.surface,
+              borderRadius: 4,
+              background: GLASS_COLORS.surface,
+              backdropFilter: 'blur(30px)',
+              WebkitBackdropFilter: 'blur(30px)',
+              border: '1px solid',
+              borderColor: GLASS_COLORS.border,
               mb: 4,
+              position: 'relative',
+              overflow: 'hidden',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '100%',
+                background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+                opacity: 0.5,
+                pointerEvents: 'none',
+              },
             }}
           >
             {/* Заголовок */}
-            <Box sx={{ mb: 4, pb: 3, borderBottom: `1px solid ${alpha(NEUTRAL_COLORS.border, 0.5)}` }}>
+            <Box sx={{ mb: 4, pb: 3, borderBottom: '1px solid', borderColor: GLASS_COLORS.border }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
                 <Box
                   sx={{
                     p: 1.5,
                     borderRadius: '50%',
-                    backgroundColor: alpha(NEUTRAL_COLORS.success, 0.1),
-                    color: NEUTRAL_COLORS.success,
+                    background: alpha(GLASS_COLORS.success, 0.15),
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid',
+                    borderColor: alpha(GLASS_COLORS.success, 0.3),
+                    color: GLASS_COLORS.success,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -1670,9 +1965,10 @@ export const UserProfilePage: React.FC = () => {
                   <Typography
                     variant="h4"
                     sx={{
-                      fontWeight: 800,
-                      color: NEUTRAL_COLORS.textPrimary,
+                      fontWeight: 700,
+                      color: GLASS_COLORS.textPrimary,
                       fontSize: { xs: '1.5rem', md: '2rem' },
+                      letterSpacing: '-0.02em',
                     }}
                   >
                     Ваша статистика
@@ -1680,7 +1976,7 @@ export const UserProfilePage: React.FC = () => {
                   <Typography
                     variant="body2"
                     sx={{
-                      color: NEUTRAL_COLORS.textSecondary,
+                      color: GLASS_COLORS.textSecondary,
                       mt: 0.5,
                     }}
                   >
@@ -1695,9 +1991,10 @@ export const UserProfilePage: React.FC = () => {
               <Typography
                 variant="h6"
                 sx={{
-                  fontWeight: 700,
-                  color: NEUTRAL_COLORS.textPrimary,
+                  fontWeight: 600,
+                  color: GLASS_COLORS.textPrimary,
                   mb: 3,
+                  letterSpacing: '-0.01em',
                 }}
               >
                 Общая статистика
@@ -1714,36 +2011,36 @@ export const UserProfilePage: React.FC = () => {
                   gap: 3,
                 }}
               >
-                <StatCard
+                <GlassStatCard
                   title="Общий прогресс"
                   value={completionStats.overall_percentage.toFixed(1)}
                   subtitle={`${completionStats.total_completed} из ${completionStats.total} вопросов`}
-                  color={NEUTRAL_COLORS.success}
+                  color={GLASS_COLORS.success}
                   icon={<TrendingUpIcon />}
                   percentage
                 />
 
-                <StatCard
+                <GlassStatCard
                   title="Легкие вопросы"
                   value={completionStats.easy_completed}
                   subtitle={`из ${completionStats.total_easy} доступных`}
-                  color={NEUTRAL_COLORS.easy}
+                  color={GLASS_COLORS.easy}
                   icon={<BoltIcon />}
                 />
 
-                <StatCard
+                <GlassStatCard
                   title="Средние вопросы"
                   value={completionStats.medium_completed}
                   subtitle={`из ${completionStats.total_medium} доступных`}
-                  color={NEUTRAL_COLORS.medium}
+                  color={GLASS_COLORS.medium}
                   icon={<BarChartIcon />}
                 />
 
-                <StatCard
+                <GlassStatCard
                   title="Сложные вопросы"
                   value={completionStats.hard_completed}
                   subtitle={`из ${completionStats.total_hard} доступных`}
-                  color={NEUTRAL_COLORS.hard}
+                  color={GLASS_COLORS.hard}
                   icon={<SpeedIcon />}
                 />
               </Box>
@@ -1751,27 +2048,46 @@ export const UserProfilePage: React.FC = () => {
           </Paper>
         )}
 
-        {/* Статистика по категориям */}
+        {/* Статистика по категориям в стеклянном стиле */}
         {!isLoadingStats && categoryStats.length > 0 && (
           <Paper
             elevation={0}
             sx={{
               p: { xs: 3, md: 4 },
-              borderRadius: 3,
-              border: `1px solid ${NEUTRAL_COLORS.border}`,
-              backgroundColor: NEUTRAL_COLORS.surface,
+              borderRadius: 4,
+              background: GLASS_COLORS.surface,
+              backdropFilter: 'blur(30px)',
+              WebkitBackdropFilter: 'blur(30px)',
+              border: '1px solid',
+              borderColor: GLASS_COLORS.border,
               mb: 4,
+              position: 'relative',
+              overflow: 'hidden',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '100%',
+                background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+                opacity: 0.5,
+                pointerEvents: 'none',
+              },
             }}
           >
             {/* Заголовок */}
-            <Box sx={{ mb: 4, pb: 3, borderBottom: `1px solid ${alpha(NEUTRAL_COLORS.border, 0.5)}` }}>
+            <Box sx={{ mb: 4, pb: 3, borderBottom: '1px solid', borderColor: GLASS_COLORS.border }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Box
                   sx={{
                     p: 1.5,
                     borderRadius: '50%',
-                    backgroundColor: alpha(NEUTRAL_COLORS.info, 0.1),
-                    color: NEUTRAL_COLORS.info,
+                    background: alpha(GLASS_COLORS.info, 0.15),
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid',
+                    borderColor: alpha(GLASS_COLORS.info, 0.3),
+                    color: GLASS_COLORS.info,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -1783,9 +2099,10 @@ export const UserProfilePage: React.FC = () => {
                   <Typography
                     variant="h4"
                     sx={{
-                      fontWeight: 800,
-                      color: NEUTRAL_COLORS.textPrimary,
+                      fontWeight: 700,
+                      color: GLASS_COLORS.textPrimary,
                       fontSize: { xs: '1.5rem', md: '2rem' },
+                      letterSpacing: '-0.02em',
                     }}
                   >
                     Статистика по темам
@@ -1793,7 +2110,7 @@ export const UserProfilePage: React.FC = () => {
                   <Typography
                     variant="body2"
                     sx={{
-                      color: NEUTRAL_COLORS.textSecondary,
+                      color: GLASS_COLORS.textSecondary,
                       mt: 0.5,
                     }}
                   >
@@ -1821,14 +2138,33 @@ export const UserProfilePage: React.FC = () => {
                   elevation={0}
                   sx={{
                     p: 3,
-                    borderRadius: 3,
-                    backgroundColor: alpha(NEUTRAL_COLORS.background, 0.5),
-                    border: `1px solid ${NEUTRAL_COLORS.border}`,
-                    transition: 'all 0.3s ease',
+                    borderRadius: 4,
+                    background: GLASS_COLORS.surface,
+                    backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)',
+                    border: '1px solid',
+                    borderColor: GLASS_COLORS.border,
+                    transition: 'all 0.4s cubic-bezier(0.2, 0, 0, 1)',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: '100%',
+                      background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+                      opacity: 0,
+                      transition: 'opacity 0.4s ease',
+                    },
                     '&:hover': {
                       transform: 'translateY(-4px)',
-                      boxShadow: `0 8px 24px ${alpha(NEUTRAL_COLORS.accent, 0.1)}`,
-                      borderColor: alpha(NEUTRAL_COLORS.accent, 0.3),
+                      boxShadow: `0 16px 32px ${alpha(GLASS_COLORS.primary, 0.15)}`,
+                      borderColor: alpha(GLASS_COLORS.primary, 0.5),
+                      '&::before': {
+                        opacity: 1,
+                      },
                     },
                   }}
                 >
@@ -1837,9 +2173,10 @@ export const UserProfilePage: React.FC = () => {
                     <Typography
                       variant="h6"
                       sx={{
-                        fontWeight: 700,
-                        color: NEUTRAL_COLORS.textPrimary,
+                        fontWeight: 600,
+                        color: GLASS_COLORS.textPrimary,
                         lineHeight: 1.3,
+                        letterSpacing: '-0.01em',
                       }}
                     >
                       {category.category_name}
@@ -1848,10 +2185,13 @@ export const UserProfilePage: React.FC = () => {
                       label={`${category.percentage.toFixed(1)}%`}
                       size="small"
                       sx={{
-                        backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
-                        color: NEUTRAL_COLORS.accent,
-                        fontWeight: 700,
+                        background: alpha(GLASS_COLORS.primary, 0.15),
+                        backdropFilter: 'blur(10px)',
+                        color: GLASS_COLORS.primary,
+                        fontWeight: 600,
                         fontSize: '0.75rem',
+                        border: '1px solid',
+                        borderColor: alpha(GLASS_COLORS.primary, 0.3),
                       }}
                     />
                   </Box>
@@ -1866,8 +2206,9 @@ export const UserProfilePage: React.FC = () => {
                       sx={{
                         height: 8,
                         borderRadius: 4,
-                        backgroundColor: alpha(NEUTRAL_COLORS.border, 0.3),
+                        backgroundColor: alpha(GLASS_COLORS.border, 0.5),
                         overflow: 'hidden',
+                        backdropFilter: 'blur(10px)',
                         position: 'relative',
                       }}
                     >
@@ -1878,10 +2219,10 @@ export const UserProfilePage: React.FC = () => {
                           left: 0,
                           height: '100%',
                           width: `${Math.min(category.percentage, 100)}%`,
-                          backgroundColor: NEUTRAL_COLORS.accent,
+                          background: `linear-gradient(90deg, ${GLASS_COLORS.primary} 0%, ${alpha(GLASS_COLORS.primary, 0.6)} 100%)`,
                           borderRadius: 4,
                           transition: 'width 0.6s ease-out',
-                          backgroundImage: `linear-gradient(90deg, ${NEUTRAL_COLORS.accent} 0%, ${alpha(NEUTRAL_COLORS.accent, 0.8)} 100%)`,
+                          boxShadow: `0 2px 8px ${alpha(GLASS_COLORS.primary, 0.3)}`,
                         }}
                       />
                     </Box>
@@ -1892,7 +2233,7 @@ export const UserProfilePage: React.FC = () => {
                     <Typography
                       variant="body2"
                       sx={{
-                        color: NEUTRAL_COLORS.textSecondary,
+                        color: GLASS_COLORS.textSecondary,
                         fontWeight: 600,
                       }}
                     >
@@ -1901,7 +2242,7 @@ export const UserProfilePage: React.FC = () => {
                     <Typography
                       variant="caption"
                       sx={{
-                        color: NEUTRAL_COLORS.textSecondary,
+                        color: GLASS_COLORS.textSecondary,
                         fontWeight: 500,
                       }}
                     >
@@ -1914,25 +2255,28 @@ export const UserProfilePage: React.FC = () => {
           </Paper>
         )}
 
-        {/* Итоговая информация */}
+        {/* Итоговая информация в стеклянном стиле */}
         <Paper
           elevation={0}
           sx={{
             p: 3,
-            borderRadius: 3,
-            border: `1px dashed ${NEUTRAL_COLORS.border}`,
-            backgroundColor: alpha(NEUTRAL_COLORS.info, 0.05),
+            borderRadius: 4,
+            border: '1px dashed',
+            borderColor: alpha(GLASS_COLORS.info, 0.5),
+            background: alpha(GLASS_COLORS.info, 0.1),
+            backdropFilter: 'blur(10px)',
           }}
         >
           <Stack spacing={2}>
             <Typography
               variant="h6"
               sx={{
-                color: NEUTRAL_COLORS.info,
+                color: GLASS_COLORS.info,
                 fontWeight: 600,
                 display: 'flex',
                 alignItems: 'center',
                 gap: 1,
+                letterSpacing: '-0.01em',
               }}
             >
               <InfoIcon />
@@ -1942,20 +2286,20 @@ export const UserProfilePage: React.FC = () => {
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <Typography
                   variant="body2"
-                  sx={{ color: NEUTRAL_COLORS.textPrimary, fontWeight: 500 }}
+                  sx={{ color: GLASS_COLORS.textPrimary, fontWeight: 500 }}
                 >
                   • Всего выполнено вопросов: <strong>{completionStats.total_completed}</strong>
                 </Typography>
                 <Typography
                   variant="body2"
-                  sx={{ color: NEUTRAL_COLORS.textPrimary, fontWeight: 500 }}
+                  sx={{ color: GLASS_COLORS.textPrimary, fontWeight: 500 }}
                 >
                   • Общий прогресс: <strong>{completionStats.overall_percentage.toFixed(1)}%</strong>
                 </Typography>
                 {achievements.length > 0 && (
                   <Typography
                     variant="body2"
-                    sx={{ color: NEUTRAL_COLORS.textPrimary, fontWeight: 500 }}
+                    sx={{ color: GLASS_COLORS.textPrimary, fontWeight: 500 }}
                   >
                     • Разблокировано ачивок: <strong>{unlockedAchievements}/{totalAchievements}</strong>
                   </Typography>
@@ -1965,7 +2309,7 @@ export const UserProfilePage: React.FC = () => {
             <Typography
               variant="caption"
               sx={{
-                color: NEUTRAL_COLORS.textSecondary,
+                color: GLASS_COLORS.textSecondary,
                 fontStyle: 'italic',
                 mt: 1,
               }}

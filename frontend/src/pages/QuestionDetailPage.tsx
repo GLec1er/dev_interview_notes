@@ -67,24 +67,32 @@ import type { Question, Answer, Category, ContentBlock } from '../types';
 import { ContentEditor } from '../components/Admin/ContentEditor';
 import { useAuth } from '../context/AuthContext';
 
-// Нейтральная цветовая палитра
-const NEUTRAL_COLORS = {
-  primary: '#2D3748',
-  secondary: '#4A5568',
-  accent: '#3182CE',
-  background: '#F7FAFC',
-  surface: '#FFFFFF',
-  textPrimary: '#1A202C',
-  textSecondary: '#718096',
-  border: '#E2E8F0',
-  success: '#38A169',
-  warning: '#DD6B20',
-  error: '#E53E3E',
-  info: '#3182CE',
+// Стеклянная цветовая палитра iOS 26 Liquid Glass
+const GLASS_COLORS = {
+  primary: 'rgba(10, 132, 255, 0.8)', // iOS синий с прозрачностью
+  secondary: 'rgba(94, 92, 230, 0.75)', // Фиолетово-синий
+  accent: 'rgba(90, 200, 250, 0.9)', // Голубой акцент
+  background: 'rgba(240, 244, 250, 0.4)', // Полупрозрачный фон
+  surface: 'rgba(255, 255, 255, 0.6)', // Стеклянная поверхность
+  surfaceDark: 'rgba(255, 255, 255, 0.8)', // Более плотное стекло
+  textPrimary: 'rgba(0, 0, 0, 0.8)',
+  textSecondary: 'rgba(60, 60, 67, 0.6)',
+  border: 'rgba(255, 255, 255, 0.5)', // Стеклянная граница
+  borderGlow: 'rgba(255, 255, 255, 0.8)',
+  success: 'rgba(52, 199, 89, 0.8)', // iOS зеленый
+  error: 'rgba(255, 59, 48, 0.8)', // iOS красный
+  warning: 'rgba(255, 149, 0, 0.8)', // iOS оранжевый
+  purple: 'rgba(175, 82, 222, 0.8)', // iOS фиолетовый
+  blue: 'rgba(0, 122, 255, 0.8)', // iOS синий
+  info: 'rgba(90, 200, 250, 0.8)',
+  gradientStart: 'rgba(255, 255, 255, 0.3)',
+  gradientEnd: 'rgba(255, 255, 255, 0.1)',
+  glassOverlay: 'rgba(255, 255, 255, 0.2)',
+  glassHighlight: 'rgba(255, 255, 255, 0.5)',
 };
 
-// SolutionCard.tsx - обновленная версия компонента с кнопками админа
-interface SolutionCardProps {
+// SolutionCard в стеклянном стиле
+interface GlassSolutionCardProps {
   answer: Answer;
   index: number;
   isExpanded: boolean;
@@ -95,7 +103,7 @@ interface SolutionCardProps {
   onDeleteAnswer: (answerId: string) => void;
 }
 
-const SolutionCard: React.FC<SolutionCardProps> = ({ 
+const GlassSolutionCard: React.FC<GlassSolutionCardProps> = ({ 
   answer, 
   index, 
   isExpanded, 
@@ -110,15 +118,50 @@ const SolutionCard: React.FC<SolutionCardProps> = ({
     <Paper
       elevation={0}
       sx={{
-        borderRadius: 2,
-        border: `1px solid ${NEUTRAL_COLORS.border}`,
-        backgroundColor: NEUTRAL_COLORS.surface,
+        borderRadius: 4,
+        background: GLASS_COLORS.surface,
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        border: '1px solid',
+        borderColor: GLASS_COLORS.border,
         overflow: 'hidden',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        transition: 'all 0.4s cubic-bezier(0.2, 0, 0, 1)',
         mb: 2,
+        position: 'relative',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '100%',
+          background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+          opacity: 0,
+          transition: 'opacity 0.4s ease',
+          pointerEvents: 'none',
+        },
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          top: -20,
+          left: -20,
+          right: -20,
+          bottom: -20,
+          background: `radial-gradient(circle at 30% 30%, ${GLASS_COLORS.success} 0%, transparent 70%)`,
+          opacity: 0,
+          zIndex: -1,
+          filter: 'blur(30px)',
+          transition: 'opacity 0.4s ease',
+        },
         '&:hover': {
-          borderColor: alpha(NEUTRAL_COLORS.accent, 0.5),
-          boxShadow: `0 4px 20px ${alpha(NEUTRAL_COLORS.accent, 0.08)}`,
+          borderColor: GLASS_COLORS.borderGlow,
+          boxShadow: `0 16px 32px ${alpha(GLASS_COLORS.success, 0.15)}`,
+          '&::before': {
+            opacity: 1,
+          },
+          '&::after': {
+            opacity: 0.2,
+          },
         },
       }}
     >
@@ -126,14 +169,14 @@ const SolutionCard: React.FC<SolutionCardProps> = ({
       <Box
         sx={{
           p: { xs: 2.5, md: 3 },
-          backgroundColor: NEUTRAL_COLORS.background,
+          background: alpha(GLASS_COLORS.background, 0.5),
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           transition: 'background-color 0.2s',
           '&:hover': {
-            backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+            background: alpha(GLASS_COLORS.primary, 0.08),
           },
         }}
       >
@@ -151,12 +194,15 @@ const SolutionCard: React.FC<SolutionCardProps> = ({
               width: 44,
               height: 44,
               borderRadius: '12px',
-              backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
-              color: NEUTRAL_COLORS.accent,
+              background: alpha(GLASS_COLORS.primary, 0.15),
+              backdropFilter: 'blur(10px)',
+              border: '1px solid',
+              borderColor: alpha(GLASS_COLORS.primary, 0.3),
+              color: GLASS_COLORS.primary,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontWeight: 800,
+              fontWeight: 600,
               fontSize: '1.125rem',
               flexShrink: 0,
               transition: 'all 0.2s',
@@ -170,10 +216,11 @@ const SolutionCard: React.FC<SolutionCardProps> = ({
             <Typography
               variant="h6"
               sx={{
-                fontWeight: 700,
-                color: NEUTRAL_COLORS.textPrimary,
+                fontWeight: 600,
+                color: GLASS_COLORS.textPrimary,
                 mb: 0.5,
                 fontSize: '1.125rem',
+                letterSpacing: '-0.01em',
               }}
             >
               Решение {index + 1}
@@ -182,7 +229,7 @@ const SolutionCard: React.FC<SolutionCardProps> = ({
               <Typography
                 variant="caption"
                 sx={{
-                  color: NEUTRAL_COLORS.textSecondary,
+                  color: GLASS_COLORS.textSecondary,
                   display: 'flex',
                   alignItems: 'center',
                   gap: 0.5,
@@ -194,7 +241,8 @@ const SolutionCard: React.FC<SolutionCardProps> = ({
                     width: 6,
                     height: 6,
                     borderRadius: '50%',
-                    backgroundColor: NEUTRAL_COLORS.success,
+                    backgroundColor: GLASS_COLORS.success,
+                    boxShadow: `0 0 8px ${GLASS_COLORS.success}`,
                     display: 'inline-block',
                   }}
                 />
@@ -217,10 +265,13 @@ const SolutionCard: React.FC<SolutionCardProps> = ({
                   }}
                   size="small"
                   sx={{
-                    color: NEUTRAL_COLORS.accent,
-                    backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
+                    color: GLASS_COLORS.primary,
+                    background: alpha(GLASS_COLORS.primary, 0.15),
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid',
+                    borderColor: alpha(GLASS_COLORS.primary, 0.3),
                     '&:hover': {
-                      backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.2),
+                      background: alpha(GLASS_COLORS.primary, 0.25),
                     },
                   }}
                 >
@@ -235,10 +286,13 @@ const SolutionCard: React.FC<SolutionCardProps> = ({
                   }}
                   size="small"
                   sx={{
-                    color: NEUTRAL_COLORS.error,
-                    backgroundColor: alpha(NEUTRAL_COLORS.error, 0.1),
+                    color: GLASS_COLORS.error,
+                    background: alpha(GLASS_COLORS.error, 0.15),
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid',
+                    borderColor: alpha(GLASS_COLORS.error, 0.3),
                     '&:hover': {
-                      backgroundColor: alpha(NEUTRAL_COLORS.error, 0.2),
+                      background: alpha(GLASS_COLORS.error, 0.25),
                     },
                   }}
                 >
@@ -254,8 +308,8 @@ const SolutionCard: React.FC<SolutionCardProps> = ({
             size="small"
             sx={{
               transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-              transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              color: NEUTRAL_COLORS.accent,
+              transition: 'transform 0.3s cubic-bezier(0.2, 0, 0, 1)',
+              color: GLASS_COLORS.primary,
             }}
           >
             <ExpandMoreIcon />
@@ -270,8 +324,8 @@ const SolutionCard: React.FC<SolutionCardProps> = ({
           height: isExpanded ? 'auto' : 0,
           opacity: isExpanded ? 1 : 0,
           overflow: 'hidden',
-          transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
-          backgroundColor: NEUTRAL_COLORS.surface,
+          transition: 'all 0.5s cubic-bezier(0.2, 0, 0, 1)',
+          background: GLASS_COLORS.surface,
           visibility: isExpanded ? 'visible' : 'hidden',
         }}
       >
@@ -280,7 +334,7 @@ const SolutionCard: React.FC<SolutionCardProps> = ({
             p: { xs: 3, md: 4 },
             opacity: isExpanded ? 1 : 0,
             transform: isExpanded ? 'translateY(0)' : 'translateY(-10px)',
-            transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+            transition: 'all 0.5s cubic-bezier(0.2, 0, 0, 1)',
             transitionDelay: isExpanded ? '0.1s' : '0s',
           }}
         >
@@ -290,11 +344,11 @@ const SolutionCard: React.FC<SolutionCardProps> = ({
               width: 40,
               height: 4,
               borderRadius: 2,
-              backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.3),
+              background: `linear-gradient(90deg, ${GLASS_COLORS.primary}, ${GLASS_COLORS.success})`,
               mb: 3,
               opacity: isExpanded ? 1 : 0,
               transform: isExpanded ? 'translateX(0)' : 'translateX(-20px)',
-              transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+              transition: 'all 0.4s cubic-bezier(0.2, 0, 0, 1)',
               transitionDelay: isExpanded ? '0.2s' : '0s',
             }}
           />
@@ -302,7 +356,7 @@ const SolutionCard: React.FC<SolutionCardProps> = ({
           {/* Контент решения */}
           <Box
             sx={{
-              color: NEUTRAL_COLORS.textPrimary,
+              color: GLASS_COLORS.textPrimary,
               lineHeight: 1.8,
               fontSize: '1.05rem',
               '& > *': {
@@ -312,25 +366,30 @@ const SolutionCard: React.FC<SolutionCardProps> = ({
                 mb: 2,
               },
               '& h2, & h3, & h4': {
-                color: NEUTRAL_COLORS.textPrimary,
-                fontWeight: 700,
+                color: GLASS_COLORS.textPrimary,
+                fontWeight: 600,
                 mt: 3,
                 mb: 1.5,
+                letterSpacing: '-0.01em',
               },
               '& code': {
-                backgroundColor: alpha(NEUTRAL_COLORS.background, 0.8),
+                background: alpha(GLASS_COLORS.background, 0.8),
+                backdropFilter: 'blur(10px)',
                 padding: '2px 6px',
                 borderRadius: 1,
                 fontFamily: 'monospace',
                 fontSize: '0.9em',
               },
               '& pre': {
-                backgroundColor: alpha(NEUTRAL_COLORS.background, 0.9),
+                background: alpha(GLASS_COLORS.background, 0.9),
+                backdropFilter: 'blur(10px)',
                 padding: 3,
                 borderRadius: 2,
                 overflow: 'auto',
                 fontSize: '0.9rem',
                 lineHeight: 1.6,
+                border: '1px solid',
+                borderColor: alpha(GLASS_COLORS.border, 0.3),
               },
               '& ul, & ol': {
                 pl: 3,
@@ -469,13 +528,13 @@ export const QuestionDetailPage: React.FC = () => {
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'easy':
-        return NEUTRAL_COLORS.success;
+        return GLASS_COLORS.success;
       case 'medium':
-        return NEUTRAL_COLORS.warning;
+        return GLASS_COLORS.warning;
       case 'hard':
-        return NEUTRAL_COLORS.error;
+        return GLASS_COLORS.error;
       default:
-        return NEUTRAL_COLORS.secondary;
+        return GLASS_COLORS.secondary;
     }
   };
 
@@ -846,37 +905,70 @@ const handleCloseAnswerEdit = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: `linear-gradient(135deg, ${NEUTRAL_COLORS.background} 0%, ${alpha(
-            NEUTRAL_COLORS.background,
-            0.8
-          )} 100%)`,
+          background: 'linear-gradient(135deg, #E0F0FF 0%, #D0E4FF 50%, #B8D8FF 100%)',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: `
+              radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.4) 0%, transparent 40%),
+              radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.3) 0%, transparent 50%)
+            `,
+            pointerEvents: 'none',
+          },
         }}
       >
-        <CircularProgress size={48} sx={{ color: NEUTRAL_COLORS.accent }} />
+        <CircularProgress size={48} sx={{ color: GLASS_COLORS.primary }} />
       </Box>
     );
   }
 
   if (error || !question) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/questions')}
-          sx={{ mb: 2, color: NEUTRAL_COLORS.accent }}
-        >
-          Назад к вопросам
-        </Button>
-        <Alert
-          severity="error"
-          sx={{
-            borderRadius: 3,
-            border: `1px solid ${alpha(NEUTRAL_COLORS.error, 0.2)}`,
-          }}
-        >
-          {error || 'Вопрос не найден'}
-        </Alert>
-      </Container>
+      <Box sx={{ 
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #E0F0FF 0%, #D0E4FF 50%, #B8D8FF 100%)',
+        py: 4,
+      }}>
+        <Container maxWidth="lg">
+          <Button
+            startIcon={<ArrowBackIcon />}
+            onClick={() => navigate('/questions')}
+            sx={{ 
+              mb: 2, 
+              color: GLASS_COLORS.primary,
+              background: GLASS_COLORS.surface,
+              backdropFilter: 'blur(10px)',
+              borderRadius: 3,
+              border: '1px solid',
+              borderColor: GLASS_COLORS.border,
+              px: 3,
+              py: 1,
+              '&:hover': {
+                background: alpha(GLASS_COLORS.primary, 0.1),
+              }
+            }}
+          >
+            Назад к вопросам
+          </Button>
+          <Alert
+            severity="error"
+            sx={{
+              borderRadius: 3,
+              background: alpha(GLASS_COLORS.error, 0.15),
+              backdropFilter: 'blur(10px)',
+              border: '1px solid',
+              borderColor: alpha(GLASS_COLORS.error, 0.3),
+              color: GLASS_COLORS.error,
+            }}
+          >
+            {error || 'Вопрос не найден'}
+          </Alert>
+        </Container>
+      </Box>
     );
   }
 
@@ -884,12 +976,25 @@ const handleCloseAnswerEdit = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: `linear-gradient(135deg, ${NEUTRAL_COLORS.background} 0%, ${alpha(
-          NEUTRAL_COLORS.background,
-          0.8
-        )} 100%)`,
-        py: 4,
+        background: 'linear-gradient(135deg, #E0F0FF 0%, #D0E4FF 50%, #B8D8FF 100%)',
         position: 'relative',
+        overflow: 'hidden',
+        fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif',
+        py: 4,
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: `
+            radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.4) 0%, transparent 40%),
+            radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.3) 0%, transparent 50%),
+            radial-gradient(circle at 40% 80%, rgba(200, 220, 255, 0.5) 0%, transparent 60%)
+          `,
+          pointerEvents: 'none',
+        },
       }}
     >
       <Container maxWidth="lg">
@@ -902,8 +1007,13 @@ const handleCloseAnswerEdit = () => {
               top: 20,
               right: 20,
               zIndex: 9999,
-              borderRadius: 2,
-              boxShadow: 3,
+              borderRadius: 3,
+              background: alpha(GLASS_COLORS.success, 0.15),
+              backdropFilter: 'blur(10px)',
+              border: '1px solid',
+              borderColor: alpha(GLASS_COLORS.success, 0.3),
+              color: GLASS_COLORS.success,
+              boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
             }}
             onClose={() => setShowCopyNotification(null)}
           >
@@ -921,11 +1031,18 @@ const handleCloseAnswerEdit = () => {
               bottom: 32,
               right: 32,
               zIndex: 1000,
-              backgroundColor: NEUTRAL_COLORS.accent,
-              color: NEUTRAL_COLORS.surface,
+              background: GLASS_COLORS.surface,
+              backdropFilter: 'blur(20px)',
+              border: '1px solid',
+              borderColor: GLASS_COLORS.border,
+              color: GLASS_COLORS.primary,
+              boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)',
               '&:hover': {
-                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.9),
+                background: GLASS_COLORS.surfaceDark,
+                transform: 'translateY(-4px)',
+                boxShadow: '0 12px 24px rgba(0, 0, 0, 0.15)',
               },
+              transition: 'all 0.3s ease',
             }}
           >
             <ScrollTopIcon />
@@ -946,9 +1063,17 @@ const handleCloseAnswerEdit = () => {
             startIcon={<ArrowBackIcon />}
             onClick={() => navigate('/questions')}
             sx={{
-              color: NEUTRAL_COLORS.accent,
+              color: GLASS_COLORS.primary,
+              background: GLASS_COLORS.surface,
+              backdropFilter: 'blur(10px)',
+              borderRadius: 3,
+              border: '1px solid',
+              borderColor: GLASS_COLORS.border,
+              px: 3,
+              py: 1,
               '&:hover': {
-                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+                background: alpha(GLASS_COLORS.primary, 0.1),
+                borderColor: GLASS_COLORS.primary,
               },
             }}
             variant="text"
@@ -961,9 +1086,17 @@ const handleCloseAnswerEdit = () => {
             endIcon={<ArrowForwardIcon />}
             onClick={() => navigate('/profile')}
             sx={{
-              color: NEUTRAL_COLORS.accent,
+              color: GLASS_COLORS.primary,
+              background: GLASS_COLORS.surface,
+              backdropFilter: 'blur(10px)',
+              borderRadius: 3,
+              border: '1px solid',
+              borderColor: GLASS_COLORS.border,
+              px: 3,
+              py: 1,
               '&:hover': {
-                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+                background: alpha(GLASS_COLORS.primary, 0.1),
+                borderColor: GLASS_COLORS.primary,
               },
             }}
             variant="text"
@@ -972,16 +1105,31 @@ const handleCloseAnswerEdit = () => {
           </Button>
         </Box>
 
-        {/* Карточка вопроса */}
+        {/* Карточка вопроса в стеклянном стиле */}
         <Paper
           elevation={0}
           sx={{
             p: { xs: 3, md: 5 },
             mb: 4,
-            borderRadius: 3,
-            border: `1px solid ${NEUTRAL_COLORS.border}`,
-            backgroundColor: NEUTRAL_COLORS.surface,
+            borderRadius: 4,
+            background: GLASS_COLORS.surface,
+            backdropFilter: 'blur(30px)',
+            WebkitBackdropFilter: 'blur(30px)',
+            border: '1px solid',
+            borderColor: GLASS_COLORS.border,
             position: 'relative',
+            overflow: 'hidden',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '100%',
+              background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+              opacity: 0.5,
+              pointerEvents: 'none',
+            },
           }}
         >
           {/* Действия с вопросом (правый верхний угол) */}
@@ -1007,15 +1155,19 @@ const handleCloseAnswerEdit = () => {
                 disabled={isCompletionLoading}
                 size="small"
                 sx={{
-                  color: isCompleted ? NEUTRAL_COLORS.success : NEUTRAL_COLORS.textSecondary,
-                  backgroundColor: alpha(NEUTRAL_COLORS.background, 0.8),
+                  color: isCompleted ? GLASS_COLORS.success : GLASS_COLORS.textSecondary,
+                  background: alpha(GLASS_COLORS.background, 0.8),
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid',
+                  borderColor: isCompleted ? alpha(GLASS_COLORS.success, 0.3) : GLASS_COLORS.border,
                   '&:hover': {
-                    backgroundColor: alpha(NEUTRAL_COLORS.success, 0.1),
+                    background: alpha(isCompleted ? GLASS_COLORS.success : GLASS_COLORS.primary, 0.1),
+                    borderColor: isCompleted ? GLASS_COLORS.success : GLASS_COLORS.primary,
                   },
                 }}
               >
                 {isCompletionLoading ? (
-                  <CircularProgress size={24} />
+                  <CircularProgress size={24} sx={{ color: GLASS_COLORS.primary }} />
                 ) : isCompleted ? (
                   <CheckCircleIcon />
                 ) : (
@@ -1024,15 +1176,19 @@ const handleCloseAnswerEdit = () => {
               </IconButton>
             </Tooltip>
 
-            <Tooltip title={isBookmarked ? "Удалить из избранное" : "Добавить в избранное"}>
+            <Tooltip title={isBookmarked ? "Удалить из избранного" : "Добавить в избранное"}>
               <IconButton
                 onClick={handleBookmarkToggle}
                 size="small"
                 sx={{
-                  color: isBookmarked ? NEUTRAL_COLORS.warning : NEUTRAL_COLORS.textSecondary,
-                  backgroundColor: alpha(NEUTRAL_COLORS.background, 0.8),
+                  color: isBookmarked ? GLASS_COLORS.warning : GLASS_COLORS.textSecondary,
+                  background: alpha(GLASS_COLORS.background, 0.8),
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid',
+                  borderColor: isBookmarked ? alpha(GLASS_COLORS.warning, 0.3) : GLASS_COLORS.border,
                   '&:hover': {
-                    backgroundColor: alpha(NEUTRAL_COLORS.warning, 0.1),
+                    background: alpha(isBookmarked ? GLASS_COLORS.warning : GLASS_COLORS.primary, 0.1),
+                    borderColor: isBookmarked ? GLASS_COLORS.warning : GLASS_COLORS.primary,
                   },
                 }}
               >
@@ -1045,10 +1201,14 @@ const handleCloseAnswerEdit = () => {
                 onClick={handleShareQuestion}
                 size="small"
                 sx={{
-                  color: NEUTRAL_COLORS.textSecondary,
-                  backgroundColor: alpha(NEUTRAL_COLORS.background, 0.8),
+                  color: GLASS_COLORS.textSecondary,
+                  background: alpha(GLASS_COLORS.background, 0.8),
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid',
+                  borderColor: GLASS_COLORS.border,
                   '&:hover': {
-                    backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
+                    background: alpha(GLASS_COLORS.primary, 0.1),
+                    borderColor: GLASS_COLORS.primary,
                   },
                 }}
               >
@@ -1063,10 +1223,14 @@ const handleCloseAnswerEdit = () => {
               onClick={(e) => setAnchorEl(e.currentTarget)}
               size="small"
               sx={{
-                color: NEUTRAL_COLORS.textSecondary,
-                backgroundColor: alpha(NEUTRAL_COLORS.background, 0.8),
+                color: GLASS_COLORS.textSecondary,
+                background: alpha(GLASS_COLORS.background, 0.8),
+                backdropFilter: 'blur(10px)',
+                border: '1px solid',
+                borderColor: GLASS_COLORS.border,
                 '&:hover': {
-                  backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
+                  background: alpha(GLASS_COLORS.primary, 0.1),
+                  borderColor: GLASS_COLORS.primary,
                 },
               }}
             >
@@ -1089,9 +1253,12 @@ const handleCloseAnswerEdit = () => {
                 sx: {
                   mt: 1,
                   minWidth: 200,
-                  borderRadius: 2,
-                  boxShadow: 3,
-                  backgroundColor: NEUTRAL_COLORS.surface,
+                  borderRadius: 3,
+                  background: GLASS_COLORS.surfaceDark,
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid',
+                  borderColor: GLASS_COLORS.border,
+                  boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
                 }
               }}
             >
@@ -1103,15 +1270,18 @@ const handleCloseAnswerEdit = () => {
                 disabled={isCompletionLoading}
                 sx={{
                   py: 1.5,
-                  color: isCompleted ? NEUTRAL_COLORS.success : NEUTRAL_COLORS.textPrimary,
+                  color: isCompleted ? GLASS_COLORS.success : GLASS_COLORS.textPrimary,
+                  '&:hover': {
+                    background: alpha(isCompleted ? GLASS_COLORS.success : GLASS_COLORS.primary, 0.1),
+                  }
                 }}
               >
                 <ListItemIcon sx={{ 
                   minWidth: 36,
-                  color: isCompleted ? NEUTRAL_COLORS.success : NEUTRAL_COLORS.textPrimary,
+                  color: isCompleted ? GLASS_COLORS.success : GLASS_COLORS.textPrimary,
                 }}>
                   {isCompletionLoading ? (
-                    <CircularProgress size={20} />
+                    <CircularProgress size={20} sx={{ color: GLASS_COLORS.primary }} />
                   ) : isCompleted ? (
                     <CheckCircleIcon fontSize="small" />
                   ) : (
@@ -1131,12 +1301,15 @@ const handleCloseAnswerEdit = () => {
                 }}
                 sx={{
                   py: 1.5,
-                  color: isBookmarked ? NEUTRAL_COLORS.warning : NEUTRAL_COLORS.textPrimary,
+                  color: isBookmarked ? GLASS_COLORS.warning : GLASS_COLORS.textPrimary,
+                  '&:hover': {
+                    background: alpha(isBookmarked ? GLASS_COLORS.warning : GLASS_COLORS.primary, 0.1),
+                  }
                 }}
               >
                 <ListItemIcon sx={{ 
                   minWidth: 36,
-                  color: isBookmarked ? NEUTRAL_COLORS.warning : NEUTRAL_COLORS.textPrimary,
+                  color: isBookmarked ? GLASS_COLORS.warning : GLASS_COLORS.textPrimary,
                 }}>
                   {isBookmarked ? (
                     <BookmarkIcon fontSize="small" />
@@ -1156,12 +1329,15 @@ const handleCloseAnswerEdit = () => {
                 }}
                 sx={{
                   py: 1.5,
-                  color: NEUTRAL_COLORS.textPrimary,
+                  color: GLASS_COLORS.textPrimary,
+                  '&:hover': {
+                    background: alpha(GLASS_COLORS.primary, 0.1),
+                  }
                 }}
               >
                 <ListItemIcon sx={{ 
                   minWidth: 36,
-                  color: NEUTRAL_COLORS.textPrimary,
+                  color: GLASS_COLORS.textPrimary,
                 }}>
                   <ShareIcon fontSize="small"/>
                 </ListItemIcon>
@@ -1182,7 +1358,8 @@ const handleCloseAnswerEdit = () => {
               sx={{
                 mb: 3,
                 pb: 3,
-                borderBottom: `1px solid ${alpha(NEUTRAL_COLORS.border, 0.5)}`,
+                borderBottom: '1px solid',
+                borderColor: GLASS_COLORS.border,
                 flexWrap: 'wrap',
                 gap: 1.5,
               }}
@@ -1190,14 +1367,15 @@ const handleCloseAnswerEdit = () => {
               {/* Сложность */}
               <Chip
                 icon={<DifficultyIcon />}
-                // label={`Сложность: ${question.difficulty.charAt(0).toUpperCase() + question.difficulty.slice(1)}`}
                 label={isMobileFilter ? `${question.difficulty.charAt(0).toUpperCase() + question.difficulty.slice(1)}` : `Сложность: ${question.difficulty.charAt(0).toUpperCase() + question.difficulty.slice(1)}`}
                 size="medium"
                 sx={{
-                  fontWeight: 700,
-                  backgroundColor: alpha(getDifficultyColor(question.difficulty), 0.1),
+                  fontWeight: 600,
+                  background: alpha(getDifficultyColor(question.difficulty), 0.15),
+                  backdropFilter: 'blur(10px)',
                   color: getDifficultyColor(question.difficulty),
-                  border: `1px solid ${alpha(getDifficultyColor(question.difficulty), 0.3)}`,
+                  border: '1px solid',
+                  borderColor: alpha(getDifficultyColor(question.difficulty), 0.3),
                   textTransform: 'capitalize',
                   fontSize: '0.95rem',
                   px: 1,
@@ -1212,15 +1390,17 @@ const handleCloseAnswerEdit = () => {
                   label={isMobileFilter ? `${category.name}` : `Категория: ${category.name}`}
                   size="medium"
                   sx={{
-                    fontWeight: 700,
-                    backgroundColor: alpha(NEUTRAL_COLORS.info, 0.1),
-                    color: NEUTRAL_COLORS.info,
-                    border: `1px solid ${alpha(NEUTRAL_COLORS.info, 0.3)}`,
+                    fontWeight: 600,
+                    background: alpha(GLASS_COLORS.info, 0.15),
+                    backdropFilter: 'blur(10px)',
+                    color: GLASS_COLORS.info,
+                    border: '1px solid',
+                    borderColor: alpha(GLASS_COLORS.info, 0.3),
                     fontSize: '0.95rem',
                     px: 1,
                     height: 36,
                     '& .MuiChip-icon': {
-                      color: NEUTRAL_COLORS.info,
+                      color: GLASS_COLORS.info,
                     },
                   }}
                 />
@@ -1237,8 +1417,11 @@ const handleCloseAnswerEdit = () => {
                     width: 56,
                     height: 56,
                     borderRadius: '16px',
-                    backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
-                    color: NEUTRAL_COLORS.accent,
+                    background: alpha(GLASS_COLORS.primary, 0.15),
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid',
+                    borderColor: alpha(GLASS_COLORS.primary, 0.3),
+                    color: GLASS_COLORS.primary,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -1254,12 +1437,13 @@ const handleCloseAnswerEdit = () => {
                 <Typography
                   variant="h2"
                   sx={{
-                    fontWeight: 800,
-                    color: NEUTRAL_COLORS.textPrimary,
-                    letterSpacing: '-0.025em',
+                    fontWeight: 700,
+                    color: GLASS_COLORS.textPrimary,
+                    letterSpacing: '-0.02em',
                     mb: 2.5,
                     fontSize: { xs: '2rem', md: '2.5rem' },
                     lineHeight: 1.2,
+                    textShadow: '0 2px 10px rgba(255,255,255,0.5)',
                   }}
                 >
                   {question.title}
@@ -1282,13 +1466,13 @@ const handleCloseAnswerEdit = () => {
                 </Box>
 
                 {/* Дополнительная информация о вопросе */}
-                <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 3, pt: 3, borderTop: `1px dashed ${alpha(NEUTRAL_COLORS.border, 0.3)}` }}>
-                  <Typography variant="caption" sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+                <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 3, pt: 3, borderTop: '1px dashed', borderColor: alpha(GLASS_COLORS.border, 0.5) }}>
+                  <Typography variant="caption" sx={{ color: GLASS_COLORS.textSecondary }}>
                     <HistoryIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
                     Обновлено: {new Date(question.updated_at).toLocaleDateString()}
                   </Typography>
                   
-                  <Typography variant="caption" sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+                  <Typography variant="caption" sx={{ color: GLASS_COLORS.textSecondary }}>
                     <CommentIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
                     Решений: {answers.length}
                   </Typography>
@@ -1303,7 +1487,8 @@ const handleCloseAnswerEdit = () => {
               sx={{ 
                 mt: 4, 
                 pt: 3, 
-                borderTop: `1px solid ${alpha(NEUTRAL_COLORS.border, 0.5)}`,
+                borderTop: '1px solid',
+                borderColor: GLASS_COLORS.border,
                 display: 'flex',
                 justifyContent: 'flex-end',
                 gap: 2
@@ -1314,11 +1499,14 @@ const handleCloseAnswerEdit = () => {
                 onClick={handleOpenQuestionEdit}
                 variant="outlined"
                 sx={{
-                  borderColor: NEUTRAL_COLORS.accent,
-                  color: NEUTRAL_COLORS.accent,
+                  borderColor: alpha(GLASS_COLORS.primary, 0.5),
+                  color: GLASS_COLORS.primary,
+                  borderRadius: 3,
+                  background: GLASS_COLORS.surface,
+                  backdropFilter: 'blur(10px)',
                   '&:hover': {
-                    borderColor: alpha(NEUTRAL_COLORS.accent, 0.8),
-                    backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+                    borderColor: GLASS_COLORS.primary,
+                    background: alpha(GLASS_COLORS.primary, 0.1),
                   },
                 }}
               >
@@ -1330,11 +1518,14 @@ const handleCloseAnswerEdit = () => {
                 onClick={handleOpenQuestionDelete}
                 variant="outlined"
                 sx={{
-                  borderColor: NEUTRAL_COLORS.error,
-                  color: NEUTRAL_COLORS.error,
+                  borderColor: alpha(GLASS_COLORS.error, 0.5),
+                  color: GLASS_COLORS.error,
+                  borderRadius: 3,
+                  background: GLASS_COLORS.surface,
+                  backdropFilter: 'blur(10px)',
                   '&:hover': {
-                    borderColor: alpha(NEUTRAL_COLORS.error, 0.8),
-                    backgroundColor: alpha(NEUTRAL_COLORS.error, 0.04),
+                    borderColor: GLASS_COLORS.error,
+                    background: alpha(GLASS_COLORS.error, 0.1),
                   },
                 }}
               >
@@ -1344,14 +1535,30 @@ const handleCloseAnswerEdit = () => {
           )}
         </Paper>
 
-        {/* Секция решений */}
+        {/* Секция решений в стеклянном стиле */}
         <Paper
           elevation={0}
           sx={{
             p: { xs: 3, md: 4 },
-            borderRadius: 3,
-            border: `1px solid ${NEUTRAL_COLORS.border}`,
-            backgroundColor: NEUTRAL_COLORS.surface,
+            borderRadius: 4,
+            background: GLASS_COLORS.surface,
+            backdropFilter: 'blur(30px)',
+            WebkitBackdropFilter: 'blur(30px)',
+            border: '1px solid',
+            borderColor: GLASS_COLORS.border,
+            position: 'relative',
+            overflow: 'hidden',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '100%',
+              background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+              opacity: 0.5,
+              pointerEvents: 'none',
+            },
           }}
         >
           <Stack spacing={3}>
@@ -1365,8 +1572,11 @@ const handleCloseAnswerEdit = () => {
                     width: 56,
                     height: 56,
                     borderRadius: '16px',
-                    backgroundColor: alpha(NEUTRAL_COLORS.success, 0.1),
-                    color: NEUTRAL_COLORS.success,
+                    background: alpha(GLASS_COLORS.success, 0.15),
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid',
+                    borderColor: alpha(GLASS_COLORS.success, 0.3),
+                    color: GLASS_COLORS.success,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -1381,10 +1591,11 @@ const handleCloseAnswerEdit = () => {
                 <Typography
                   variant="h3"
                   sx={{
-                    fontWeight: 800,
-                    color: NEUTRAL_COLORS.textPrimary,
+                    fontWeight: 700,
+                    color: GLASS_COLORS.textPrimary,
                     fontSize: { xs: '1.75rem', md: '2.25rem' },
                     mb: 1,
+                    letterSpacing: '-0.02em',
                   }}
                 >
                   Варианты решения
@@ -1392,7 +1603,7 @@ const handleCloseAnswerEdit = () => {
                 <Typography
                   variant="body1"
                   sx={{
-                    color: NEUTRAL_COLORS.textSecondary,
+                    color: GLASS_COLORS.textSecondary,
                   }}
                 >
                   Подробные объяснения и подходы к решению проблемы
@@ -1406,9 +1617,11 @@ const handleCloseAnswerEdit = () => {
                 elevation={0}
                 sx={{
                   p: 6,
-                  borderRadius: 2,
-                  border: `1px dashed ${NEUTRAL_COLORS.border}`,
-                  backgroundColor: alpha(NEUTRAL_COLORS.background, 0.5),
+                  borderRadius: 3,
+                  background: alpha(GLASS_COLORS.background, 0.5),
+                  backdropFilter: 'blur(10px)',
+                  border: '1px dashed',
+                  borderColor: GLASS_COLORS.border,
                   textAlign: 'center',
                 }}
               >
@@ -1416,20 +1629,24 @@ const handleCloseAnswerEdit = () => {
                   sx={{
                     p: 2,
                     borderRadius: '50%',
-                    backgroundColor: alpha(NEUTRAL_COLORS.background, 0.5),
+                    background: alpha(GLASS_COLORS.background, 0.8),
+                    backdropFilter: 'blur(10px)',
                     display: 'inline-flex',
                     mb: 2,
+                    border: '1px solid',
+                    borderColor: GLASS_COLORS.border,
                   }}
                 >
                   <SolutionIcon
-                    sx={{ fontSize: 48, color: NEUTRAL_COLORS.textSecondary }}
+                    sx={{ fontSize: 48, color: GLASS_COLORS.textSecondary }}
                   />
                 </Box>
                 <Typography
                   variant="h6"
                   sx={{
-                    color: NEUTRAL_COLORS.textSecondary,
+                    color: GLASS_COLORS.textSecondary,
                     mb: 1,
+                    fontWeight: 500,
                   }}
                 >
                   Пока нет доступных решений
@@ -1437,12 +1654,12 @@ const handleCloseAnswerEdit = () => {
               </Paper>
             ) : (
               <Box>
-                <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary, mb: 2 }}>
+                <Typography variant="body2" sx={{ color: GLASS_COLORS.textSecondary, mb: 2 }}>
                   Кликните на заголовок, чтобы развернуть решение.
                 </Typography>
                 
                 {answers.map((answer, index) => (
-                  <SolutionCard
+                  <GlassSolutionCard
                     key={answer.id}
                     answer={answer}
                     index={index}
@@ -1458,11 +1675,22 @@ const handleCloseAnswerEdit = () => {
             )}
 
             {/* Быстрые действия внизу */}
-            <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center" sx={{ mt: 4, pt: 3, borderTop: `1px solid ${alpha(NEUTRAL_COLORS.border, 0.5)}` }}>
+            <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center" sx={{ mt: 4, pt: 3, borderTop: '1px solid', borderColor: alpha(GLASS_COLORS.border, 0.5) }}>
               <Button
                 startIcon={<ArrowBackIcon />}
                 onClick={() => navigate('/questions')}
                 variant="outlined"
+                sx={{
+                  borderColor: GLASS_COLORS.border,
+                  color: GLASS_COLORS.textPrimary,
+                  borderRadius: 3,
+                  background: GLASS_COLORS.surface,
+                  backdropFilter: 'blur(10px)',
+                  '&:hover': {
+                    borderColor: GLASS_COLORS.primary,
+                    background: alpha(GLASS_COLORS.primary, 0.1),
+                  },
+                }}
               >
                 {isMobileFilter ? "К вопросам" : "Вернуться к вопросам"}
               </Button>
@@ -1472,10 +1700,14 @@ const handleCloseAnswerEdit = () => {
                   onClick={handleOpenAnswerAdd}
                   variant="contained"
                   sx={{
-                    backgroundColor: NEUTRAL_COLORS.success,
-                    color: NEUTRAL_COLORS.surface,
+                    background: `linear-gradient(135deg, ${GLASS_COLORS.success}, ${alpha(GLASS_COLORS.success, 0.7)})`,
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid',
+                    borderColor: alpha('#FFFFFF', 0.3),
+                    color: 'white',
+                    borderRadius: 3,
                     '&:hover': {
-                      backgroundColor: alpha(NEUTRAL_COLORS.success, 0.9),
+                      background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.success, 0.9)}, ${alpha(GLASS_COLORS.success, 0.6)})`,
                     },
                   }}
                 >
@@ -1486,26 +1718,28 @@ const handleCloseAnswerEdit = () => {
           </Stack>
         </Paper>
 
-        {/* Подсказки для пользователей */}
+        {/* Подсказки для пользователей в стеклянном стиле */}
         <Paper
           elevation={0}
           sx={{
             mt: 4,
             p: 3,
-            borderRadius: 3,
-            border: `1px dashed ${NEUTRAL_COLORS.border}`,
-            backgroundColor: alpha(NEUTRAL_COLORS.info, 0.05),
+            borderRadius: 4,
+            border: '1px dashed',
+            borderColor: alpha(GLASS_COLORS.info, 0.5),
+            background: alpha(GLASS_COLORS.info, 0.1),
+            backdropFilter: 'blur(10px)',
           }}
         >
           <Stack spacing={2}>
-            <Typography variant="h6" sx={{ color: NEUTRAL_COLORS.info, fontWeight: 600 }}>
+            <Typography variant="h6" sx={{ color: GLASS_COLORS.info, fontWeight: 600, letterSpacing: '-0.01em' }}>
               Советы по использованию платформы:
             </Typography>
             <Stack spacing={1}>
-              <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+              <Typography variant="body2" sx={{ color: GLASS_COLORS.textSecondary }}>
                 • Нажимайте на код, чтобы скопировать его в буфер обмена
               </Typography>
-              <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+              <Typography variant="body2" sx={{ color: GLASS_COLORS.textSecondary }}>
                 • Добавляйте понравившиеся вопросы в закладки для быстрого доступа
               </Typography>
             </Stack>
@@ -1513,7 +1747,7 @@ const handleCloseAnswerEdit = () => {
         </Paper>
       </Container>
 
-      {/* Модалка редактирования вопроса */}
+      {/* Модалка редактирования вопроса в стеклянном стиле */}
       <Dialog 
         open={openQuestionEditDialog} 
         onClose={handleCloseQuestionEdit} 
@@ -1521,18 +1755,24 @@ const handleCloseAnswerEdit = () => {
         fullWidth
         PaperProps={{
           sx: {
-            borderRadius: 3,
-            border: `1px solid ${NEUTRAL_COLORS.border}`,
+            borderRadius: 4,
+            background: GLASS_COLORS.surfaceDark,
+            backdropFilter: 'blur(30px)',
+            WebkitBackdropFilter: 'blur(30px)',
+            border: '1px solid',
+            borderColor: GLASS_COLORS.border,
+            boxShadow: '0 24px 48px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.5) inset',
             maxHeight: '90vh',
-            backgroundColor: NEUTRAL_COLORS.secondary,
           }
         }}
       >
         <DialogTitle sx={{ 
-          borderBottom: `1px solid ${NEUTRAL_COLORS.border}`,
+          borderBottom: '1px solid',
+          borderColor: GLASS_COLORS.border,
           pb: 2,
-          fontWeight: 700,
-          color: NEUTRAL_COLORS.surface,
+          fontWeight: 600,
+          color: GLASS_COLORS.textPrimary,
+          letterSpacing: '-0.01em',
         }}>
           Редактировать вопрос
           {questionError && (
@@ -1540,8 +1780,12 @@ const handleCloseAnswerEdit = () => {
               severity="error" 
               sx={{ 
                 mt: 2,
-                borderRadius: 2,
-                border: `1px solid ${alpha(NEUTRAL_COLORS.error, 0.2)}`,
+                borderRadius: 3,
+                background: alpha(GLASS_COLORS.error, 0.15),
+                backdropFilter: 'blur(10px)',
+                border: '1px solid',
+                borderColor: alpha(GLASS_COLORS.error, 0.3),
+                color: GLASS_COLORS.error,
               }}
               onClose={() => setQuestionError(null)}
             >
@@ -1570,11 +1814,16 @@ const handleCloseAnswerEdit = () => {
                 size="medium"
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
+                    borderRadius: 3,
+                    background: GLASS_COLORS.background,
+                    backdropFilter: 'blur(10px)',
                     '&:hover fieldset': {
-                      borderColor: NEUTRAL_COLORS.accent,
-                    }
-                  }
+                      borderColor: GLASS_COLORS.primary,
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: GLASS_COLORS.primary,
+                    },
+                  },
                 }}
               />
               <TextField
@@ -1585,27 +1834,43 @@ const handleCloseAnswerEdit = () => {
                 size="medium"
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
+                    borderRadius: 3,
+                    background: GLASS_COLORS.background,
+                    backdropFilter: 'blur(10px)',
                     '&:hover fieldset': {
-                      borderColor: NEUTRAL_COLORS.accent,
-                    }
-                  }
+                      borderColor: GLASS_COLORS.primary,
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: GLASS_COLORS.primary,
+                    },
+                  },
                 }}
                 helperText="URL-friendly версия названия (генерируется автоматически)"
+                FormHelperTextProps={{
+                  sx: { color: GLASS_COLORS.textSecondary }
+                }}
               />
               
               {/* Категория */}
               <FormControl fullWidth size="medium">
-                <InputLabel>Категория *</InputLabel>
+                <InputLabel sx={{ color: GLASS_COLORS.textSecondary }}>Категория *</InputLabel>
                 <Select
                   value={questionFormData.category_id}
                   label="Категория *"
                   onChange={(e) => setQuestionFormData({ ...questionFormData, category_id: e.target.value })}
                   sx={{
-                    borderRadius: 2,
+                    borderRadius: 3,
+                    background: GLASS_COLORS.background,
+                    backdropFilter: 'blur(10px)',
                     '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: NEUTRAL_COLORS.accent,
-                    }
+                      borderColor: GLASS_COLORS.primary,
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: GLASS_COLORS.primary,
+                    },
+                    '& .MuiSelect-select': {
+                      color: GLASS_COLORS.textPrimary,
+                    },
                   }}
                 >
                   <MenuItem value="">
@@ -1620,16 +1885,24 @@ const handleCloseAnswerEdit = () => {
               </FormControl>
 
               <FormControl fullWidth size="medium">
-                <InputLabel>Сложность</InputLabel>
+                <InputLabel sx={{ color: GLASS_COLORS.textSecondary }}>Сложность</InputLabel>
                 <Select
                   value={questionFormData.difficulty}
                   label="Сложность"
                   onChange={(e) => setQuestionFormData({ ...questionFormData, difficulty: e.target.value as any })}
                   sx={{
-                    borderRadius: 2,
+                    borderRadius: 3,
+                    background: GLASS_COLORS.background,
+                    backdropFilter: 'blur(10px)',
                     '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: NEUTRAL_COLORS.accent,
-                    }
+                      borderColor: GLASS_COLORS.primary,
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: GLASS_COLORS.primary,
+                    },
+                    '& .MuiSelect-select': {
+                      color: GLASS_COLORS.textPrimary,
+                    },
                   }}
                 >
                   <MenuItem value="easy">Легкий</MenuItem>
@@ -1647,7 +1920,8 @@ const handleCloseAnswerEdit = () => {
           )}
         </DialogContent>
         <DialogActions sx={{ 
-          borderTop: `1px solid ${NEUTRAL_COLORS.border}`,
+          borderTop: '1px solid',
+          borderColor: GLASS_COLORS.border,
           pt: 2,
           px: 3,
           pb: 3
@@ -1657,15 +1931,17 @@ const handleCloseAnswerEdit = () => {
             onClick={handleCloseQuestionEdit}
             sx={{
               borderWidth: 2,
-              borderColor: NEUTRAL_COLORS.border,
-              color: NEUTRAL_COLORS.surface,
-              borderRadius: 2,
+              borderRadius: 3,
+              borderColor: GLASS_COLORS.border,
+              color: GLASS_COLORS.textPrimary,
               px: 3,
               py: 1,
               fontWeight: 600,
+              background: GLASS_COLORS.surface,
+              backdropFilter: 'blur(10px)',
               '&:hover': {
-                borderColor: NEUTRAL_COLORS.accent,
-                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+                borderColor: GLASS_COLORS.primary,
+                background: alpha(GLASS_COLORS.primary, 0.1),
               }
             }}
           >
@@ -1677,14 +1953,21 @@ const handleCloseAnswerEdit = () => {
             disabled={!questionFormData.category_id || !questionFormData.title.trim() || !questionFormData.slug.trim() || isSavingQuestion}
             startIcon={isSavingQuestion ? <CircularProgress size={20} color="inherit" /> : null}
             sx={{
-              backgroundColor: NEUTRAL_COLORS.success,
-              color: NEUTRAL_COLORS.surface,
-              borderRadius: 2,
+              background: `linear-gradient(135deg, ${GLASS_COLORS.success}, ${alpha(GLASS_COLORS.success, 0.7)})`,
+              backdropFilter: 'blur(10px)',
+              border: '1px solid',
+              borderColor: alpha('#FFFFFF', 0.3),
+              color: 'white',
+              borderRadius: 3,
               px: 3,
               py: 1,
               fontWeight: 600,
               '&:hover': {
-                backgroundColor: alpha(NEUTRAL_COLORS.success, 0.9),
+                background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.success, 0.9)}, ${alpha(GLASS_COLORS.success, 0.6)})`,
+              },
+              '&:disabled': {
+                background: alpha(GLASS_COLORS.surface, 0.5),
+                color: GLASS_COLORS.textSecondary,
               }
             }}
           >
@@ -1693,7 +1976,7 @@ const handleCloseAnswerEdit = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Модалка подтверждения удаления вопроса */}
+      {/* Модалка подтверждения удаления вопроса в стеклянном стиле */}
       <Dialog 
         open={openQuestionDeleteDialog} 
         onClose={handleCloseQuestionDelete} 
@@ -1701,31 +1984,38 @@ const handleCloseAnswerEdit = () => {
         fullWidth
         PaperProps={{
           sx: {
-            borderRadius: 3,
-            border: `1px solid ${NEUTRAL_COLORS.border}`,
-            backgroundColor: NEUTRAL_COLORS.secondary,
+            borderRadius: 4,
+            background: GLASS_COLORS.surfaceDark,
+            backdropFilter: 'blur(30px)',
+            WebkitBackdropFilter: 'blur(30px)',
+            border: '1px solid',
+            borderColor: GLASS_COLORS.border,
+            boxShadow: '0 24px 48px rgba(0, 0, 0, 0.2)',
           }
         }}
       >
         <DialogTitle sx={{ 
-          borderBottom: `1px solid ${NEUTRAL_COLORS.border}`,
+          borderBottom: '1px solid',
+          borderColor: GLASS_COLORS.border,
           pb: 2,
-          fontWeight: 700,
-          color: NEUTRAL_COLORS.surface,
+          fontWeight: 600,
+          color: GLASS_COLORS.textPrimary,
+          letterSpacing: '-0.01em',
         }}>
           Удаление вопроса
         </DialogTitle>
         
         <DialogContent sx={{ pt: 3 }}>
-          <Typography sx={{ mt:2, mb: 2, color: NEUTRAL_COLORS.surface }}>
+          <Typography sx={{ mt:2, mb: 2, color: GLASS_COLORS.textPrimary }}>
             Вы уверены, что хотите удалить вопрос "{question?.title}"?
           </Typography>
-          <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.primary }}>
+          <Typography variant="body2" sx={{ color: GLASS_COLORS.textSecondary }}>
             Это действие нельзя отменить. Все связанные ответы также будут удалены.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ 
-          borderTop: `1px solid ${NEUTRAL_COLORS.border}`,
+          borderTop: '1px solid',
+          borderColor: GLASS_COLORS.border,
           pt: 2,
           px: 3,
           pb: 3
@@ -1735,15 +2025,17 @@ const handleCloseAnswerEdit = () => {
             onClick={handleCloseQuestionDelete}
             sx={{
               borderWidth: 2,
-              borderColor: NEUTRAL_COLORS.border,
-              color: NEUTRAL_COLORS.surface,
-              borderRadius: 2,
+              borderRadius: 3,
+              borderColor: GLASS_COLORS.border,
+              color: GLASS_COLORS.textPrimary,
               px: 3,
               py: 1,
               fontWeight: 600,
+              background: GLASS_COLORS.surface,
+              backdropFilter: 'blur(10px)',
               '&:hover': {
-                borderColor: NEUTRAL_COLORS.accent,
-                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+                borderColor: GLASS_COLORS.primary,
+                background: alpha(GLASS_COLORS.primary, 0.1),
               }
             }}
           >
@@ -1753,14 +2045,17 @@ const handleCloseAnswerEdit = () => {
             variant="contained"
             onClick={handleDeleteQuestion}
             sx={{
-              backgroundColor: NEUTRAL_COLORS.error,
-              color: NEUTRAL_COLORS.surface,
-              borderRadius: 2,
+              background: `linear-gradient(135deg, ${GLASS_COLORS.error}, ${alpha(GLASS_COLORS.error, 0.7)})`,
+              backdropFilter: 'blur(10px)',
+              border: '1px solid',
+              borderColor: alpha('#FFFFFF', 0.3),
+              color: 'white',
+              borderRadius: 3,
               px: 3,
               py: 1,
               fontWeight: 600,
               '&:hover': {
-                backgroundColor: alpha(NEUTRAL_COLORS.error, 0.9),
+                background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.error, 0.9)}, ${alpha(GLASS_COLORS.error, 0.6)})`,
               }
             }}
           >
@@ -1769,7 +2064,7 @@ const handleCloseAnswerEdit = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Модалка добавления ответа */}
+      {/* Модалка добавления ответа в стеклянном стиле */}
       <Dialog 
         open={openAnswerAddDialog} 
         onClose={handleCloseAnswerAdd} 
@@ -1777,18 +2072,24 @@ const handleCloseAnswerEdit = () => {
         fullWidth
         PaperProps={{
           sx: {
-            borderRadius: 3,
-            border: `1px solid ${NEUTRAL_COLORS.border}`,
+            borderRadius: 4,
+            background: GLASS_COLORS.surfaceDark,
+            backdropFilter: 'blur(30px)',
+            WebkitBackdropFilter: 'blur(30px)',
+            border: '1px solid',
+            borderColor: GLASS_COLORS.border,
+            boxShadow: '0 24px 48px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.5) inset',
             maxHeight: '90vh',
-            backgroundColor: NEUTRAL_COLORS.secondary,
           }
         }}
       >
         <DialogTitle sx={{ 
-          borderBottom: `1px solid ${NEUTRAL_COLORS.border}`,
+          borderBottom: '1px solid',
+          borderColor: GLASS_COLORS.border,
           pb: 2,
-          fontWeight: 700,
-          color: NEUTRAL_COLORS.surface,
+          fontWeight: 600,
+          color: GLASS_COLORS.textPrimary,
+          letterSpacing: '-0.01em',
         }}>
           Добавить новый ответ
           {answerError && (
@@ -1796,8 +2097,12 @@ const handleCloseAnswerEdit = () => {
               severity="error" 
               sx={{ 
                 mt: 2,
-                borderRadius: 2,
-                border: `1px solid ${alpha(NEUTRAL_COLORS.error, 0.2)}`,
+                borderRadius: 3,
+                background: alpha(GLASS_COLORS.error, 0.15),
+                backdropFilter: 'blur(10px)',
+                border: '1px solid',
+                borderColor: alpha(GLASS_COLORS.error, 0.3),
+                color: GLASS_COLORS.error,
               }}
               onClose={() => setAnswerError(null)}
             >
@@ -1824,7 +2129,8 @@ const handleCloseAnswerEdit = () => {
           )}
         </DialogContent>
         <DialogActions sx={{ 
-          borderTop: `1px solid ${NEUTRAL_COLORS.border}`,
+          borderTop: '1px solid',
+          borderColor: GLASS_COLORS.border,
           pt: 2,
           px: 3,
           pb: 3
@@ -1834,15 +2140,17 @@ const handleCloseAnswerEdit = () => {
             onClick={handleCloseAnswerAdd}
             sx={{
               borderWidth: 2,
-              borderColor: NEUTRAL_COLORS.border,
-              color: NEUTRAL_COLORS.surface,
-              borderRadius: 2,
+              borderRadius: 3,
+              borderColor: GLASS_COLORS.border,
+              color: GLASS_COLORS.textPrimary,
               px: 3,
               py: 1,
               fontWeight: 600,
+              background: GLASS_COLORS.surface,
+              backdropFilter: 'blur(10px)',
               '&:hover': {
-                borderColor: NEUTRAL_COLORS.accent,
-                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+                borderColor: GLASS_COLORS.primary,
+                background: alpha(GLASS_COLORS.primary, 0.1),
               }
             }}
           >
@@ -1854,14 +2162,21 @@ const handleCloseAnswerEdit = () => {
             disabled={answerContent.length === 0 || isSavingAnswer}
             startIcon={isSavingAnswer ? <CircularProgress size={20} color="inherit" /> : null}
             sx={{
-              backgroundColor: NEUTRAL_COLORS.success,
-              color: NEUTRAL_COLORS.surface,
-              borderRadius: 2,
+              background: `linear-gradient(135deg, ${GLASS_COLORS.success}, ${alpha(GLASS_COLORS.success, 0.7)})`,
+              backdropFilter: 'blur(10px)',
+              border: '1px solid',
+              borderColor: alpha('#FFFFFF', 0.3),
+              color: 'white',
+              borderRadius: 3,
               px: 3,
               py: 1,
               fontWeight: 600,
               '&:hover': {
-                backgroundColor: alpha(NEUTRAL_COLORS.success, 0.9),
+                background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.success, 0.9)}, ${alpha(GLASS_COLORS.success, 0.6)})`,
+              },
+              '&:disabled': {
+                background: alpha(GLASS_COLORS.surface, 0.5),
+                color: GLASS_COLORS.textSecondary,
               }
             }}
           >
@@ -1870,7 +2185,7 @@ const handleCloseAnswerEdit = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Модалка редактирования ответа */}
+      {/* Модалка редактирования ответа в стеклянном стиле */}
       <Dialog 
         open={openAnswerEditDialog} 
         onClose={handleCloseAnswerEdit} 
@@ -1878,18 +2193,24 @@ const handleCloseAnswerEdit = () => {
         fullWidth
         PaperProps={{
           sx: {
-            borderRadius: 3,
-            border: `1px solid ${NEUTRAL_COLORS.border}`,
+            borderRadius: 4,
+            background: GLASS_COLORS.surfaceDark,
+            backdropFilter: 'blur(30px)',
+            WebkitBackdropFilter: 'blur(30px)',
+            border: '1px solid',
+            borderColor: GLASS_COLORS.border,
+            boxShadow: '0 24px 48px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.5) inset',
             maxHeight: '90vh',
-            backgroundColor: NEUTRAL_COLORS.secondary,
           }
         }}
       >
         <DialogTitle sx={{ 
-          borderBottom: `1px solid ${NEUTRAL_COLORS.border}`,
+          borderBottom: '1px solid',
+          borderColor: GLASS_COLORS.border,
           pb: 2,
-          fontWeight: 700,
-          color: NEUTRAL_COLORS.surface,
+          fontWeight: 600,
+          color: GLASS_COLORS.textPrimary,
+          letterSpacing: '-0.01em',
         }}>
           Редактировать ответ
           {answerError && (
@@ -1897,8 +2218,12 @@ const handleCloseAnswerEdit = () => {
               severity="error" 
               sx={{ 
                 mt: 2,
-                borderRadius: 2,
-                border: `1px solid ${alpha(NEUTRAL_COLORS.error, 0.2)}`,
+                borderRadius: 3,
+                background: alpha(GLASS_COLORS.error, 0.15),
+                backdropFilter: 'blur(10px)',
+                border: '1px solid',
+                borderColor: alpha(GLASS_COLORS.error, 0.3),
+                color: GLASS_COLORS.error,
               }}
               onClose={() => setAnswerError(null)}
             >
@@ -1925,7 +2250,8 @@ const handleCloseAnswerEdit = () => {
           )}
         </DialogContent>
         <DialogActions sx={{ 
-          borderTop: `1px solid ${NEUTRAL_COLORS.border}`,
+          borderTop: '1px solid',
+          borderColor: GLASS_COLORS.border,
           pt: 2,
           px: 3,
           pb: 3
@@ -1935,15 +2261,17 @@ const handleCloseAnswerEdit = () => {
             onClick={handleCloseAnswerEdit}
             sx={{
               borderWidth: 2,
-              borderColor: NEUTRAL_COLORS.border,
-              color: NEUTRAL_COLORS.textPrimary,
-              borderRadius: 2,
+              borderRadius: 3,
+              borderColor: GLASS_COLORS.border,
+              color: GLASS_COLORS.textPrimary,
               px: 3,
               py: 1,
               fontWeight: 600,
+              background: GLASS_COLORS.surface,
+              backdropFilter: 'blur(10px)',
               '&:hover': {
-                borderColor: NEUTRAL_COLORS.accent,
-                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+                borderColor: GLASS_COLORS.primary,
+                background: alpha(GLASS_COLORS.primary, 0.1),
               }
             }}
           >
@@ -1955,14 +2283,21 @@ const handleCloseAnswerEdit = () => {
             disabled={answerContent.length === 0 || isSavingAnswer}
             startIcon={isSavingAnswer ? <CircularProgress size={20} color="inherit" /> : null}
             sx={{
-              backgroundColor: NEUTRAL_COLORS.success,
-              color: NEUTRAL_COLORS.surface,
-              borderRadius: 2,
+              background: `linear-gradient(135deg, ${GLASS_COLORS.success}, ${alpha(GLASS_COLORS.success, 0.7)})`,
+              backdropFilter: 'blur(10px)',
+              border: '1px solid',
+              borderColor: alpha('#FFFFFF', 0.3),
+              color: 'white',
+              borderRadius: 3,
               px: 3,
               py: 1,
               fontWeight: 600,
               '&:hover': {
-                backgroundColor: alpha(NEUTRAL_COLORS.success, 0.9),
+                background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.success, 0.9)}, ${alpha(GLASS_COLORS.success, 0.6)})`,
+              },
+              '&:disabled': {
+                background: alpha(GLASS_COLORS.surface, 0.5),
+                color: GLASS_COLORS.textSecondary,
               }
             }}
           >
@@ -1971,7 +2306,7 @@ const handleCloseAnswerEdit = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Модалка подтверждения удаления ответа */}
+      {/* Модалка подтверждения удаления ответа в стеклянном стиле */}
       <Dialog 
         open={openAnswerDeleteDialog} 
         onClose={handleCloseAnswerDelete} 
@@ -1979,31 +2314,38 @@ const handleCloseAnswerEdit = () => {
         fullWidth
         PaperProps={{
           sx: {
-            borderRadius: 3,
-            border: `1px solid ${NEUTRAL_COLORS.border}`,
-            backgroundColor: NEUTRAL_COLORS.secondary,
+            borderRadius: 4,
+            background: GLASS_COLORS.surfaceDark,
+            backdropFilter: 'blur(30px)',
+            WebkitBackdropFilter: 'blur(30px)',
+            border: '1px solid',
+            borderColor: GLASS_COLORS.border,
+            boxShadow: '0 24px 48px rgba(0, 0, 0, 0.2)',
           }
         }}
       >
         <DialogTitle sx={{ 
-          borderBottom: `1px solid ${NEUTRAL_COLORS.border}`,
+          borderBottom: '1px solid',
+          borderColor: GLASS_COLORS.border,
           pb: 2,
-          fontWeight: 700,
-          color: NEUTRAL_COLORS.surface,
+          fontWeight: 600,
+          color: GLASS_COLORS.textPrimary,
+          letterSpacing: '-0.01em',
         }}>
           Удаление ответа
         </DialogTitle>
         
         <DialogContent sx={{ pt: 3 }}>
-          <Typography sx={{ mt:2, mb: 2, color: NEUTRAL_COLORS.surface }}>
+          <Typography sx={{ mt:2, mb: 2, color: GLASS_COLORS.textPrimary }}>
             Вы уверены, что хотите удалить этот ответ?
           </Typography>
-          <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.primary }}>
+          <Typography variant="body2" sx={{ color: GLASS_COLORS.textSecondary }}>
             Это действие нельзя отменить.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ 
-          borderTop: `1px solid ${NEUTRAL_COLORS.border}`,
+          borderTop: '1px solid',
+          borderColor: GLASS_COLORS.border,
           pt: 2,
           px: 3,
           pb: 3
@@ -2013,15 +2355,17 @@ const handleCloseAnswerEdit = () => {
             onClick={handleCloseAnswerDelete}
             sx={{
               borderWidth: 2,
-              borderColor: NEUTRAL_COLORS.border,
-              color: NEUTRAL_COLORS.surface,
-              borderRadius: 2,
+              borderRadius: 3,
+              borderColor: GLASS_COLORS.border,
+              color: GLASS_COLORS.textPrimary,
               px: 3,
               py: 1,
               fontWeight: 600,
+              background: GLASS_COLORS.surface,
+              backdropFilter: 'blur(10px)',
               '&:hover': {
-                borderColor: NEUTRAL_COLORS.accent,
-                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+                borderColor: GLASS_COLORS.primary,
+                background: alpha(GLASS_COLORS.primary, 0.1),
               }
             }}
           >
@@ -2031,14 +2375,17 @@ const handleCloseAnswerEdit = () => {
             variant="contained"
             onClick={handleDeleteAnswer}
             sx={{
-              backgroundColor: NEUTRAL_COLORS.error,
-              color: NEUTRAL_COLORS.surface,
-              borderRadius: 2,
+              background: `linear-gradient(135deg, ${GLASS_COLORS.error}, ${alpha(GLASS_COLORS.error, 0.7)})`,
+              backdropFilter: 'blur(10px)',
+              border: '1px solid',
+              borderColor: alpha('#FFFFFF', 0.3),
+              color: 'white',
+              borderRadius: 3,
               px: 3,
               py: 1,
               fontWeight: 600,
               '&:hover': {
-                backgroundColor: alpha(NEUTRAL_COLORS.error, 0.9),
+                background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.error, 0.9)}, ${alpha(GLASS_COLORS.error, 0.6)})`,
               }
             }}
           >

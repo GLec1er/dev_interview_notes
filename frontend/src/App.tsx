@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, createTheme, CssBaseline, Box } from '@mui/material';
+import { ThemeProvider, createTheme, CssBaseline, Box, GlobalStyles } from '@mui/material';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
@@ -13,6 +13,7 @@ import { QuestionDetailPage } from './pages/QuestionDetailPage';
 import { AdminPage } from './pages/AdminPage';
 import { UserProfilePage } from './pages/UserProfilePage';
 import { FavoritesPage } from './pages/FavoritesPage';
+import { RoadmapsPage } from './pages/RoadmapsPage';
 
 const theme = createTheme({
   palette: {
@@ -126,13 +127,132 @@ const theme = createTheme({
         },
       },
     },
+    // Стили для полей ввода
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          '& input:-webkit-autofill': {
+            WebkitBoxShadow: '0 0 0 1000px #ffffffff inset !important',
+            WebkitTextFillColor: '#000000ff !important',
+            caretColor: '#ffffff',
+            borderRadius: 'inherit',
+          },
+          '& input:-webkit-autofill:hover': {
+            WebkitBoxShadow: '0 0 0 1000px #ffffffff inset !important',
+            WebkitTextFillColor: '#000000ff !important',
+          },
+          '& input:-webkit-autofill:focus': {
+            WebkitBoxShadow: '0 0 0 1000px #fcfdffff inset !important',
+            WebkitTextFillColor: '#000000ff !important',
+          },
+          '& input:-webkit-autofill:active': {
+            WebkitBoxShadow: '0 0 0 1000px #ffffffff inset !important',
+            WebkitTextFillColor: '#000000ff !important',
+          },
+        },
+      },
+    },
+    MuiInputBase: {
+      styleOverrides: {
+        root: {
+          '& input:-webkit-autofill': {
+            WebkitBoxShadow: '0 0 0 1000px #1a1f3a inset !important',
+            WebkitTextFillColor: '#ffffff !important',
+            caretColor: '#ffffff',
+            borderRadius: 'inherit',
+          },
+        },
+      },
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& input:-webkit-autofill': {
+            WebkitBoxShadow: '0 0 0 1000px #1a1f3a inset !important',
+            WebkitTextFillColor: '#ffffff !important',
+          },
+        },
+      },
+    },
   },
 });
+
+// Глобальные стили для автозаполнения
+const autocompleteStyles = {
+  '@keyframes autofill': {
+    '0%,100%': {
+      color: '#ffffff',
+      background: '#1a1f3a',
+    },
+  },
+  'input:-webkit-autofill': {
+    animationName: 'autofill',
+    animationDuration: '0s',
+    animationFillMode: 'forwards',
+    WebkitAnimationName: 'autofill',
+    WebkitAnimationDuration: '0s',
+    WebkitAnimationFillMode: 'forwards',
+    transition: 'background-color 9999s ease-in-out 0s',
+    WebkitTransition: 'background-color 9999s ease-in-out 0s',
+    caretColor: '#ffffff !important',
+    WebkitTextFillColor: '#ffffff !important',
+    color: '#ffffff !important',
+    // backgroundColor: '#1a1f3a !important',
+    backgroundClip: 'content-box !important',
+    boxShadow: '0 0 0 1000px #1a1f3a inset !important',
+    WebkitBoxShadow: '0 0 0 1000px #1a1f3a inset !important',
+    border: 'none',
+  },
+  'input:-webkit-autofill:hover': {
+    WebkitBoxShadow: '0 0 0 1000px #1a1f3a inset !important',
+    WebkitTextFillColor: '#ffffff !important',
+  },
+  'input:-webkit-autofill:focus': {
+    WebkitBoxShadow: '0 0 0 1000px #1a1f3a inset !important',
+    WebkitTextFillColor: '#ffffff !important',
+  },
+  'input:-webkit-autofill:active': {
+    WebkitBoxShadow: '0 0 0 1000px #1a1f3a inset !important',
+    WebkitTextFillColor: '#ffffff !important',
+  },
+  // Для Firefox
+  'input:autofill': {
+    // backgroundColor: '#1a1f3a !important',
+    color: '#ffffff !important',
+    boxShadow: '0 0 0 1000px #1a1f3a inset !important',
+  },
+  // Для Edge
+  'input:-internal-autofill-selected': {
+    // backgroundColor: '#1a1f3a !important',
+    color: '#ffffff !important',
+    boxShadow: '0 0 0 1000px #1a1f3a inset !important',
+  },
+  // Для всех браузеров через анимацию
+  'input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:-webkit-autofill:active': {
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: '#ffffff !important',
+    transition: 'background-color 5000s ease-in-out 0s',
+    boxShadow: 'inset 0 0 20px 20px #1a1f3a !important',
+  },
+  // Специфичные селекторы для разных браузеров
+  'input:-webkit-autofill, textarea:-webkit-autofill, select:-webkit-autofill': {
+    '&, &:hover, &:focus, &:active': {
+      WebkitBoxShadow: '0 0 0 1000px #1a1f3a inset !important',
+      WebkitTextFillColor: '#ffffff !important',
+      caretColor: '#ffffff',
+      transition: 'background-color 5000s ease-in-out 0s',
+    },
+  },
+};
 
 function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      {/* Глобальные стили для автозаполнения */}
+      <GlobalStyles
+        styles={autocompleteStyles}
+      />
       <Router>
         <AuthProvider>
           <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -174,6 +294,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <UserProfilePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/roadmap"
+                  element={
+                    <ProtectedRoute>
+                      <RoadmapsPage />
                     </ProtectedRoute>
                   }
                 />

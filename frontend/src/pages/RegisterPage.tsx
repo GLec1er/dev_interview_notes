@@ -17,6 +17,7 @@ import {
   InputLabel,
   OutlinedInput,
   FormControl,
+  Grid,
 } from '@mui/material';
 import {
   Email as EmailIcon,
@@ -31,24 +32,32 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 
-// Нейтральная цветовая палитра
-const NEUTRAL_COLORS = {
-  primary: '#2D3748',
-  secondary: '#4A5568',
-  accent: '#3182CE',
-  background: '#F7FAFC',
-  surface: '#FFFFFF',
-  textPrimary: '#1A202C',
-  textSecondary: '#718096',
-  border: '#E2E8F0',
-  success: '#38A169',
-  error: '#E53E3E',
-  gradientStart: '#EDF2F7',
-  gradientEnd: '#CBD5E0',
+// Стеклянная цветовая палитра iOS 26 Liquid Glass
+const GLASS_COLORS = {
+  primary: 'rgba(10, 132, 255, 0.8)', // iOS синий с прозрачностью
+  secondary: 'rgba(94, 92, 230, 0.75)', // Фиолетово-синий
+  accent: 'rgba(90, 200, 250, 0.9)', // Голубой акцент
+  background: 'rgba(240, 244, 250, 0.4)', // Полупрозрачный фон
+  surface: 'rgba(255, 255, 255, 0.6)', // Стеклянная поверхность
+  surfaceDark: 'rgba(255, 255, 255, 0.8)', // Более плотное стекло
+  textPrimary: 'rgba(0, 0, 0, 0.8)',
+  textSecondary: 'rgba(60, 60, 67, 0.6)',
+  border: 'rgba(255, 255, 255, 0.5)', // Стеклянная граница
+  borderGlow: 'rgba(255, 255, 255, 0.8)',
+  success: 'rgba(52, 199, 89, 0.8)', // iOS зеленый
+  error: 'rgba(255, 59, 48, 0.8)', // iOS красный
+  warning: 'rgba(255, 149, 0, 0.8)', // iOS оранжевый
+  purple: 'rgba(175, 82, 222, 0.8)', // iOS фиолетовый
+  blue: 'rgba(0, 122, 255, 0.8)', // iOS синий
+  info: 'rgba(90, 200, 250, 0.8)',
+  gradientStart: 'rgba(255, 255, 255, 0.3)',
+  gradientEnd: 'rgba(255, 255, 255, 0.1)',
+  glassOverlay: 'rgba(255, 255, 255, 0.2)',
+  glassHighlight: 'rgba(255, 255, 255, 0.5)',
 };
 
-// Компонент текстового поля со стилями (такой же как в LoginPage)
-const StyledInputField = ({ 
+// Компонент текстового поля в стеклянном стиле
+const GlassInputField = ({ 
   label, 
   type = 'text', 
   value, 
@@ -63,12 +72,12 @@ const StyledInputField = ({
   <FormControl fullWidth variant="outlined">
     <InputLabel 
       sx={{ 
-        color: NEUTRAL_COLORS.textSecondary,
+        color: GLASS_COLORS.textSecondary,
         '&.Mui-focused': {
-          color: NEUTRAL_COLORS.accent,
+          color: GLASS_COLORS.primary,
         },
         '&.Mui-error': {
-          color: NEUTRAL_COLORS.error,
+          color: GLASS_COLORS.error,
         },
       }}
     >
@@ -92,24 +101,25 @@ const StyledInputField = ({
         </InputAdornment>
       ) : undefined}
       sx={{
-        borderRadius: 2,
-        backgroundColor: NEUTRAL_COLORS.surface,
+        borderRadius: 3,
+        background: GLASS_COLORS.surface,
+        backdropFilter: 'blur(10px)',
         '& .MuiOutlinedInput-input': {
-          color: NEUTRAL_COLORS.textPrimary,
+          color: GLASS_COLORS.textPrimary,
         },
         '& .MuiOutlinedInput-notchedOutline': {
-          borderColor: NEUTRAL_COLORS.border,
+          borderColor: GLASS_COLORS.border,
           borderWidth: 1.5,
         },
         '&:hover .MuiOutlinedInput-notchedOutline': {
-          borderColor: NEUTRAL_COLORS.accent,
+          borderColor: GLASS_COLORS.primary,
         },
         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-          borderColor: NEUTRAL_COLORS.accent,
+          borderColor: GLASS_COLORS.primary,
           borderWidth: 2,
         },
         '&.Mui-error .MuiOutlinedInput-notchedOutline': {
-          borderColor: NEUTRAL_COLORS.error,
+          borderColor: GLASS_COLORS.error,
         },
       }}
       {...props}
@@ -119,7 +129,7 @@ const StyledInputField = ({
         variant="caption" 
         sx={{ 
           mt: 0.5,
-          color: error ? NEUTRAL_COLORS.error : NEUTRAL_COLORS.textSecondary,
+          color: error ? GLASS_COLORS.error : GLASS_COLORS.textSecondary,
           fontSize: '0.75rem'
         }}
       >
@@ -129,8 +139,8 @@ const StyledInputField = ({
   </FormControl>
 );
 
-// Такая же кнопка как в LoginPage
-const StyledButton = ({ 
+// Стилизованная кнопка в стеклянном стиле
+const GlassButton = ({ 
   children, 
   variant = 'contained', 
   startIcon, 
@@ -153,37 +163,43 @@ const StyledButton = ({
     sx={{
       textTransform: 'none',
       fontWeight: 600,
-      borderRadius: 2,
+      borderRadius: 3,
       py: 1.5,
       fontSize: '1rem',
-      letterSpacing: '0.3px',
-      transition: 'all 0.2s ease',
-      fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
+      letterSpacing: '-0.01em',
+      transition: 'all 0.3s ease',
+      fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif',
       ...(variant === 'contained' && {
-        background: `linear-gradient(135deg, ${NEUTRAL_COLORS.accent} 0%, ${alpha(NEUTRAL_COLORS.accent, 0.9)} 100%)`,
-        boxShadow: '0 2px 10px rgba(49, 130, 206, 0.2)',
+        background: `linear-gradient(135deg, ${GLASS_COLORS.primary} 0%, ${alpha(GLASS_COLORS.primary, 0.6)} 100%)`,
+        backdropFilter: 'blur(10px)',
+        border: '1px solid',
+        borderColor: alpha('#FFFFFF', 0.3),
+        boxShadow: `0 4px 12px ${alpha(GLASS_COLORS.primary, 0.2)}`,
         '&:hover': {
-          boxShadow: '0 4px 20px rgba(49, 130, 206, 0.3)',
-          transform: 'translateY(-1px)',
+          background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.primary, 0.9)}, ${alpha(GLASS_COLORS.primary, 0.5)})`,
+          transform: 'translateY(-2px)',
+          boxShadow: `0 8px 20px ${alpha(GLASS_COLORS.primary, 0.3)}`,
         },
         '&:disabled': {
-          background: alpha(NEUTRAL_COLORS.secondary, 0.2),
-          color: alpha(NEUTRAL_COLORS.textSecondary, 0.5),
+          background: alpha(GLASS_COLORS.surface, 0.5),
+          color: alpha(GLASS_COLORS.textSecondary, 0.5),
         }
       }),
       ...(variant === 'outlined' && {
         borderWidth: 1.5,
-        borderColor: NEUTRAL_COLORS.border,
-        color: NEUTRAL_COLORS.textPrimary,
+        borderColor: GLASS_COLORS.border,
+        color: GLASS_COLORS.textPrimary,
+        background: GLASS_COLORS.surface,
+        backdropFilter: 'blur(10px)',
         '&:hover': {
-          borderColor: NEUTRAL_COLORS.accent,
-          backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+          borderColor: GLASS_COLORS.primary,
+          background: alpha(GLASS_COLORS.primary, 0.1),
         }
       }),
       ...(variant === 'text' && {
-        color: NEUTRAL_COLORS.accent,
+        color: GLASS_COLORS.primary,
         '&:hover': {
-          backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+          background: alpha(GLASS_COLORS.primary, 0.1),
         }
       })
     }}
@@ -306,9 +322,15 @@ export const RegisterPage: React.FC = () => {
   }, []);
 
   const getPasswordStrengthColor = (strength: number) => {
-    if (strength < 40) return NEUTRAL_COLORS.error;
-    if (strength < 70) return '#DD6B20'; // warning orange
-    return NEUTRAL_COLORS.success;
+    if (strength < 40) return GLASS_COLORS.error;
+    if (strength < 70) return GLASS_COLORS.warning;
+    return GLASS_COLORS.success;
+  };
+
+  const getPasswordStrengthLabel = (strength: number) => {
+    if (strength < 40) return 'Слабый';
+    if (strength < 70) return 'Средний';
+    return 'Сильный';
   };
 
   const passwordStrength = calculatePasswordStrength(formData.password);
@@ -318,10 +340,10 @@ export const RegisterPage: React.FC = () => {
   return (
     <Box sx={{ 
       minHeight: '100vh',
-      background: `linear-gradient(135deg, ${NEUTRAL_COLORS.background} 0%, ${NEUTRAL_COLORS.gradientEnd} 100%)`,
+      background: 'linear-gradient(135deg, #E0F0FF 0%, #D0E4FF 50%, #B8D8FF 100%)',
       position: 'relative',
       overflow: 'hidden',
-      fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
+      fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif',
       display: 'flex',
       alignItems: 'center',
       '&::before': {
@@ -332,16 +354,18 @@ export const RegisterPage: React.FC = () => {
         right: 0,
         bottom: 0,
         background: `
-          radial-gradient(circle at 10% 20%, ${alpha(NEUTRAL_COLORS.gradientStart, 0.4)} 0%, transparent 50%),
-          radial-gradient(circle at 90% 80%, ${alpha(NEUTRAL_COLORS.gradientEnd, 0.2)} 0%, transparent 50%)
+          radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.4) 0%, transparent 40%),
+          radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.3) 0%, transparent 50%),
+          radial-gradient(circle at 40% 80%, rgba(200, 220, 255, 0.5) 0%, transparent 60%)
         `,
+        pointerEvents: 'none',
       }
     }}>
       <Container maxWidth="md">
         <Fade in timeout={600}>
           <Box>
             {/* Back Button */}
-            <StyledButton
+            <GlassButton
               variant="text"
               startIcon={<ArrowBackIcon />}
               onClick={handleBackToHome}
@@ -349,39 +373,59 @@ export const RegisterPage: React.FC = () => {
               sx={{ mb: 2 }}
             >
               Назад на главную
-            </StyledButton>
+            </GlassButton>
 
             <Paper 
               elevation={0}
               sx={{
                 p: { xs: 3, sm: 5 },
                 borderRadius: 4,
-                border: `1px solid ${NEUTRAL_COLORS.border}`,
-                backgroundColor: alpha(NEUTRAL_COLORS.surface, 0.95),
-                backdropFilter: 'blur(10px)',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+                border: '1px solid',
+                borderColor: GLASS_COLORS.border,
+                background: GLASS_COLORS.surface,
+                backdropFilter: 'blur(30px)',
+                WebkitBackdropFilter: 'blur(30px)',
+                boxShadow: '0 16px 32px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.5) inset',
+                position: 'relative',
+                overflow: 'hidden',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: '100%',
+                  background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+                  opacity: 0.5,
+                  pointerEvents: 'none',
+                },
               }}
             >
               {/* Header */}
-              <Box sx={{ textAlign: 'center', mb: 4 }}>
+              <Box sx={{ textAlign: 'center', mb: 4, position: 'relative', zIndex: 1 }}>
                 <Box sx={{ 
                   display: 'inline-flex',
                   p: 2,
                   mb: 2,
                   borderRadius: '50%',
-                  backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
-                  color: NEUTRAL_COLORS.accent,
+                  background: alpha(GLASS_COLORS.primary, 0.15),
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid',
+                  borderColor: alpha(GLASS_COLORS.primary, 0.3),
+                  color: GLASS_COLORS.primary,
+                  boxShadow: `0 4px 12px ${alpha(GLASS_COLORS.primary, 0.2)}`,
                 }}>
                   <RegisterIcon sx={{ fontSize: 40 }} />
                 </Box>
                 <Typography 
                   variant="h3" 
                   sx={{ 
-                    fontWeight: 800,
-                    color: NEUTRAL_COLORS.textPrimary,
-                    letterSpacing: '-0.025em',
+                    fontWeight: 700,
+                    color: GLASS_COLORS.textPrimary,
+                    letterSpacing: '-0.02em',
                     mb: 1,
-                    fontSize: { xs: '2rem', sm: '2.5rem' }
+                    fontSize: { xs: '2rem', sm: '2.5rem' },
+                    textShadow: '0 2px 10px rgba(255,255,255,0.5)',
                   }}
                 >
                   Зарегистрироваться
@@ -389,7 +433,7 @@ export const RegisterPage: React.FC = () => {
                 <Typography 
                   variant="body1" 
                   sx={{ 
-                    color: NEUTRAL_COLORS.textSecondary,
+                    color: GLASS_COLORS.textSecondary,
                     fontSize: '1.1rem'
                   }}
                 >
@@ -397,17 +441,22 @@ export const RegisterPage: React.FC = () => {
                 </Typography>
               </Box>
 
-              {/* Error Alert */}
+              {/* Error Alert в стеклянном стиле */}
               {(error || localError) && (
                 <Fade in>
                   <Alert 
                     severity="error" 
                     sx={{ 
                       mb: 3,
-                      borderRadius: 2,
-                      border: `1px solid ${alpha(NEUTRAL_COLORS.error, 0.2)}`,
+                      borderRadius: 3,
+                      background: alpha(GLASS_COLORS.error, 0.15),
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid',
+                      borderColor: alpha(GLASS_COLORS.error, 0.3),
+                      color: GLASS_COLORS.error,
                       '& .MuiAlert-icon': {
-                        fontSize: 24
+                        fontSize: 24,
+                        color: GLASS_COLORS.error,
                       }
                     }}
                     onClose={() => {
@@ -422,71 +471,73 @@ export const RegisterPage: React.FC = () => {
 
               {/* Registration Form */}
               <form onSubmit={handleSubmit}>
-                <Stack container spacing={3}>
-                  <Stack item xs={12} sm={6}>
-                    <StyledInputField
+                <Grid container spacing={3}>
+                  <Grid item xs={12} sm={6}>
+                    <GlassInputField
                       label="Имя"
                       name="firstName"
                       value={formData.firstName}
                       onChange={handleChange}
                       disabled={isLoading}
-                      startIcon={<PersonIcon sx={{ color: NEUTRAL_COLORS.textSecondary }} />}
+                      startIcon={<PersonIcon sx={{ color: GLASS_COLORS.textSecondary }} />}
                     />
-                  </Stack>
+                  </Grid>
                   
-                  <Stack item xs={12} sm={6}>
-                    <StyledInputField
+                  <Grid item xs={12} sm={6}>
+                    <GlassInputField
                       label="Фамилия"
                       name="lastName"
                       value={formData.lastName}
                       onChange={handleChange}
                       disabled={isLoading}
-                      startIcon={<PersonIcon sx={{ color: NEUTRAL_COLORS.textSecondary }} />}
+                      startIcon={<PersonIcon sx={{ color: GLASS_COLORS.textSecondary }} />}
                     />
-                  </Stack>
+                  </Grid>
 
-                  <Stack item xs={12}>
-                    <StyledInputField
-                      label="Адресс электронной почты"
+                  <Grid item xs={12}>
+                    <GlassInputField
+                      label="Адрес электронной почты"
                       type="email"
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
                       disabled={isLoading}
-                      startIcon={<EmailIcon sx={{ color: NEUTRAL_COLORS.textSecondary }} />}
+                      startIcon={<EmailIcon sx={{ color: GLASS_COLORS.textSecondary }} />}
                     />
-                  </Stack>
+                  </Grid>
 
-                  <Stack item xs={12}>
-                    <StyledInputField
+                  <Grid item xs={12}>
+                    <GlassInputField
                       label="Пароль"
                       type={showPassword ? 'text' : 'password'}
                       name="password"
                       value={formData.password}
                       onChange={handleChange}
                       disabled={isLoading}
-                      startIcon={<LockIcon sx={{ color: NEUTRAL_COLORS.textSecondary }} />}
+                      startIcon={<LockIcon sx={{ color: GLASS_COLORS.textSecondary }} />}
                       endIcon={
                         <IconButton
                           onClick={handleShowPassword}
                           edge="end"
-                          sx={{ color: NEUTRAL_COLORS.textSecondary }}
+                          sx={{ color: GLASS_COLORS.textSecondary }}
                         >
                           {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
                         </IconButton>
                       }
                     />
                     
-                    {/* Password Strength Indicator */}
+                    {/* Password Strength Indicator в стеклянном стиле */}
                     {formData.password && (
                       <Paper 
                         elevation={0}
                         sx={{ 
                           mt: 2, 
                           p: 2.5,
-                          borderRadius: 2,
-                          border: `1px solid ${NEUTRAL_COLORS.border}`,
-                          backgroundColor: alpha(NEUTRAL_COLORS.background, 0.5),
+                          borderRadius: 3,
+                          border: '1px solid',
+                          borderColor: GLASS_COLORS.border,
+                          background: GLASS_COLORS.surface,
+                          backdropFilter: 'blur(10px)',
                         }}
                       >
                         <Stack spacing={2}>
@@ -496,7 +547,8 @@ export const RegisterPage: React.FC = () => {
                                 variant="subtitle2" 
                                 sx={{ 
                                   fontWeight: 600,
-                                  color: NEUTRAL_COLORS.textPrimary
+                                  color: GLASS_COLORS.textPrimary,
+                                  letterSpacing: '-0.01em',
                                 }}
                               >
                                 Надежность пароля
@@ -508,7 +560,7 @@ export const RegisterPage: React.FC = () => {
                                   color: getPasswordStrengthColor(passwordStrength)
                                 }}
                               >
-                                {passwordStrength < 40 ? 'Weak' : passwordStrength < 70 ? 'Medium' : 'Strong'}
+                                {getPasswordStrengthLabel(passwordStrength)}
                               </Typography>
                             </Stack>
                             <LinearProgress 
@@ -517,86 +569,91 @@ export const RegisterPage: React.FC = () => {
                               sx={{
                                 height: 6,
                                 borderRadius: 3,
-                                backgroundColor: alpha(NEUTRAL_COLORS.border, 0.5),
+                                backgroundColor: alpha(GLASS_COLORS.border, 0.5),
                                 '& .MuiLinearProgress-bar': {
-                                  backgroundColor: getPasswordStrengthColor(passwordStrength),
+                                  background: `linear-gradient(90deg, ${getPasswordStrengthColor(passwordStrength)} 0%, ${alpha(getPasswordStrengthColor(passwordStrength), 0.6)} 100%)`,
                                   borderRadius: 3,
+                                  boxShadow: `0 2px 8px ${alpha(getPasswordStrengthColor(passwordStrength), 0.3)}`,
                                 }
                               }}
                             />
                           </Box>
                           
-                          <Stack container spacing={1}>
+                          <Grid container spacing={1}>
                             {PASSWORD_REQUIREMENTS.map((req, index) => {
                               const met = req.validator(formData.password);
                               return (
-                                <Stack item xs={12} sm={6} key={index}>
+                                <Grid item xs={12} sm={6} key={index}>
                                   <Stack 
                                     direction="row" 
                                     spacing={1} 
                                     alignItems="center"
                                     sx={{
                                       p: 1,
-                                      borderRadius: 1,
-                                      backgroundColor: met ? alpha(NEUTRAL_COLORS.success, 0.1) : 'transparent',
+                                      borderRadius: 2,
+                                      background: met ? alpha(GLASS_COLORS.success, 0.1) : 'transparent',
+                                      backdropFilter: met ? 'blur(5px)' : 'none',
                                     }}
                                   >
                                     {met ? (
-                                      <CheckIcon sx={{ fontSize: 16, color: NEUTRAL_COLORS.success }} />
+                                      <CheckIcon sx={{ fontSize: 16, color: GLASS_COLORS.success }} />
                                     ) : (
-                                      <CancelIcon sx={{ fontSize: 16, color: NEUTRAL_COLORS.error }} />
+                                      <CancelIcon sx={{ fontSize: 16, color: GLASS_COLORS.error }} />
                                     )}
                                     <Typography 
                                       variant="caption" 
                                       sx={{ 
-                                        color: met ? NEUTRAL_COLORS.success : NEUTRAL_COLORS.textSecondary,
-                                        fontSize: '0.75rem'
+                                        color: met ? GLASS_COLORS.success : GLASS_COLORS.textSecondary,
+                                        fontSize: '0.75rem',
+                                        fontWeight: 500,
                                       }}
                                     >
                                       {req.text}
                                     </Typography>
                                   </Stack>
-                                </Stack>
+                                </Grid>
                               );
                             })}
-                          </Stack>
+                          </Grid>
                         </Stack>
                       </Paper>
                     )}
-                  </Stack>
+                  </Grid>
 
-                  <Stack item xs={12}>
-                    <StyledInputField
+                  <Grid item xs={12}>
+                    <GlassInputField
                       label="Подтвердите пароль"
                       type={showConfirmPassword ? 'text' : 'password'}
                       name="confirmPassword"
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       disabled={isLoading}
-                      startIcon={<LockIcon sx={{ color: NEUTRAL_COLORS.textSecondary }} />}
+                      startIcon={<LockIcon sx={{ color: GLASS_COLORS.textSecondary }} />}
                       endIcon={
                         <IconButton
                           onClick={handleShowConfirmPassword}
                           edge="end"
-                          sx={{ color: NEUTRAL_COLORS.textSecondary }}
+                          sx={{ color: GLASS_COLORS.textSecondary }}
                         >
                           {showConfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
                         </IconButton>
                       }
                       error={passwordError}
-                      helperText={passwordError ? "Passwords don't match" : undefined}
+                      helperText={passwordError ? "Пароли не совпадают" : undefined}
                     />
                     
-                    {/* Password Match Indicator */}
+                    {/* Password Match Indicator в стеклянном стиле */}
                     {formData.confirmPassword && (
                       <Paper 
                         elevation={0}
                         sx={{ 
                           mt: 2, 
                           p: 2,
-                          borderRadius: 2,
-                          border: `1px solid ${passwordMatch ? NEUTRAL_COLORS.success : NEUTRAL_COLORS.error}`,
-                          backgroundColor: passwordMatch ? alpha(NEUTRAL_COLORS.success, 0.1) : alpha(NEUTRAL_COLORS.error, 0.1),
+                          borderRadius: 3,
+                          border: '1px solid',
+                          borderColor: passwordMatch ? GLASS_COLORS.success : GLASS_COLORS.error,
+                          background: passwordMatch ? alpha(GLASS_COLORS.success, 0.1) : alpha(GLASS_COLORS.error, 0.1),
+                          backdropFilter: 'blur(10px)',
                         }}
                       >
                         <Stack 
@@ -607,12 +664,13 @@ export const RegisterPage: React.FC = () => {
                         >
                           {passwordMatch ? (
                             <>
-                              <CheckIcon sx={{ fontSize: 20, color: NEUTRAL_COLORS.success }} />
+                              <CheckIcon sx={{ fontSize: 20, color: GLASS_COLORS.success }} />
                               <Typography 
                                 variant="body2" 
                                 sx={{ 
-                                  color: NEUTRAL_COLORS.success,
-                                  fontWeight: 600
+                                  color: GLASS_COLORS.success,
+                                  fontWeight: 600,
+                                  letterSpacing: '-0.01em',
                                 }}
                               >
                                 Пароли совпадают
@@ -620,12 +678,13 @@ export const RegisterPage: React.FC = () => {
                             </>
                           ) : (
                             <>
-                              <CancelIcon sx={{ fontSize: 20, color: NEUTRAL_COLORS.error }} />
+                              <CancelIcon sx={{ fontSize: 20, color: GLASS_COLORS.error }} />
                               <Typography 
                                 variant="body2" 
                                 sx={{ 
-                                  color: NEUTRAL_COLORS.error,
-                                  fontWeight: 600
+                                  color: GLASS_COLORS.error,
+                                  fontWeight: 600,
+                                  letterSpacing: '-0.01em',
                                 }}
                               >
                                 Пароли не совпадают
@@ -635,11 +694,11 @@ export const RegisterPage: React.FC = () => {
                         </Stack>
                       </Paper>
                     )}
-                  </Stack>
-                </Stack>
+                  </Grid>
+                </Grid>
 
                 <Box sx={{ mt: 4 }}>
-                  <StyledButton
+                  <GlassButton
                     variant="contained"
                     startIcon={isLoading ? null : <RegisterIcon />}
                     type="submit"
@@ -653,11 +712,11 @@ export const RegisterPage: React.FC = () => {
                     ) : (
                       'Зарегистрироваться'
                     )}
-                  </StyledButton>
+                  </GlassButton>
                 </Box>
               </form>
 
-              {/* Divider */}
+              {/* Divider в стеклянном стиле */}
               <Box sx={{ my: 4, position: 'relative' }}>
                 <Box sx={{ 
                   position: 'absolute', 
@@ -665,7 +724,7 @@ export const RegisterPage: React.FC = () => {
                   left: 0, 
                   right: 0, 
                   height: '1px', 
-                  backgroundColor: NEUTRAL_COLORS.border 
+                  background: `linear-gradient(90deg, transparent, ${GLASS_COLORS.border}, transparent)`,
                 }} />
                 <Typography 
                   variant="body2" 
@@ -673,10 +732,15 @@ export const RegisterPage: React.FC = () => {
                     position: 'relative',
                     display: 'inline-block',
                     px: 2,
-                    backgroundColor: NEUTRAL_COLORS.surface,
-                    color: NEUTRAL_COLORS.textSecondary,
+                    background: GLASS_COLORS.surface,
+                    backdropFilter: 'blur(10px)',
+                    color: GLASS_COLORS.textSecondary,
                     left: '50%',
-                    transform: 'translateX(-50%)'
+                    transform: 'translateX(-50%)',
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: GLASS_COLORS.border,
+                    py: 0.5,
                   }}
                 >
                   У вас уже есть аккаунт?
@@ -685,43 +749,12 @@ export const RegisterPage: React.FC = () => {
 
               {/* Login Link */}
               <Box sx={{ textAlign: 'center' }}>
-                <StyledButton
+                <GlassButton
                   variant="outlined"
                   onClick={() => navigate('/login')}
                 >
                   Войти в существующий аккаунт
-                </StyledButton>
-                {/* <Typography 
-                  variant="body2" 
-                  sx={{ 
-                    mt: 3, 
-                    color: NEUTRAL_COLORS.textSecondary,
-                    fontSize: '0.875rem'
-                  }}
-                >
-                  Создавая учетную запись, вы соглашаетесь с нашими условиями{' '}
-                  <Link 
-                    to="/terms" 
-                    style={{ 
-                      color: NEUTRAL_COLORS.accent, 
-                      textDecoration: 'none',
-                      fontWeight: 500 
-                    }}
-                  >
-                    Условиями использования
-                  </Link>{' '}
-                  и{' '}
-                  <Link 
-                    to="/privacy" 
-                    style={{ 
-                      color: NEUTRAL_COLORS.accent, 
-                      textDecoration: 'none',
-                      fontWeight: 500 
-                    }}
-                  >
-                    Политикой конфиденциальности
-                  </Link>
-                </Typography> */}
+                </GlassButton>
               </Box>
             </Paper>
 
@@ -732,7 +765,7 @@ export const RegisterPage: React.FC = () => {
                 display: 'block',
                 mt: 3,
                 textAlign: 'center',
-                color: alpha(NEUTRAL_COLORS.textSecondary, 0.7),
+                color: alpha(GLASS_COLORS.textSecondary, 0.7),
                 fontSize: '0.75rem'
               }}
             >

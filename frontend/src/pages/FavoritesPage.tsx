@@ -45,44 +45,49 @@ import {
 import { favoriteService } from '../services/favoriteService';
 import { questionCompletionService } from '../services/questionCompletionService';
 
-// Используем те же цвета, что и в профиле
-const NEUTRAL_COLORS = {
-  primary: '#2D3748',
-  secondary: '#4A5568',
-  accent: '#3182CE',
-  background: '#F7FAFC',
-  surface: '#FFFFFF',
-  textPrimary: '#1A202C',
-  textSecondary: '#718096',
-  border: '#E2E8F0',
-  success: '#38A169',
-  warning: '#DD6B20',
-  error: '#E53E3E',
-  info: '#3182CE',
-  easy: '#38A169',
-  medium: '#D69E2E',
-  hard: '#E53E3E',
-  gold: '#D4AF37',
-  silver: '#C0C0C0',
-  bronze: '#CD7F32',
+// Стеклянная цветовая палитра iOS 26 Liquid Glass
+const GLASS_COLORS = {
+  primary: 'rgba(10, 132, 255, 0.8)', // iOS синий с прозрачностью
+  secondary: 'rgba(94, 92, 230, 0.75)', // Фиолетово-синий
+  accent: 'rgba(90, 200, 250, 0.9)', // Голубой акцент
+  background: 'rgba(240, 244, 250, 0.4)', // Полупрозрачный фон
+  surface: 'rgba(255, 255, 255, 0.6)', // Стеклянная поверхность
+  surfaceDark: 'rgba(255, 255, 255, 0.8)', // Более плотное стекло
+  textPrimary: 'rgba(0, 0, 0, 0.8)',
+  textSecondary: 'rgba(60, 60, 67, 0.6)',
+  border: 'rgba(255, 255, 255, 0.5)', // Стеклянная граница
+  borderGlow: 'rgba(255, 255, 255, 0.8)',
+  success: 'rgba(52, 199, 89, 0.8)', // iOS зеленый
+  error: 'rgba(255, 59, 48, 0.8)', // iOS красный
+  warning: 'rgba(255, 149, 0, 0.8)', // iOS оранжевый
+  purple: 'rgba(175, 82, 222, 0.8)', // iOS фиолетовый
+  blue: 'rgba(0, 122, 255, 0.8)', // iOS синий
+  info: 'rgba(90, 200, 250, 0.8)',
+  gradientStart: 'rgba(255, 255, 255, 0.3)',
+  gradientEnd: 'rgba(255, 255, 255, 0.1)',
+  glassOverlay: 'rgba(255, 255, 255, 0.2)',
+  glassHighlight: 'rgba(255, 255, 255, 0.5)',
+  easy: 'rgba(52, 199, 89, 0.8)',
+  medium: 'rgba(255, 149, 0, 0.8)',
+  hard: 'rgba(255, 59, 48, 0.8)',
+  gold: 'rgba(212, 175, 55, 0.8)',
+  silver: 'rgba(192, 192, 192, 0.7)',
+  bronze: 'rgba(205, 127, 50, 0.7)',
 };
 
 // Тот же градиент фона, что и в профиле
-const BACKGROUND_GRADIENT = `linear-gradient(135deg, ${NEUTRAL_COLORS.background} 0%, ${alpha(
-  NEUTRAL_COLORS.background,
-  0.8
-)} 100%)`;
+const BACKGROUND_GRADIENT = 'linear-gradient(135deg, #E0F0FF 0%, #D0E4FF 50%, #B8D8FF 100%)';
 
 const getDifficultyColor = (difficulty: string) => {
   switch (difficulty) {
     case 'easy':
-      return NEUTRAL_COLORS.easy;
+      return GLASS_COLORS.easy;
     case 'medium':
-      return NEUTRAL_COLORS.medium;
+      return GLASS_COLORS.medium;
     case 'hard':
-      return NEUTRAL_COLORS.hard;
+      return GLASS_COLORS.hard;
     default:
-      return NEUTRAL_COLORS.accent;
+      return GLASS_COLORS.accent;
   }
 };
 
@@ -114,15 +119,15 @@ interface FavoritesResponse {
   total: number;
 }
 
-// Компонент карточки вопроса в избранном
-interface FavoriteQuestionCardProps {
+// Компонент карточки вопроса в избранном в стеклянном стиле
+interface GlassFavoriteQuestionCardProps {
   favorite: FavoriteItem;
   isCompleted: boolean;
   onRemove: (questionId: string) => void;
   onNavigate: (questionId: string) => void;
 }
 
-const FavoriteQuestionCard: React.FC<FavoriteQuestionCardProps> = ({
+const GlassFavoriteQuestionCard: React.FC<GlassFavoriteQuestionCardProps> = ({
   favorite,
   isCompleted,
   onRemove,
@@ -139,21 +144,55 @@ const FavoriteQuestionCard: React.FC<FavoriteQuestionCardProps> = ({
         onMouseLeave={() => setIsHovered(false)}
         sx={{
           p: 3,
-          borderRadius: 3,
-          border: `1px solid ${NEUTRAL_COLORS.border}`,
-          backgroundColor: NEUTRAL_COLORS.surface,
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          width: '340px', // Фиксированная высота
+          borderRadius: 4,
+          background: GLASS_COLORS.surface,
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          border: '1px solid',
+          borderColor: GLASS_COLORS.border,
+          transition: 'all 0.4s cubic-bezier(0.2, 0, 0, 1)',
+          width: '340px',
           display: 'flex',
           flexDirection: 'column',
           position: 'relative',
           overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '100%',
+            background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+            opacity: 0,
+            transition: 'opacity 0.4s ease',
+            pointerEvents: 'none',
+          },
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            top: -20,
+            left: -20,
+            right: -20,
+            bottom: -20,
+            background: `radial-gradient(circle at 30% 30%, ${getDifficultyColor(favorite.question_difficulty)} 0%, transparent 70%)`,
+            opacity: 0,
+            zIndex: -1,
+            filter: 'blur(30px)',
+            transition: 'opacity 0.4s ease',
+          },
           '&:hover': {
-            borderColor: alpha(NEUTRAL_COLORS.accent, 0.5),
-            boxShadow: `0 12px 32px ${alpha(NEUTRAL_COLORS.accent, 0.1)}`,
+            borderColor: GLASS_COLORS.borderGlow,
+            boxShadow: `0 16px 32px ${alpha(getDifficultyColor(favorite.question_difficulty), 0.15)}`,
             transform: 'translateY(-4px)',
+            '&::before': {
+              opacity: 1,
+            },
+            '&::after': {
+              opacity: 0.2,
+            },
             '& .card-title': {
-              color: NEUTRAL_COLORS.accent,
+              color: getDifficultyColor(favorite.question_difficulty),
             },
           },
         }}
@@ -170,7 +209,7 @@ const FavoriteQuestionCard: React.FC<FavoriteQuestionCardProps> = ({
               getDifficultyColor(favorite.question_difficulty),
               0.5
             )} 100%)`,
-            borderRadius: '3px 3px 0 0',
+            borderRadius: '4px 4px 0 0',
           }}
         />
 
@@ -183,7 +222,7 @@ const FavoriteQuestionCard: React.FC<FavoriteQuestionCardProps> = ({
             zIndex: 1,
           }}
         >
-          <BookmarkIcon sx={{ color: NEUTRAL_COLORS.warning, fontSize: 24 }} />
+          <BookmarkIcon sx={{ color: GLASS_COLORS.warning, fontSize: 24 }} />
         </Box>
 
         {/* Содержимое карточки */}
@@ -195,8 +234,8 @@ const FavoriteQuestionCard: React.FC<FavoriteQuestionCardProps> = ({
               variant="h6"
               onClick={() => onNavigate(favorite.question_id)}
               sx={{
-                fontWeight: 700,
-                color: NEUTRAL_COLORS.textPrimary,
+                fontWeight: 600,
+                color: GLASS_COLORS.textPrimary,
                 fontSize: '1.125rem',
                 lineHeight: 1.4,
                 transition: 'color 0.3s',
@@ -207,6 +246,11 @@ const FavoriteQuestionCard: React.FC<FavoriteQuestionCardProps> = ({
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 wordBreak: 'break-word',
+                letterSpacing: '-0.01em',
+                cursor: 'pointer',
+                '&:hover': {
+                  color: getDifficultyColor(favorite.question_difficulty),
+                },
               }}
             >
               {favorite.question_title}
@@ -221,10 +265,12 @@ const FavoriteQuestionCard: React.FC<FavoriteQuestionCardProps> = ({
                 size="small"
                 label={getDifficultyLabel(favorite.question_difficulty)}
                 sx={{
-                  fontWeight: 700,
-                  backgroundColor: alpha(getDifficultyColor(favorite.question_difficulty), 0.1),
+                  fontWeight: 600,
+                  background: alpha(getDifficultyColor(favorite.question_difficulty), 0.15),
+                  backdropFilter: 'blur(10px)',
                   color: getDifficultyColor(favorite.question_difficulty),
-                  border: `1px solid ${alpha(getDifficultyColor(favorite.question_difficulty), 0.3)}`,
+                  border: '1px solid',
+                  borderColor: alpha(getDifficultyColor(favorite.question_difficulty), 0.3),
                   fontSize: '0.75rem',
                 }}
               />
@@ -236,10 +282,12 @@ const FavoriteQuestionCard: React.FC<FavoriteQuestionCardProps> = ({
                   size="small"
                   label="Выполнено"
                   sx={{
-                    fontWeight: 700,
-                    backgroundColor: alpha(NEUTRAL_COLORS.success, 0.1),
-                    color: NEUTRAL_COLORS.success,
-                    border: `1px solid ${alpha(NEUTRAL_COLORS.success, 0.3)}`,
+                    fontWeight: 600,
+                    background: alpha(GLASS_COLORS.success, 0.15),
+                    backdropFilter: 'blur(10px)',
+                    color: GLASS_COLORS.success,
+                    border: '1px solid',
+                    borderColor: alpha(GLASS_COLORS.success, 0.3),
                     fontSize: '0.75rem',
                   }}
                 />
@@ -252,7 +300,7 @@ const FavoriteQuestionCard: React.FC<FavoriteQuestionCardProps> = ({
             <Typography
               variant="caption"
               sx={{
-                color: NEUTRAL_COLORS.textSecondary,
+                color: GLASS_COLORS.textSecondary,
                 display: 'flex',
                 alignItems: 'center',
                 gap: 0.5,
@@ -274,9 +322,14 @@ const FavoriteQuestionCard: React.FC<FavoriteQuestionCardProps> = ({
                 endIcon={<OpenInNewIcon />}
                 onClick={() => onNavigate(favorite.question_id)}
                 sx={{
-                  background: `linear-gradient(135deg, ${NEUTRAL_COLORS.accent} 0%, ${alpha(NEUTRAL_COLORS.accent, 0.8)} 100%)`,
+                  background: `linear-gradient(135deg, ${getDifficultyColor(favorite.question_difficulty)} 0%, ${alpha(getDifficultyColor(favorite.question_difficulty), 0.6)} 100%)`,
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid',
+                  borderColor: alpha('#FFFFFF', 0.3),
+                  borderRadius: 3,
                   '&:hover': {
-                    boxShadow: `0 8px 24px ${alpha(NEUTRAL_COLORS.accent, 0.3)}`,
+                    background: `linear-gradient(135deg, ${alpha(getDifficultyColor(favorite.question_difficulty), 0.9)}, ${alpha(getDifficultyColor(favorite.question_difficulty), 0.5)})`,
+                    boxShadow: `0 8px 16px ${alpha(getDifficultyColor(favorite.question_difficulty), 0.3)}`,
                   },
                 }}
               >
@@ -291,10 +344,13 @@ const FavoriteQuestionCard: React.FC<FavoriteQuestionCardProps> = ({
                   setConfirmDelete(true);
                 }}
                 sx={{
-                  backgroundColor: alpha(NEUTRAL_COLORS.error, 0.1),
-                  color: NEUTRAL_COLORS.error,
+                  background: alpha(GLASS_COLORS.error, 0.15),
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid',
+                  borderColor: alpha(GLASS_COLORS.error, 0.3),
+                  color: GLASS_COLORS.error,
                   '&:hover': {
-                    backgroundColor: alpha(NEUTRAL_COLORS.error, 0.2),
+                    background: alpha(GLASS_COLORS.error, 0.25),
                   },
                 }}
               >
@@ -305,26 +361,34 @@ const FavoriteQuestionCard: React.FC<FavoriteQuestionCardProps> = ({
         </Box>
       </Paper>
 
-      {/* Диалог подтверждения удаления */}
+      {/* Диалог подтверждения удаления в стеклянном стиле */}
       <Dialog
         open={confirmDelete}
         onClose={() => setConfirmDelete(false)}
         PaperProps={{
           sx: {
-            backgroundColor: NEUTRAL_COLORS.background,
-            borderRadius: 3,
-            border: `1px solid ${alpha(NEUTRAL_COLORS.error, 0.2)}`,
+            borderRadius: 4,
+            background: GLASS_COLORS.surfaceDark,
+            backdropFilter: 'blur(30px)',
+            WebkitBackdropFilter: 'blur(30px)',
+            border: '1px solid',
+            borderColor: GLASS_COLORS.border,
+            boxShadow: '0 24px 48px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.5) inset',
           },
         }}
       >
-        <DialogTitle sx={{ fontWeight: 700, color: NEUTRAL_COLORS.error }}>
+        <DialogTitle sx={{ 
+          fontWeight: 600, 
+          color: GLASS_COLORS.error,
+          letterSpacing: '-0.01em',
+        }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <DeleteIcon />
             Удалить из избранного?
           </Box>
         </DialogTitle>
         <DialogContent>
-          <Typography sx={{ color: NEUTRAL_COLORS.textPrimary }}>
+          <Typography sx={{ color: GLASS_COLORS.textPrimary }}>
             Вы уверены, что хотите удалить вопрос <strong>"{favorite.question_title}"</strong> из избранного?
           </Typography>
         </DialogContent>
@@ -333,9 +397,15 @@ const FavoriteQuestionCard: React.FC<FavoriteQuestionCardProps> = ({
             onClick={() => setConfirmDelete(false)}
             variant="outlined"
             sx={{
-              borderRadius: 2,
-              borderColor: NEUTRAL_COLORS.border,
-              color: NEUTRAL_COLORS.textSecondary,
+              borderRadius: 3,
+              borderColor: GLASS_COLORS.border,
+              color: GLASS_COLORS.textPrimary,
+              background: GLASS_COLORS.surface,
+              backdropFilter: 'blur(10px)',
+              '&:hover': {
+                borderColor: GLASS_COLORS.primary,
+                background: alpha(GLASS_COLORS.primary, 0.1),
+              },
             }}
           >
             Отмена
@@ -347,10 +417,14 @@ const FavoriteQuestionCard: React.FC<FavoriteQuestionCardProps> = ({
             }}
             variant="contained"
             sx={{
-              borderRadius: 2,
-              background: `linear-gradient(135deg, ${NEUTRAL_COLORS.error} 0%, ${alpha(NEUTRAL_COLORS.error, 0.8)} 100%)`,
+              borderRadius: 3,
+              background: `linear-gradient(135deg, ${GLASS_COLORS.error} 0%, ${alpha(GLASS_COLORS.error, 0.6)} 100%)`,
+              backdropFilter: 'blur(10px)',
+              border: '1px solid',
+              borderColor: alpha('#FFFFFF', 0.3),
               '&:hover': {
-                boxShadow: `0 8px 24px ${alpha(NEUTRAL_COLORS.error, 0.3)}`,
+                background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.error, 0.9)}, ${alpha(GLASS_COLORS.error, 0.5)})`,
+                boxShadow: `0 8px 16px ${alpha(GLASS_COLORS.error, 0.3)}`,
               },
             }}
           >
@@ -362,8 +436,8 @@ const FavoriteQuestionCard: React.FC<FavoriteQuestionCardProps> = ({
   );
 };
 
-// Компонент статистики (похож на профиль)
-const StatCard = ({
+// Компонент статистики в стеклянном стиле
+const GlassStatCard = ({
   title,
   value,
   subtitle,
@@ -381,24 +455,59 @@ const StatCard = ({
   <Paper
     elevation={0}
     sx={{
-      p: { xs: 2, sm: 3 }, // Меньший padding на мобильных
-      borderRadius: 2,
-      backgroundColor: alpha(color, 0.05),
-      border: `1px solid ${alpha(color, 0.2)}`,
+      p: { xs: 2, sm: 3 },
+      borderRadius: 4,
+      background: GLASS_COLORS.surface,
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
+      border: '1px solid',
+      borderColor: alpha(color, 0.3),
       height: '100%',
-      minWidth: { xs: 'unset', sm: 250 }, // Убираем фиксированную минимальную ширину на мобильных
+      minWidth: { xs: 'unset', sm: 250 },
       display: 'flex',
       flexDirection: 'column',
-      transition: 'all 0.3s ease',
+      transition: 'all 0.4s cubic-bezier(0.2, 0, 0, 1)',
+      position: 'relative',
+      overflow: 'hidden',
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '100%',
+        background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+        opacity: 0,
+        transition: 'opacity 0.4s ease',
+        pointerEvents: 'none',
+      },
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        top: -20,
+        left: -20,
+        right: -20,
+        bottom: -20,
+        background: `radial-gradient(circle at 30% 30%, ${color} 0%, transparent 70%)`,
+        opacity: 0.1,
+        zIndex: -1,
+        filter: 'blur(30px)',
+        transition: 'opacity 0.4s ease',
+      },
       '&:hover': {
-        transform: { xs: 'none', sm: 'translateY(-4px)' }, // Анимация только на больших экранах
+        transform: { xs: 'none', sm: 'translateY(-4px)' },
         boxShadow: { 
           xs: 'none', 
-          sm: `0 8px 24px ${alpha(color, 0.15)}` 
+          sm: `0 16px 32px ${alpha(color, 0.15)}` 
         },
-        borderColor: { xs: alpha(color, 0.2), sm: alpha(color, 0.4) },
+        borderColor: alpha(color, 0.5),
+        '&::before': {
+          opacity: 1,
+        },
+        '&::after': {
+          opacity: 0.2,
+        },
       },
-      // Адаптивные стили для очень маленьких экранов
       '@media (max-width: 400px)': {
         p: 1.5,
         '& .MuiTypography-h3': {
@@ -414,22 +523,24 @@ const StatCard = ({
       sx={{ 
         display: 'flex', 
         alignItems: 'center', 
-        gap: { xs: 1.5, sm: 2 }, // Меньший gap на мобильных
-        mb: { xs: 1.5, sm: 2 } 
+        gap: { xs: 1.5, sm: 2 },
+        mb: { xs: 1.5, sm: 2 }
       }}
     >
       <Box
         className="icon-container"
         sx={{
-          p: { xs: 1, sm: 1.5 }, // Меньший padding для иконки
+          p: { xs: 1, sm: 1.5 },
           borderRadius: '50%',
-          backgroundColor: alpha(color, 0.1),
+          background: alpha(color, 0.15),
+          backdropFilter: 'blur(10px)',
+          border: '1px solid',
+          borderColor: alpha(color, 0.3),
           color: color,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
-          // Размер иконки адаптивный
           '& svg': {
             fontSize: { xs: 20, sm: 24 }
           }
@@ -441,9 +552,10 @@ const StatCard = ({
         variant="subtitle1"
         sx={{
           fontWeight: 600,
-          color: NEUTRAL_COLORS.textPrimary,
-          fontSize: { xs: '0.9rem', sm: '1rem' }, // Меньший шрифт на мобильных
+          color: GLASS_COLORS.textPrimary,
+          fontSize: { xs: '0.9rem', sm: '1rem' },
           lineHeight: 1.3,
+          letterSpacing: '-0.01em',
         }}
       >
         {title}
@@ -453,15 +565,17 @@ const StatCard = ({
     <Typography
       variant="h3"
       sx={{
-        fontWeight: 800,
+        fontWeight: 700,
         color: color,
         mb: { xs: 0.5, sm: 1 },
         fontSize: { 
-          xs: '1.75rem',  // Меньше на мобильных
-          sm: '2rem',     // Средний размер
-          md: '2.5rem'    // Полный размер на десктопе
+          xs: '1.75rem',
+          sm: '2rem',
+          md: '2.5rem'
         },
-        background: percentage ? `linear-gradient(135deg, ${color} 0%, ${alpha(color, 0.7)} 100%)` : 'none',
+        letterSpacing: '-0.02em',
+        textShadow: `0 4px 12px ${alpha(color, 0.3)}`,
+        background: percentage ? `linear-gradient(135deg, ${color} 0%, ${alpha(color, 0.6)} 100%)` : 'none',
         backgroundClip: percentage ? 'text' : 'none',
         WebkitBackgroundClip: percentage ? 'text' : 'none',
         WebkitTextFillColor: percentage ? 'transparent' : 'inherit',
@@ -474,9 +588,9 @@ const StatCard = ({
     <Typography
       variant="body2"
       sx={{
-        color: NEUTRAL_COLORS.textSecondary,
+        color: GLASS_COLORS.textSecondary,
         flexGrow: 1,
-        fontSize: { xs: '0.8rem', sm: '0.875rem' }, // Меньший шрифт
+        fontSize: { xs: '0.8rem', sm: '0.875rem' },
         lineHeight: 1.4,
       }}
     >
@@ -485,7 +599,7 @@ const StatCard = ({
   </Paper>
 );
 
-// Главный компонент страницы избранного
+// Главный компонент страницы избранного в стеклянном стиле
 export const FavoritesPage: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
@@ -505,7 +619,7 @@ export const FavoritesPage: React.FC = () => {
   const [sortBy, setSortBy] = useState<string>('added_at');
   const [sortDir, setSortDir] = useState<string>('desc');
 
-  const ITEMS_PER_PAGE = 6; // Количество элементов на странице
+  const ITEMS_PER_PAGE = 6;
 
   // Отслеживание скролла
   useEffect(() => {
@@ -523,7 +637,6 @@ export const FavoritesPage: React.FC = () => {
       setIsRefreshing(true);
       setError(null);
 
-      // Используем правильный endpoint с параметрами пагинации и сортировки
       const response = await favoriteService.getFavorites(
         page,
         ITEMS_PER_PAGE,
@@ -535,7 +648,6 @@ export const FavoritesPage: React.FC = () => {
       setTotal(response.total);
       setTotalPages(Math.ceil(response.total / ITEMS_PER_PAGE));
 
-      // Загрузим статус выполнения для каждого вопроса
       const completedSet = new Set<string>();
       for (const favorite of response.items) {
         try {
@@ -571,13 +683,12 @@ export const FavoritesPage: React.FC = () => {
   // Обработчик сортировки
   const handleSortChange = (newSortBy: string) => {
     if (sortBy === newSortBy) {
-      // Меняем направление сортировки, если кликнули на тот же столбец
       setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
     } else {
       setSortBy(newSortBy);
-      setSortDir('desc'); // По умолчанию нисходящая сортировка
+      setSortDir('desc');
     }
-    setPage(1); // Сбрасываем на первую страницу при изменении сортировки
+    setPage(1);
   };
 
   // Удаление из избранного
@@ -622,8 +733,24 @@ export const FavoritesPage: React.FC = () => {
       sx={{
         minHeight: '100vh',
         background: BACKGROUND_GRADIENT,
-        py: 4,
         position: 'relative',
+        overflow: 'hidden',
+        fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif',
+        py: 4,
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: `
+            radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.4) 0%, transparent 40%),
+            radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.3) 0%, transparent 50%),
+            radial-gradient(circle at 40% 80%, rgba(200, 220, 255, 0.5) 0%, transparent 60%)
+          `,
+          pointerEvents: 'none',
+        },
       }}
     >
       <Container maxWidth="lg">
@@ -637,11 +764,18 @@ export const FavoritesPage: React.FC = () => {
               bottom: 32,
               right: 32,
               zIndex: 1000,
-              backgroundColor: NEUTRAL_COLORS.accent,
-              color: NEUTRAL_COLORS.surface,
+              background: GLASS_COLORS.surface,
+              backdropFilter: 'blur(20px)',
+              border: '1px solid',
+              borderColor: GLASS_COLORS.border,
+              color: GLASS_COLORS.primary,
+              boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)',
               '&:hover': {
-                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.9),
+                background: GLASS_COLORS.surfaceDark,
+                transform: 'translateY(-4px)',
+                boxShadow: '0 12px 24px rgba(0, 0, 0, 0.15)',
               },
+              transition: 'all 0.3s ease',
             }}
           >
             <ScrollTopIcon />
@@ -654,9 +788,17 @@ export const FavoritesPage: React.FC = () => {
             startIcon={<ArrowBackIcon />}
             onClick={() => navigate('/profile')}
             sx={{
-              color: NEUTRAL_COLORS.accent,
+              color: GLASS_COLORS.primary,
+              background: GLASS_COLORS.surface,
+              backdropFilter: 'blur(10px)',
+              borderRadius: 3,
+              border: '1px solid',
+              borderColor: GLASS_COLORS.border,
+              px: 3,
+              py: 1,
               '&:hover': {
-                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+                background: alpha(GLASS_COLORS.primary, 0.1),
+                borderColor: GLASS_COLORS.primary,
               },
             }}
             variant="text"
@@ -673,7 +815,11 @@ export const FavoritesPage: React.FC = () => {
               sx={{
                 mb: 3,
                 borderRadius: 3,
-                border: `1px solid ${alpha(NEUTRAL_COLORS.error, 0.2)}`,
+                background: alpha(GLASS_COLORS.error, 0.15),
+                backdropFilter: 'blur(10px)',
+                border: '1px solid',
+                borderColor: alpha(GLASS_COLORS.error, 0.3),
+                color: GLASS_COLORS.error,
               }}
               onClose={() => setError(null)}
             >
@@ -682,27 +828,46 @@ export const FavoritesPage: React.FC = () => {
           </Fade>
         )}
 
-        {/* Заголовок страницы */}
+        {/* Заголовок страницы в стеклянном стиле */}
         <Paper
           elevation={0}
           sx={{
             p: { xs: 3, md: 5 },
-            borderRadius: 3,
-            border: `1px solid ${NEUTRAL_COLORS.border}`,
-            backgroundColor: NEUTRAL_COLORS.surface,
+            borderRadius: 4,
+            background: GLASS_COLORS.surface,
+            backdropFilter: 'blur(30px)',
+            WebkitBackdropFilter: 'blur(30px)',
+            border: '1px solid',
+            borderColor: GLASS_COLORS.border,
             mb: 4,
+            position: 'relative',
+            overflow: 'hidden',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '100%',
+              background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+              opacity: 0.5,
+              pointerEvents: 'none',
+            },
           }}
         >
           {/* Заголовок с иконкой */}
-          <Box sx={{ mb: 4, pb: 3, borderBottom: `1px solid ${alpha(NEUTRAL_COLORS.border, 0.5)}` }}>
+          <Box sx={{ mb: 4, pb: 3, borderBottom: '1px solid', borderColor: GLASS_COLORS.border }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Box
                   sx={{
                     p: 1.5,
                     borderRadius: '50%',
-                    backgroundColor: alpha(NEUTRAL_COLORS.warning, 0.1),
-                    color: NEUTRAL_COLORS.warning,
+                    background: alpha(GLASS_COLORS.warning, 0.15),
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid',
+                    borderColor: alpha(GLASS_COLORS.warning, 0.3),
+                    color: GLASS_COLORS.warning,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -714,9 +879,10 @@ export const FavoritesPage: React.FC = () => {
                   <Typography
                     variant="h4"
                     sx={{
-                      fontWeight: 800,
-                      color: NEUTRAL_COLORS.textPrimary,
+                      fontWeight: 700,
+                      color: GLASS_COLORS.textPrimary,
                       fontSize: { xs: '1.75rem', md: '2.25rem' },
+                      letterSpacing: '-0.02em',
                     }}
                   >
                     Избранные вопросы
@@ -724,7 +890,7 @@ export const FavoritesPage: React.FC = () => {
                   <Typography
                     variant="body2"
                     sx={{
-                      color: NEUTRAL_COLORS.textSecondary,
+                      color: GLASS_COLORS.textSecondary,
                       mt: 0.5,
                     }}
                   >
@@ -738,10 +904,13 @@ export const FavoritesPage: React.FC = () => {
                   onClick={handleRefresh}
                   disabled={isRefreshing}
                   sx={{
-                    backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
-                    color: NEUTRAL_COLORS.accent,
+                    background: alpha(GLASS_COLORS.primary, 0.15),
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid',
+                    borderColor: alpha(GLASS_COLORS.primary, 0.3),
+                    color: GLASS_COLORS.primary,
                     '&:hover': {
-                      backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.2),
+                      background: alpha(GLASS_COLORS.primary, 0.25),
                     },
                   }}
                 >
@@ -762,13 +931,14 @@ export const FavoritesPage: React.FC = () => {
                 <Typography
                   variant="h6"
                   sx={{
-                    fontWeight: 700,
-                    color: NEUTRAL_COLORS.textPrimary,
+                    fontWeight: 600,
+                    color: GLASS_COLORS.textPrimary,
+                    letterSpacing: '-0.01em',
                   }}
                 >
                   Общая статистика
                 </Typography>
-                <IconButton size="small">
+                <IconButton size="small" sx={{ color: GLASS_COLORS.primary }}>
                   {statsExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                 </IconButton>
               </Box>
@@ -780,11 +950,10 @@ export const FavoritesPage: React.FC = () => {
             <Box sx={{ mb: 4 }}>
               <Grid 
                 container 
-                spacing={{ xs: 2, sm: 3 }} // Меньший отступ на мобильных
+                spacing={{ xs: 2, sm: 3 }}
                 justifyContent="center"
                 sx={{ 
                   mb: 3,
-                  // На очень маленьких экранах делаем вертикальное расположение
                   '@media (max-width: 400px)': {
                     '& .MuiGrid-item': {
                       width: '100%',
@@ -793,30 +962,30 @@ export const FavoritesPage: React.FC = () => {
                 }}
               >
                 <Grid item xs={12} sm={6} md={3}>
-                  <StatCard
+                  <GlassStatCard
                     title={isMobileFilter ? "Вопросы" : "Всего вопросов"}
                     value={total}
                     subtitle="в избранном"
-                    color={NEUTRAL_COLORS.accent}
+                    color={GLASS_COLORS.primary}
                     icon={<BookmarkIcon />}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
-                  <StatCard
+                  <GlassStatCard
                     title="Выполнено"
                     value={completedCount}
                     subtitle="вопросов"
-                    color={NEUTRAL_COLORS.success}
+                    color={GLASS_COLORS.success}
                     icon={<CheckCircleIcon />}
                   />
                 </Grid>
                 {!isMobileFilter && (
                 <Grid item xs={12} sm={6} md={3}>
-                  <StatCard
+                  <GlassStatCard
                     title="Прогресс"
                     value={completionPercentage}
                     subtitle="от общего числа"
-                    color={NEUTRAL_COLORS.warning}
+                    color={GLASS_COLORS.warning}
                     icon={<TrendingUpIcon />}
                     percentage
                   />
@@ -829,36 +998,39 @@ export const FavoritesPage: React.FC = () => {
           {/* Состояние загрузки */}
           {isLoading && (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-              <CircularProgress size={48} sx={{ color: NEUTRAL_COLORS.accent }} />
+              <CircularProgress size={48} sx={{ color: GLASS_COLORS.primary }} />
             </Box>
           )}
 
-          {/* Пустое состояние */}
+          {/* Пустое состояние в стеклянном стиле */}
           {!isLoading && favorites.length === 0 && !error && (
             <Fade in={true}>
               <Paper
                 elevation={0}
                 sx={{
                   p: 6,
-                  borderRadius: 3,
-                  border: `1px dashed ${NEUTRAL_COLORS.border}`,
-                  backgroundColor: alpha(NEUTRAL_COLORS.background, 0.5),
+                  borderRadius: 4,
+                  border: '1px dashed',
+                  borderColor: alpha(GLASS_COLORS.border, 0.8),
+                  background: alpha(GLASS_COLORS.background, 0.5),
+                  backdropFilter: 'blur(10px)',
                   textAlign: 'center',
                 }}
               >
                 <BookmarkBorderIcon
                   sx={{
                     fontSize: 64,
-                    color: NEUTRAL_COLORS.textSecondary,
+                    color: GLASS_COLORS.textSecondary,
                     mb: 2,
                   }}
                 />
                 <Typography
                   variant="h5"
                   sx={{
-                    fontWeight: 700,
-                    color: NEUTRAL_COLORS.textPrimary,
+                    fontWeight: 600,
+                    color: GLASS_COLORS.textPrimary,
                     mb: 1,
+                    letterSpacing: '-0.01em',
                   }}
                 >
                   Избранное пусто
@@ -866,7 +1038,7 @@ export const FavoritesPage: React.FC = () => {
                 <Typography
                   variant="body1"
                   sx={{
-                    color: NEUTRAL_COLORS.textSecondary,
+                    color: GLASS_COLORS.textSecondary,
                     mb: 3,
                     maxWidth: '400px',
                     mx: 'auto',
@@ -879,12 +1051,14 @@ export const FavoritesPage: React.FC = () => {
                   onClick={() => navigate('/questions')}
                   startIcon={<TrendingUpIcon />}
                   sx={{
-                    background: `linear-gradient(135deg, ${NEUTRAL_COLORS.accent} 0%, ${alpha(
-                      NEUTRAL_COLORS.accent,
-                      0.8
-                    )} 100%)`,
+                    background: `linear-gradient(135deg, ${GLASS_COLORS.primary} 0%, ${alpha(GLASS_COLORS.primary, 0.6)} 100%)`,
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid',
+                    borderColor: alpha('#FFFFFF', 0.3),
+                    borderRadius: 3,
                     '&:hover': {
-                      boxShadow: `0 8px 24px ${alpha(NEUTRAL_COLORS.accent, 0.3)}`,
+                      background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.primary, 0.9)}, ${alpha(GLASS_COLORS.primary, 0.5)})`,
+                      boxShadow: `0 8px 16px ${alpha(GLASS_COLORS.primary, 0.3)}`,
                     },
                   }}
                 >
@@ -910,8 +1084,9 @@ export const FavoritesPage: React.FC = () => {
                   <Typography
                     variant="h5"
                     sx={{
-                      fontWeight: 700,
-                      color: NEUTRAL_COLORS.textPrimary,
+                      fontWeight: 600,
+                      color: GLASS_COLORS.textPrimary,
+                      letterSpacing: '-0.01em',
                     }}
                   >
                     Ваши избранные вопросы ({total})
@@ -929,12 +1104,14 @@ export const FavoritesPage: React.FC = () => {
                       }
                       size={isMobile ? 'small' : 'medium'}
                       sx={{
-                        backgroundColor: sortBy === 'added_at' ? alpha(NEUTRAL_COLORS.accent, 0.1) : 'transparent',
-                        color: sortBy === 'added_at' ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.textSecondary,
-                        borderColor: sortBy === 'added_at' ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.border,
+                        background: sortBy === 'added_at' ? alpha(GLASS_COLORS.primary, 0.15) : GLASS_COLORS.surface,
+                        backdropFilter: 'blur(10px)',
+                        color: sortBy === 'added_at' ? GLASS_COLORS.primary : GLASS_COLORS.textSecondary,
+                        border: '1px solid',
+                        borderColor: sortBy === 'added_at' ? alpha(GLASS_COLORS.primary, 0.3) : GLASS_COLORS.border,
                         '&:hover': {
-                          backgroundColor: sortBy === 'added_at' ? alpha(NEUTRAL_COLORS.accent, 0.15) : alpha(NEUTRAL_COLORS.accent, 0.05),
-                          borderColor: sortBy === 'added_at' ? NEUTRAL_COLORS.accent : alpha(NEUTRAL_COLORS.accent, 0.3),
+                          background: sortBy === 'added_at' ? alpha(GLASS_COLORS.primary, 0.25) : alpha(GLASS_COLORS.primary, 0.1),
+                          borderColor: sortBy === 'added_at' ? alpha(GLASS_COLORS.primary, 0.5) : alpha(GLASS_COLORS.primary, 0.3),
                         },
                       }}
                     />
@@ -948,12 +1125,14 @@ export const FavoritesPage: React.FC = () => {
                       }
                       size={isMobile ? 'small' : 'medium'}
                       sx={{
-                        backgroundColor: sortBy === 'difficulty' ? alpha(NEUTRAL_COLORS.warning, 0.1) : 'transparent',
-                        color: sortBy === 'difficulty' ? NEUTRAL_COLORS.warning : NEUTRAL_COLORS.textSecondary,
-                        borderColor: sortBy === 'difficulty' ? NEUTRAL_COLORS.warning : NEUTRAL_COLORS.border,
+                        background: sortBy === 'difficulty' ? alpha(GLASS_COLORS.warning, 0.15) : GLASS_COLORS.surface,
+                        backdropFilter: 'blur(10px)',
+                        color: sortBy === 'difficulty' ? GLASS_COLORS.warning : GLASS_COLORS.textSecondary,
+                        border: '1px solid',
+                        borderColor: sortBy === 'difficulty' ? alpha(GLASS_COLORS.warning, 0.3) : GLASS_COLORS.border,
                         '&:hover': {
-                          backgroundColor: sortBy === 'difficulty' ? alpha(NEUTRAL_COLORS.warning, 0.15) : alpha(NEUTRAL_COLORS.warning, 0.05),
-                          borderColor: sortBy === 'difficulty' ? NEUTRAL_COLORS.warning : alpha(NEUTRAL_COLORS.warning, 0.3),
+                          background: sortBy === 'difficulty' ? alpha(GLASS_COLORS.warning, 0.25) : alpha(GLASS_COLORS.warning, 0.1),
+                          borderColor: sortBy === 'difficulty' ? alpha(GLASS_COLORS.warning, 0.5) : alpha(GLASS_COLORS.warning, 0.3),
                         },
                       }}
                     />
@@ -967,12 +1146,14 @@ export const FavoritesPage: React.FC = () => {
                       }
                       size={isMobile ? 'small' : 'medium'}
                       sx={{
-                        backgroundColor: sortBy === 'title' ? alpha(NEUTRAL_COLORS.success, 0.1) : 'transparent',
-                        color: sortBy === 'title' ? NEUTRAL_COLORS.success : NEUTRAL_COLORS.textSecondary,
-                        borderColor: sortBy === 'title' ? NEUTRAL_COLORS.success : NEUTRAL_COLORS.border,
+                        background: sortBy === 'title' ? alpha(GLASS_COLORS.success, 0.15) : GLASS_COLORS.surface,
+                        backdropFilter: 'blur(10px)',
+                        color: sortBy === 'title' ? GLASS_COLORS.success : GLASS_COLORS.textSecondary,
+                        border: '1px solid',
+                        borderColor: sortBy === 'title' ? alpha(GLASS_COLORS.success, 0.3) : GLASS_COLORS.border,
                         '&:hover': {
-                          backgroundColor: sortBy === 'title' ? alpha(NEUTRAL_COLORS.success, 0.15) : alpha(NEUTRAL_COLORS.success, 0.05),
-                          borderColor: sortBy === 'title' ? NEUTRAL_COLORS.success : alpha(NEUTRAL_COLORS.success, 0.3),
+                          background: sortBy === 'title' ? alpha(GLASS_COLORS.success, 0.25) : alpha(GLASS_COLORS.success, 0.1),
+                          borderColor: sortBy === 'title' ? alpha(GLASS_COLORS.success, 0.5) : alpha(GLASS_COLORS.success, 0.3),
                         },
                       }}
                     />
@@ -983,7 +1164,7 @@ export const FavoritesPage: React.FC = () => {
                 <Grid container spacing={3} sx={{ mb: 4 }}>
                   {favorites.map(favorite => (
                     <Grid item xs={12} sm={6} md={4} key={favorite.favorite_id} sx={{ display: 'flex' }}>
-                      <FavoriteQuestionCard
+                      <GlassFavoriteQuestionCard
                         favorite={favorite}
                         isCompleted={completedQuestions.has(favorite.question_id)}
                         onRemove={handleRemoveFavorite}
@@ -993,7 +1174,7 @@ export const FavoritesPage: React.FC = () => {
                   ))}
                 </Grid>
 
-                {/* Пагинация */}
+                {/* Пагинация в стеклянном стиле */}
                 {totalPages > 1 && (
                   <Fade in={true}>
                     <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 4 }}>
@@ -1001,22 +1182,29 @@ export const FavoritesPage: React.FC = () => {
                         elevation={0}
                         sx={{
                           p: { xs: 2, sm: 3 },
-                          borderRadius: 3,
-                          backgroundColor: alpha(NEUTRAL_COLORS.surface, 0.8),
-                          border: `1px solid ${alpha(NEUTRAL_COLORS.border, 0.5)}`,
-                          backdropFilter: 'blur(10px)',
+                          borderRadius: 4,
+                          background: GLASS_COLORS.surface,
+                          backdropFilter: 'blur(20px)',
+                          WebkitBackdropFilter: 'blur(20px)',
+                          border: '1px solid',
+                          borderColor: GLASS_COLORS.border,
                           width: '100%',
                           maxWidth: '800px',
+                          position: 'relative',
+                          overflow: 'hidden',
+                          '&::before': {
+                            content: '""',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            height: '100%',
+                            background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+                            opacity: 0.3,
+                            pointerEvents: 'none',
+                          },
                         }}
                       >
-                        {/* Информация о странице */}
-                        {/* <Box sx={{ textAlign: 'center', mb: 2 }}>
-                          <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary }}>
-                            Показано {((page - 1) * ITEMS_PER_PAGE) + 1} - {Math.min(page * ITEMS_PER_PAGE, total)} из {total} вопросов
-                          </Typography>
-                        </Box> */}
-
-                        {/* Основная пагинация */}
                         <Stack 
                           direction={isMobile ? 'column' : 'row'} 
                           spacing={isMobile ? 2 : 3} 
@@ -1033,11 +1221,14 @@ export const FavoritesPage: React.FC = () => {
                             variant="outlined"
                             startIcon={<ArrowBackIcon />}
                             sx={{
-                              borderColor: NEUTRAL_COLORS.border,
-                              color: page === 1 ? NEUTRAL_COLORS.textSecondary : NEUTRAL_COLORS.accent,
+                              borderColor: GLASS_COLORS.border,
+                              color: page === 1 ? GLASS_COLORS.textSecondary : GLASS_COLORS.primary,
+                              background: GLASS_COLORS.surface,
+                              backdropFilter: 'blur(10px)',
+                              borderRadius: 3,
                               '&:hover': {
-                                borderColor: NEUTRAL_COLORS.accent,
-                                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+                                borderColor: GLASS_COLORS.primary,
+                                background: alpha(GLASS_COLORS.primary, 0.1),
                               },
                               minWidth: { xs: '100%', sm: 'auto' },
                             }}
@@ -1050,34 +1241,38 @@ export const FavoritesPage: React.FC = () => {
                             count={totalPages}
                             page={page}
                             onChange={handlePageChange}
-                            color="primary"
+                            shape="rounded"
                             siblingCount={isMobile ? 0 : 1}
                             boundaryCount={isMobile ? 1 : 2}
                             sx={{
                               '& .MuiPaginationItem-root': {
-                                color: NEUTRAL_COLORS.textSecondary,
-                                border: `1px solid ${NEUTRAL_COLORS.border}`,
-                                backgroundColor: NEUTRAL_COLORS.surface,
+                                fontWeight: 600,
                                 fontSize: { xs: '0.875rem', sm: '1rem' },
+                                color: GLASS_COLORS.textSecondary,
+                                border: '1px solid',
+                                borderColor: GLASS_COLORS.border,
+                                background: GLASS_COLORS.surface,
+                                backdropFilter: 'blur(10px)',
                                 minWidth: { xs: 32, sm: 40 },
                                 height: { xs: 32, sm: 40 },
                                 margin: { xs: '0 2px', sm: '0 4px' },
                                 '&.Mui-selected': {
-                                  backgroundColor: NEUTRAL_COLORS.accent,
-                                  color: NEUTRAL_COLORS.surface,
+                                  background: `linear-gradient(135deg, ${GLASS_COLORS.primary} 0%, ${alpha(GLASS_COLORS.primary, 0.6)} 100%)`,
+                                  color: 'white',
                                   fontWeight: 700,
-                                  borderColor: NEUTRAL_COLORS.accent,
+                                  borderColor: GLASS_COLORS.primary,
                                   '&:hover': {
-                                    backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.9),
+                                    background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.primary, 0.9)}, ${alpha(GLASS_COLORS.primary, 0.5)})`,
                                   },
                                 },
                                 '&:hover': {
-                                  backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
-                                  borderColor: NEUTRAL_COLORS.accent,
+                                  background: alpha(GLASS_COLORS.primary, 0.1),
+                                  borderColor: GLASS_COLORS.primary,
                                 },
                                 '&.MuiPaginationItem-ellipsis': {
                                   border: 'none',
-                                  backgroundColor: 'transparent',
+                                  background: 'transparent',
+                                  backdropFilter: 'none',
                                 },
                               },
                             }}
@@ -1093,11 +1288,14 @@ export const FavoritesPage: React.FC = () => {
                             variant="outlined"
                             endIcon={<ArrowBackIcon sx={{ transform: 'rotate(180deg)' }} />}
                             sx={{
-                              borderColor: NEUTRAL_COLORS.border,
-                              color: page >= totalPages ? NEUTRAL_COLORS.textSecondary : NEUTRAL_COLORS.accent,
+                              borderColor: GLASS_COLORS.border,
+                              color: page >= totalPages ? GLASS_COLORS.textSecondary : GLASS_COLORS.primary,
+                              background: GLASS_COLORS.surface,
+                              backdropFilter: 'blur(10px)',
+                              borderRadius: 3,
                               '&:hover': {
-                                borderColor: NEUTRAL_COLORS.accent,
-                                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+                                borderColor: GLASS_COLORS.primary,
+                                background: alpha(GLASS_COLORS.primary, 0.1),
                               },
                               minWidth: { xs: '100%', sm: 'auto' },
                             }}
@@ -1109,7 +1307,7 @@ export const FavoritesPage: React.FC = () => {
                         {/* Переход к странице */}
                         {!isMobile && totalPages > 5 && (
                           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mt: 2, gap: 1 }}>
-                            <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+                            <Typography variant="body2" sx={{ color: GLASS_COLORS.textSecondary }}>
                               Перейти к странице:
                             </Typography>
                             <Box sx={{ display: 'flex', gap: 0.5 }}>
@@ -1128,15 +1326,16 @@ export const FavoritesPage: React.FC = () => {
                                 style={{
                                   width: '60px',
                                   padding: '4px 8px',
-                                  border: `1px solid ${NEUTRAL_COLORS.border}`,
-                                  borderRadius: '4px',
+                                  border: `1px solid ${GLASS_COLORS.border}`,
+                                  borderRadius: '8px',
                                   textAlign: 'center',
                                   fontSize: '14px',
-                                  color: NEUTRAL_COLORS.textPrimary,
-                                  backgroundColor: NEUTRAL_COLORS.surface,
+                                  color: GLASS_COLORS.textPrimary,
+                                  background: GLASS_COLORS.surface,
+                                  backdropFilter: 'blur(10px)',
                                 }}
                               />
-                              <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary, alignSelf: 'center' }}>
+                              <Typography variant="body2" sx={{ color: GLASS_COLORS.textSecondary, alignSelf: 'center' }}>
                                 / {totalPages}
                               </Typography>
                             </Box>
@@ -1151,31 +1350,33 @@ export const FavoritesPage: React.FC = () => {
           )}
         </Paper>
 
-        {/* Подсказка */}
+        {/* Подсказка в стеклянном стиле */}
         <Paper
           elevation={0}
           sx={{
             p: 3,
-            borderRadius: 3,
-            border: `1px dashed ${NEUTRAL_COLORS.border}`,
-            backgroundColor: alpha(NEUTRAL_COLORS.info, 0.05),
+            borderRadius: 4,
+            border: '1px dashed',
+            borderColor: alpha(GLASS_COLORS.info, 0.5),
+            background: alpha(GLASS_COLORS.info, 0.1),
+            backdropFilter: 'blur(10px)',
           }}
         >
           <Stack spacing={2}>
-            <Typography variant="h6" sx={{ color: NEUTRAL_COLORS.info, fontWeight: 600 }}>
+            <Typography variant="h6" sx={{ color: GLASS_COLORS.info, fontWeight: 600, letterSpacing: '-0.01em' }}>
               💡 Как использовать избранное:
             </Typography>
             <Stack spacing={1}>
-              <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+              <Typography variant="body2" sx={{ color: GLASS_COLORS.textSecondary }}>
                 • Добавляйте в избранное сложные вопросы, чтобы вернуться к ним позже
               </Typography>
-              <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+              <Typography variant="body2" sx={{ color: GLASS_COLORS.textSecondary }}>
                 • Используйте избранное для повторения важного материала
               </Typography>
-              <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+              <Typography variant="body2" sx={{ color: GLASS_COLORS.textSecondary }}>
                 • Отслеживайте свой прогресс по выполненным вопросам
               </Typography>
-              <Typography variant="body2" sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+              <Typography variant="body2" sx={{ color: GLASS_COLORS.textSecondary }}>
                 • Удаляйте вопросы из избранного, когда освоите тему
               </Typography>
             </Stack>

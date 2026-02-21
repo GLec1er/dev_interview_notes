@@ -69,21 +69,29 @@ import type { Question, Category, ContentBlock } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { ContentEditor } from '../components/Admin/ContentEditor';
 
-// Нейтральная цветовая палитра
-const NEUTRAL_COLORS = {
-  primary: '#2D3748',
-  secondary: '#4A5568',
-  accent: '#3182CE',
-  background: '#F7FAFC',
-  surface: '#FFFFFF',
-  textPrimary: '#1A202C',
-  textSecondary: '#718096',
-  border: '#E2E8F0',
-  success: '#38A169',
-  warning: '#DD6B20',
-  error: '#E53E3E',
-  info: '#3182CE',
-  question: '#9e3fa7ff',
+// Стеклянная цветовая палитра iOS 26 Liquid Glass
+const GLASS_COLORS = {
+  primary: 'rgba(10, 132, 255, 0.8)', // iOS синий с прозрачностью
+  secondary: 'rgba(94, 92, 230, 0.75)', // Фиолетово-синий
+  accent: 'rgba(90, 200, 250, 0.9)', // Голубой акцент
+  background: 'rgba(240, 244, 250, 0.4)', // Полупрозрачный фон
+  surface: 'rgba(255, 255, 255, 0.6)', // Стеклянная поверхность
+  surfaceDark: 'rgba(255, 255, 255, 0.8)', // Более плотное стекло
+  textPrimary: 'rgba(0, 0, 0, 0.8)',
+  textSecondary: 'rgba(60, 60, 67, 0.6)',
+  border: 'rgba(255, 255, 255, 0.5)', // Стеклянная граница
+  borderGlow: 'rgba(255, 255, 255, 0.8)',
+  success: 'rgba(52, 199, 89, 0.8)', // iOS зеленый
+  error: 'rgba(255, 59, 48, 0.8)', // iOS красный
+  warning: 'rgba(255, 149, 0, 0.8)', // iOS оранжевый
+  purple: 'rgba(175, 82, 222, 0.8)', // iOS фиолетовый
+  blue: 'rgba(0, 122, 255, 0.8)', // iOS синий
+  info: 'rgba(90, 200, 250, 0.8)',
+  gradientStart: 'rgba(255, 255, 255, 0.3)',
+  gradientEnd: 'rgba(255, 255, 255, 0.1)',
+  glassOverlay: 'rgba(255, 255, 255, 0.2)',
+  glassHighlight: 'rgba(255, 255, 255, 0.5)',
+  question: 'rgba(158, 63, 167, 0.8)',
 };
 
 // Вспомогательная функция для меток сортировки
@@ -102,7 +110,7 @@ const getSortLabel = (sortBy: string) => {
   }
 };
 
-// Улучшенная статистическая карточка
+// Улучшенная статистическая карточка в стеклянном стиле
 interface EnhancedStatCardProps {
   title: string;
   value: number;
@@ -115,7 +123,7 @@ interface EnhancedStatCardProps {
   isCompletionFilter?: boolean;
 }
 
-const EnhancedStatCard: React.FC<EnhancedStatCardProps> = ({ 
+const GlassEnhancedStatCard: React.FC<EnhancedStatCardProps> = ({ 
   title, 
   value, 
   icon, 
@@ -135,18 +143,48 @@ const EnhancedStatCard: React.FC<EnhancedStatCardProps> = ({
         sx={{
           minWidth: 250,
           p: 3,
-          borderRadius: 3,
-          border: `2px solid ${isActive ? NEUTRAL_COLORS.success : alpha(NEUTRAL_COLORS.border, 0.3)}`,
-          backgroundColor: isActive ? alpha(NEUTRAL_COLORS.success, 0.1) : alpha(NEUTRAL_COLORS.background, 0.5),
+          borderRadius: 4,
+          background: GLASS_COLORS.surface,
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          border: '2px solid',
+          borderColor: isActive ? GLASS_COLORS.success : GLASS_COLORS.border,
           height: '100%',
-          transition: 'all 0.3s',
+          transition: 'all 0.4s cubic-bezier(0.2, 0, 0, 1)',
           cursor: 'pointer',
           position: 'relative',
           overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '100%',
+            background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+            opacity: 0,
+            transition: 'opacity 0.4s ease',
+          },
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            top: -20,
+            left: -20,
+            right: -20,
+            bottom: -20,
+            background: `radial-gradient(circle at 30% 30%, ${GLASS_COLORS.success} 0%, transparent 70%)`,
+            opacity: isActive ? 0.3 : 0,
+            zIndex: -1,
+            filter: 'blur(30px)',
+            transition: 'opacity 0.4s ease',
+          },
           '&:hover': {
-            borderColor: isActive ? NEUTRAL_COLORS.success : NEUTRAL_COLORS.accent,
-            backgroundColor: isActive ? alpha(NEUTRAL_COLORS.success, 0.15) : alpha(NEUTRAL_COLORS.background, 0.8),
-            transform: 'translateY(-4px)',
+            transform: 'translateY(-4px) scale(1.02)',
+            borderColor: isActive ? GLASS_COLORS.success : GLASS_COLORS.borderGlow,
+            boxShadow: `0 16px 32px ${alpha(GLASS_COLORS.success, 0.2)}`,
+            '&::before': {
+              opacity: 1,
+            },
           },
         }}
       >
@@ -159,8 +197,11 @@ const EnhancedStatCard: React.FC<EnhancedStatCardProps> = ({
               width: 52,
               height: 52,
               borderRadius: '16px',
-              backgroundColor: isActive ? alpha(NEUTRAL_COLORS.success, 0.2) : alpha(NEUTRAL_COLORS.success, 0.1),
-              color: isActive ? NEUTRAL_COLORS.success : alpha(NEUTRAL_COLORS.success, 0.7),
+              background: isActive ? alpha(GLASS_COLORS.success, 0.2) : alpha(GLASS_COLORS.success, 0.15),
+              backdropFilter: 'blur(10px)',
+              border: '1px solid',
+              borderColor: alpha(GLASS_COLORS.success, 0.3),
+              color: isActive ? GLASS_COLORS.success : alpha(GLASS_COLORS.success, 0.7),
               flexShrink: 0,
             }}
           >
@@ -170,10 +211,11 @@ const EnhancedStatCard: React.FC<EnhancedStatCardProps> = ({
             <Typography
               variant="h6"
               sx={{
-                fontWeight: 800,
-                color: isActive ? NEUTRAL_COLORS.success : NEUTRAL_COLORS.textPrimary,
+                fontWeight: 600,
+                color: isActive ? GLASS_COLORS.success : GLASS_COLORS.textPrimary,
                 fontSize: '1.1rem',
                 lineHeight: 1.2,
+                letterSpacing: '-0.01em',
               }}
             >
               {title}
@@ -181,7 +223,7 @@ const EnhancedStatCard: React.FC<EnhancedStatCardProps> = ({
             <Typography
               variant="caption"
               sx={{
-                color: isActive ? alpha(NEUTRAL_COLORS.success, 0.8) : NEUTRAL_COLORS.textSecondary,
+                color: isActive ? alpha(GLASS_COLORS.success, 0.8) : GLASS_COLORS.textSecondary,
                 fontWeight: 500,
                 display: 'block',
                 mt: 0.5,
@@ -195,12 +237,13 @@ const EnhancedStatCard: React.FC<EnhancedStatCardProps> = ({
         <Typography
           variant="h1"
           sx={{
-            fontWeight: 900,
-            color: isActive ? NEUTRAL_COLORS.success : NEUTRAL_COLORS.textSecondary,
+            fontWeight: 700,
+            color: isActive ? GLASS_COLORS.success : GLASS_COLORS.textSecondary,
             fontSize: '3rem',
             lineHeight: 1,
             textAlign: 'center',
             mb: 2,
+            letterSpacing: '-0.02em',
           }}
         >
           {value}%
@@ -211,8 +254,9 @@ const EnhancedStatCard: React.FC<EnhancedStatCardProps> = ({
             sx={{
               height: 6,
               borderRadius: 3,
-              backgroundColor: alpha(NEUTRAL_COLORS.border, 0.3),
+              backgroundColor: alpha(GLASS_COLORS.border, 0.5),
               overflow: 'hidden',
+              backdropFilter: 'blur(10px)',
             }}
           >
             <Box
@@ -220,15 +264,16 @@ const EnhancedStatCard: React.FC<EnhancedStatCardProps> = ({
                 width: `${Math.min(percentage, 100)}%`,
                 height: '100%',
                 borderRadius: 3,
-                backgroundColor: NEUTRAL_COLORS.success,
+                background: `linear-gradient(90deg, ${GLASS_COLORS.success}, ${alpha(GLASS_COLORS.success, 0.6)})`,
                 transition: 'width 1s ease-out',
+                boxShadow: `0 2px 8px ${alpha(GLASS_COLORS.success, 0.3)}`,
               }}
             />
           </Box>
           <Typography
             variant="caption"
             sx={{
-              color: NEUTRAL_COLORS.textSecondary,
+              color: GLASS_COLORS.textSecondary,
               fontWeight: 600,
               display: 'block',
               mt: 1,
@@ -250,8 +295,8 @@ const EnhancedStatCard: React.FC<EnhancedStatCardProps> = ({
               width: 8,
               height: 8,
               borderRadius: '50%',
-              backgroundColor: NEUTRAL_COLORS.success,
-              boxShadow: `0 0 8px ${NEUTRAL_COLORS.success}`,
+              backgroundColor: GLASS_COLORS.success,
+              boxShadow: `0 0 12px ${GLASS_COLORS.success}`,
             }}
           />
         )}
@@ -267,42 +312,54 @@ const EnhancedStatCard: React.FC<EnhancedStatCardProps> = ({
       sx={{
         minWidth: 250,
         p: 3,
-        borderRadius: 3,
-        border: `2px solid ${alpha(color, isActive ? 0.6 : 0.2)}`,
-        backgroundColor: alpha(color, isActive ? 0.12 : 0.05),
+        borderRadius: 4,
+        background: GLASS_COLORS.surface,
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        border: '2px solid',
+        borderColor: isActive ? color : GLASS_COLORS.border,
         height: '100%',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        transition: 'all 0.4s cubic-bezier(0.2, 0, 0, 1)',
         position: 'relative',
         overflow: 'hidden',
         cursor: 'pointer',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '100%',
+          background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+          opacity: 0,
+          transition: 'opacity 0.4s ease',
+        },
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          top: -20,
+          left: -20,
+          right: -20,
+          bottom: -20,
+          background: `radial-gradient(circle at 30% 30%, ${color} 0%, transparent 70%)`,
+          opacity: isActive ? 0.3 : 0,
+          zIndex: -1,
+          filter: 'blur(30px)',
+          transition: 'opacity 0.4s ease',
+        },
         '&:hover': {
-          transform: 'translateY(-6px)',
+          transform: 'translateY(-6px) scale(1.02)',
+          borderColor: isActive ? color : GLASS_COLORS.borderGlow,
           boxShadow: `0 20px 40px ${alpha(color, 0.15)}`,
-          borderColor: alpha(color, isActive ? 0.8 : 0.4),
-          backgroundColor: alpha(color, isActive ? 0.16 : 0.08),
-          '& .stat-glow': {
+          '&::before': {
+            opacity: 1,
+          },
+          '&::after': {
             opacity: 0.3,
           },
         },
       }}
     >
-      {/* Эффект свечения */}
-      <Box
-        className="stat-glow"
-        sx={{
-          position: 'absolute',
-          top: -50,
-          right: -50,
-          width: 100,
-          height: 100,
-          borderRadius: '50%',
-          backgroundColor: alpha(color, 0.2),
-          filter: 'blur(20px)',
-          opacity: 0,
-          transition: 'opacity 0.3s',
-        }}
-      />
-
       {/* Иконка и заголовок */}
       <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
         <Box
@@ -313,10 +370,13 @@ const EnhancedStatCard: React.FC<EnhancedStatCardProps> = ({
             width: 52,
             height: 52,
             borderRadius: '16px',
-            backgroundColor: alpha(color, isActive ? 0.25 : 0.15),
+            background: alpha(color, isActive ? 0.25 : 0.15),
+            backdropFilter: 'blur(10px)',
+            border: '1px solid',
+            borderColor: alpha(color, 0.3),
             color: color,
             flexShrink: 0,
-            boxShadow: `0 8px 24px ${alpha(color, 0.2)}`,
+            boxShadow: `0 8px 16px ${alpha(color, 0.2)}`,
           }}
         >
           {icon}
@@ -325,10 +385,11 @@ const EnhancedStatCard: React.FC<EnhancedStatCardProps> = ({
           <Typography
             variant="h6"
             sx={{
-              fontWeight: 800,
-              color: NEUTRAL_COLORS.textPrimary,
+              fontWeight: 600,
+              color: GLASS_COLORS.textPrimary,
               fontSize: '1.1rem',
               lineHeight: 1.2,
+              letterSpacing: '-0.01em',
             }}
           >
             {title}
@@ -336,7 +397,7 @@ const EnhancedStatCard: React.FC<EnhancedStatCardProps> = ({
           <Typography
             variant="caption"
             sx={{
-              color: alpha(NEUTRAL_COLORS.textSecondary, 0.8),
+              color: GLASS_COLORS.textSecondary,
               fontWeight: 500,
               display: 'block',
               mt: 0.5,
@@ -355,14 +416,12 @@ const EnhancedStatCard: React.FC<EnhancedStatCardProps> = ({
           <Typography
             variant="h1"
             sx={{
-              fontWeight: 900,
+              fontWeight: 700,
               color: color,
               fontSize: '3rem',
               lineHeight: 1,
-              background: `linear-gradient(135deg, ${color} 0%, ${alpha(color, 0.7)} 100%)`,
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
+              letterSpacing: '-0.02em',
+              textShadow: `0 4px 12px ${alpha(color, 0.3)}`,
             }}
           >
             {value}
@@ -373,10 +432,12 @@ const EnhancedStatCard: React.FC<EnhancedStatCardProps> = ({
               label={`${percentage.toFixed(1)}%`}
               size="small"
               sx={{
-                fontWeight: 700,
-                backgroundColor: alpha(color, 0.1),
+                fontWeight: 600,
+                backgroundColor: alpha(color, 0.15),
+                backdropFilter: 'blur(10px)',
                 color: color,
-                border: `2px solid ${alpha(color, 0.2)}`,
+                border: '1px solid',
+                borderColor: alpha(color, 0.3),
                 fontSize: '0.75rem',
                 height: 28,
                 '& .MuiChip-icon': {
@@ -394,8 +455,9 @@ const EnhancedStatCard: React.FC<EnhancedStatCardProps> = ({
           sx={{
             height: 6,
             borderRadius: 3,
-            backgroundColor: alpha(NEUTRAL_COLORS.border, 0.3),
+            backgroundColor: alpha(GLASS_COLORS.border, 0.5),
             overflow: 'hidden',
+            backdropFilter: 'blur(10px)',
           }}
         >
           <Box
@@ -403,8 +465,7 @@ const EnhancedStatCard: React.FC<EnhancedStatCardProps> = ({
               width: `${Math.min(percentage, 100)}%`,
               height: '100%',
               borderRadius: 3,
-              backgroundColor: color,
-              backgroundImage: `linear-gradient(90deg, ${color} 0%, ${alpha(color, 0.8)} 100%)`,
+              background: `linear-gradient(90deg, ${color} 0%, ${alpha(color, 0.6)} 100%)`,
               transition: 'width 1s ease-out',
               boxShadow: `0 2px 8px ${alpha(color, 0.3)}`,
             }}
@@ -413,7 +474,7 @@ const EnhancedStatCard: React.FC<EnhancedStatCardProps> = ({
         <Typography
           variant="caption"
           sx={{
-            color: NEUTRAL_COLORS.textSecondary,
+            color: GLASS_COLORS.textSecondary,
             fontWeight: 600,
             display: 'block',
             mt: 1,
@@ -428,8 +489,8 @@ const EnhancedStatCard: React.FC<EnhancedStatCardProps> = ({
   );
 };
 
-// Статистический блок с интерактивными фильтрами
-const StatisticsSection: React.FC<{
+// Статистический блок с интерактивными фильтрами в стеклянном стиле
+const GlassStatisticsSection: React.FC<{
   total: number;
   easy: number;
   medium: number;
@@ -445,7 +506,7 @@ const StatisticsSection: React.FC<{
       title: 'Всего вопросов',
       value: total,
       icon: <NumbersIcon sx={{ fontSize: 28 }} />,
-      color: NEUTRAL_COLORS.accent,
+      color: GLASS_COLORS.primary,
       filter: '',
       percentage: 100,
     },
@@ -453,7 +514,7 @@ const StatisticsSection: React.FC<{
       title: 'Легкие',
       value: easy,
       icon: <SpeedIcon sx={{ fontSize: 28 }} />,
-      color: NEUTRAL_COLORS.success,
+      color: GLASS_COLORS.success,
       filter: 'easy',
       percentage: total > 0 ? (easy / total) * 100 : 0,
     },
@@ -461,7 +522,7 @@ const StatisticsSection: React.FC<{
       title: 'Средние',
       value: medium,
       icon: <BarChartIcon sx={{ fontSize: 28 }} />,
-      color: NEUTRAL_COLORS.warning,
+      color: GLASS_COLORS.warning,
       filter: 'medium',
       percentage: total > 0 ? (medium / total) * 100 : 0,
     },
@@ -469,7 +530,7 @@ const StatisticsSection: React.FC<{
       title: 'Сложные',
       value: hard,
       icon: <TimelineIcon sx={{ fontSize: 28 }} />,
-      color: NEUTRAL_COLORS.error,
+      color: GLASS_COLORS.error,
       filter: 'hard',
       percentage: total > 0 ? (hard / total) * 100 : 0,
     },
@@ -477,7 +538,7 @@ const StatisticsSection: React.FC<{
       title: 'Выполнено',
       value: Math.round(completionPercentage),
       icon: <CheckCircleIcon sx={{ fontSize: 28 }} />,
-      color: NEUTRAL_COLORS.success,
+      color: GLASS_COLORS.success,
       filter: 'completed',
       percentage: completionPercentage,
       isCompletionFilter: true,
@@ -487,10 +548,8 @@ const StatisticsSection: React.FC<{
   const handleCardClick = (stat: any) => {
     if (stat.isCompletionFilter) {
       if (activeCompletionFilter === true) {
-        // Если уже активен фильтр "Выполнено", сбрасываем его
         onCompletionFilterSelect(undefined);
       } else {
-        // Иначе включаем фильтр "Выполнено"
         onCompletionFilterSelect(true);
       }
     } else {
@@ -501,20 +560,17 @@ const StatisticsSection: React.FC<{
   return (
     <Fade in={true}>
       <Box sx={{ mb: 4 }}>
-        {/* Заголовок статистики */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
           <Box>
             <Typography
               variant="h3"
               sx={{
-                fontWeight: 900,
-                color: NEUTRAL_COLORS.textPrimary,
+                fontWeight: 700,
+                color: GLASS_COLORS.textPrimary,
                 mb: 1,
                 fontSize: { xs: '1.75rem', sm: '2.25rem' },
-                background: `linear-gradient(135deg, ${NEUTRAL_COLORS.textPrimary} 0%, ${NEUTRAL_COLORS.accent} 100%)`,
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
+                letterSpacing: '-0.02em',
+                textShadow: '0 2px 10px rgba(255,255,255,0.5)',
               }}
             >
               Статистика вопросов
@@ -522,7 +578,7 @@ const StatisticsSection: React.FC<{
             <Typography
               variant="body1"
               sx={{
-                color: NEUTRAL_COLORS.textSecondary,
+                color: GLASS_COLORS.textSecondary,
                 fontWeight: 400,
                 maxWidth: '600px',
               }}
@@ -534,33 +590,23 @@ const StatisticsSection: React.FC<{
                   size="small"
                   sx={{
                     ml: 2,
-                    backgroundColor: alpha(NEUTRAL_COLORS.success, 0.1),
-                    color: NEUTRAL_COLORS.success,
+                    backgroundColor: alpha(GLASS_COLORS.success, 0.15),
+                    backdropFilter: 'blur(10px)',
+                    color: GLASS_COLORS.success,
                     fontWeight: 600,
+                    border: '1px solid',
+                    borderColor: alpha(GLASS_COLORS.success, 0.3),
                   }}
                 />
               )}
             </Typography>
           </Box>
-          <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
-            <Chip
-              label="Актуальная база вопросов"
-              size="small"
-              sx={{
-                fontWeight: 600,
-                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
-                color: NEUTRAL_COLORS.accent,
-                border: `2px solid ${alpha(NEUTRAL_COLORS.accent, 0.2)}`,
-              }}
-            />
-          </Box>
         </Box>
 
-        {/* Карточки статистики - теперь на всю ширину */}
         <Grid container spacing={3} sx={{ mb: 3 }}>
           {stats.map((stat) => (
             <Grid item xs={12} sm={6} lg={stat.isCompletionFilter ? 3 : 2.25} key={stat.title}>
-              <EnhancedStatCard
+              <GlassEnhancedStatCard
                 title={stat.title}
                 value={stat.value}
                 icon={stat.icon}
@@ -579,45 +625,50 @@ const StatisticsSection: React.FC<{
           ))}
         </Grid>
 
-        {/* Визуализация распределения */}
         {total > 0 && (
           <Paper
             elevation={0}
             sx={{
               p: 3,
-              borderRadius: 3,
-              border: `2px solid ${alpha(NEUTRAL_COLORS.border, 0.3)}`,
-              backgroundColor: alpha(NEUTRAL_COLORS.background, 0.5),
+              borderRadius: 4,
+              background: GLASS_COLORS.surface,
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid',
+              borderColor: GLASS_COLORS.border,
             }}
           >
             <Typography
               variant="h6"
               sx={{
-                fontWeight: 700,
-                color: NEUTRAL_COLORS.textPrimary,
+                fontWeight: 600,
+                color: GLASS_COLORS.textPrimary,
                 mb: 2,
                 display: 'flex',
                 alignItems: 'center',
                 gap: 1,
+                letterSpacing: '-0.01em',
               }}
             >
               Распределение по сложности
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, height: 40 }}>
-              {/* Легкие */}
               {easy > 0 && (
                 <Box
                   sx={{
                     flex: easy,
                     height: 32,
                     borderRadius: 2,
-                    backgroundColor: NEUTRAL_COLORS.success,
-                    backgroundImage: `linear-gradient(90deg, ${NEUTRAL_COLORS.success} 0%, ${alpha(NEUTRAL_COLORS.success, 0.8)} 100%)`,
+                    background: `linear-gradient(90deg, ${GLASS_COLORS.success} 0%, ${alpha(GLASS_COLORS.success, 0.6)} 100%)`,
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid',
+                    borderColor: alpha(GLASS_COLORS.success, 0.3),
                     position: 'relative',
                     overflow: 'hidden',
                     transition: 'all 0.3s',
                     '&:hover': {
                       transform: 'scaleY(1.2)',
+                      boxShadow: `0 4px 12px ${alpha(GLASS_COLORS.success, 0.3)}`,
                     },
                   }}
                 >
@@ -628,10 +679,11 @@ const StatisticsSection: React.FC<{
                       top: '50%',
                       left: '50%',
                       transform: 'translate(-50%, -50%)',
-                      color: NEUTRAL_COLORS.surface,
+                      color: 'white',
                       fontWeight: 700,
                       fontSize: '0.75rem',
                       whiteSpace: 'nowrap',
+                      textShadow: '0 2px 4px rgba(0,0,0,0.2)',
                     }}
                   >
                     {easy} ({((easy / total) * 100).toFixed(1)}%)
@@ -639,20 +691,22 @@ const StatisticsSection: React.FC<{
                 </Box>
               )}
               
-              {/* Средние */}
               {medium > 0 && (
                 <Box
                   sx={{
                     flex: medium,
                     height: 40,
                     borderRadius: 2,
-                    backgroundColor: NEUTRAL_COLORS.warning,
-                    backgroundImage: `linear-gradient(90deg, ${NEUTRAL_COLORS.warning} 0%, ${alpha(NEUTRAL_COLORS.warning, 0.8)} 100%)`,
+                    background: `linear-gradient(90deg, ${GLASS_COLORS.warning} 0%, ${alpha(GLASS_COLORS.warning, 0.6)} 100%)`,
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid',
+                    borderColor: alpha(GLASS_COLORS.warning, 0.3),
                     position: 'relative',
                     overflow: 'hidden',
                     transition: 'all 0.3s',
                     '&:hover': {
                       transform: 'scaleY(1.2)',
+                      boxShadow: `0 4px 12px ${alpha(GLASS_COLORS.warning, 0.3)}`,
                     },
                   }}
                 >
@@ -663,10 +717,11 @@ const StatisticsSection: React.FC<{
                       top: '50%',
                       left: '50%',
                       transform: 'translate(-50%, -50%)',
-                      color: NEUTRAL_COLORS.surface,
+                      color: 'white',
                       fontWeight: 700,
                       fontSize: '0.75rem',
                       whiteSpace: 'nowrap',
+                      textShadow: '0 2px 4px rgba(0,0,0,0.2)',
                     }}
                   >
                     {medium} ({((medium / total) * 100).toFixed(1)}%)
@@ -674,20 +729,22 @@ const StatisticsSection: React.FC<{
                 </Box>
               )}
               
-              {/* Сложные */}
               {hard > 0 && (
                 <Box
                   sx={{
                     flex: hard,
                     height: 48,
                     borderRadius: 2,
-                    backgroundColor: NEUTRAL_COLORS.error,
-                    backgroundImage: `linear-gradient(90deg, ${NEUTRAL_COLORS.error} 0%, ${alpha(NEUTRAL_COLORS.error, 0.8)} 100%)`,
+                    background: `linear-gradient(90deg, ${GLASS_COLORS.error} 0%, ${alpha(GLASS_COLORS.error, 0.6)} 100%)`,
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid',
+                    borderColor: alpha(GLASS_COLORS.error, 0.3),
                     position: 'relative',
                     overflow: 'hidden',
                     transition: 'all 0.3s',
                     '&:hover': {
                       transform: 'scaleY(1.2)',
+                      boxShadow: `0 4px 12px ${alpha(GLASS_COLORS.error, 0.3)}`,
                     },
                   }}
                 >
@@ -698,10 +755,11 @@ const StatisticsSection: React.FC<{
                       top: '50%',
                       left: '50%',
                       transform: 'translate(-50%, -50%)',
-                      color: NEUTRAL_COLORS.surface,
+                      color: 'white',
                       fontWeight: 700,
                       fontSize: '0.75rem',
                       whiteSpace: 'nowrap',
+                      textShadow: '0 2px 4px rgba(0,0,0,0.2)',
                     }}
                   >
                     {hard} ({((hard / total) * 100).toFixed(1)}%)
@@ -710,23 +768,22 @@ const StatisticsSection: React.FC<{
               )}
             </Box>
             
-            {/* Легенда */}
             <Stack direction="row" spacing={2} sx={{ mt: 2, justifyContent: 'center' }}>
               <Stack direction="row" spacing={1} alignItems="center">
-                <Box sx={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: NEUTRAL_COLORS.success }} />
-                <Typography variant="caption" sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+                <Box sx={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: GLASS_COLORS.success }} />
+                <Typography variant="caption" sx={{ color: GLASS_COLORS.textSecondary }}>
                   Легкие
                 </Typography>
               </Stack>
               <Stack direction="row" spacing={1} alignItems="center">
-                <Box sx={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: NEUTRAL_COLORS.warning }} />
-                <Typography variant="caption" sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+                <Box sx={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: GLASS_COLORS.warning }} />
+                <Typography variant="caption" sx={{ color: GLASS_COLORS.textSecondary }}>
                   Средние
                 </Typography>
               </Stack>
               <Stack direction="row" spacing={1} alignItems="center">
-                <Box sx={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: NEUTRAL_COLORS.error }} />
-                <Typography variant="caption" sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+                <Box sx={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: GLASS_COLORS.error }} />
+                <Typography variant="caption" sx={{ color: GLASS_COLORS.textSecondary }}>
                   Сложные
                 </Typography>
               </Stack>
@@ -738,26 +795,27 @@ const StatisticsSection: React.FC<{
   );
 };
 
-// Стилизованная карточка вопроса (горизонтальная версия)
-interface QuestionCardProps {
+// Стилизованная карточка вопроса в стеклянном стиле
+interface GlassQuestionCardProps {
   question: Question;
   onClick: () => void;
   index: number;
   categories: Category[];
   onCompletionChange?: () => void;
+  currentUserId?: string;
 }
 
-const QuestionCard: React.FC<QuestionCardProps> = ({ 
+const GlassQuestionCard: React.FC<GlassQuestionCardProps> = ({ 
   question, 
   onClick, 
   index, 
   categories,
   onCompletionChange,
+  currentUserId,
 }) => {
   const [isCompleted, setIsCompleted] = useState(false);
   const [isCompletionLoading, setIsCompletionLoading] = useState(false);
 
-  // Загружаем статус выполнения при монтировании компонента
   useEffect(() => {
     questionCompletionService.isQuestionCompleted(question.id)
       .then(result => setIsCompleted(result.is_completed))
@@ -767,24 +825,21 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'easy':
-        return NEUTRAL_COLORS.success;
+        return GLASS_COLORS.success;
       case 'medium':
-        return NEUTRAL_COLORS.warning;
+        return GLASS_COLORS.warning;
       case 'hard':
-        return NEUTRAL_COLORS.error;
+        return GLASS_COLORS.error;
       default:
-        return NEUTRAL_COLORS.secondary;
+        return GLASS_COLORS.secondary;
     }
   };
 
-  // Получаем название категории вопроса
   const getCategoryName = (question: Question) => {
-    // Сначала проверяем полный объект категории
     if (question.category?.name) {
       return question.category.name;
     }
     
-    // Затем ищем в локальном списке категорий по ID
     if (question.category_id) {
       const category = categories.find(cat => cat.id === question.category_id);
       if (category) {
@@ -809,7 +864,6 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
         setIsCompleted(true);
       }
       
-      // Обновляем статистику после изменения статуса
       if (onCompletionChange) {
         onCompletionChange();
       }
@@ -821,72 +875,81 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   };
 
   const categoryName = getCategoryName(question);
-  const isUserIdQuestion = question.user_id;
+  const isUserIdQuestion = question.user_id === currentUserId;
 
   return (
     <Paper
       elevation={0}
       sx={{
         cursor: 'pointer',
-        borderRadius: 3,
-        border: `2px solid ${NEUTRAL_COLORS.border}`,
-        backgroundColor: NEUTRAL_COLORS.surface,
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        borderRadius: 4,
+        background: GLASS_COLORS.surface,
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        border: '1px solid',
+        borderColor: GLASS_COLORS.border,
+        transition: 'all 0.4s cubic-bezier(0.2, 0, 0, 1)',
         position: 'relative',
         overflow: 'hidden',
         mb: 2,
         width: '100%',
-        '&:hover': {
-          borderColor: NEUTRAL_COLORS.accent,
-          boxShadow: `0 12px 32px ${alpha(NEUTRAL_COLORS.accent, 0.1)}`,
-          transform: 'translateY(-3px)',
-          '& .hover-indicator': {
-            width: '100%',
-            opacity: 1,
-          },
-          '& .question-title': {
-            color: NEUTRAL_COLORS.accent,
-          },
-          '& .arrow-icon': {
-            transform: 'translateX(4px)',
-          },
-        },
-      }}
-      onClick={(e) => {
-      // Открываем в новой вкладке
-      window.open(`/questions/${question.id}`, '_blank');
-    }}
-    >
-      {/* Индикатор ховера */}
-      <Box
-        className="hover-indicator"
-        sx={{
+        '&::before': {
+          content: '""',
           position: 'absolute',
           top: 0,
           left: 0,
-          width: '0%',
-          height: '4px',
-          backgroundColor: NEUTRAL_COLORS.accent,
-          transition: 'all 0.3s ease',
+          right: 0,
+          height: '100%',
+          background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
           opacity: 0,
-        }}
-      />
-
+          transition: 'opacity 0.4s ease',
+        },
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          top: -20,
+          left: -20,
+          right: -20,
+          bottom: -20,
+          background: `radial-gradient(circle at 30% 30%, ${isCompleted ? GLASS_COLORS.success : GLASS_COLORS.primary} 0%, transparent 70%)`,
+          opacity: 0,
+          zIndex: -1,
+          filter: 'blur(30px)',
+          transition: 'opacity 0.4s ease',
+        },
+        '&:hover': {
+          transform: 'translateY(-3px) scale(1.01)',
+          borderColor: isCompleted ? GLASS_COLORS.success : GLASS_COLORS.borderGlow,
+          boxShadow: `0 16px 32px ${alpha(isCompleted ? GLASS_COLORS.success : GLASS_COLORS.primary, 0.15)}`,
+          '&::before': {
+            opacity: 1,
+          },
+          '&::after': {
+            opacity: 0.3,
+          },
+          '& .question-title': {
+            color: isCompleted ? GLASS_COLORS.success : GLASS_COLORS.primary,
+          },
+        },
+      }}
+      onClick={() => window.open(`/questions/${question.id}`, '_blank')}
+    >
       <Box sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        {/* Левая часть - номер и заголовок */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, flex: 1, minWidth: 0 }}>
-          {/* Номер вопроса */}
           <Box
             sx={{
               width: 48,
               height: 48,
-              borderRadius: '14px',
-              backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
-              color: NEUTRAL_COLORS.accent,
+              borderRadius: '16px',
+              background: alpha(GLASS_COLORS.primary, 0.15),
+              backdropFilter: 'blur(10px)',
+              border: '1px solid',
+              borderColor: alpha(GLASS_COLORS.primary, 0.3),
+              color: GLASS_COLORS.primary,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontWeight: 800,
+              fontWeight: 700,
               fontSize: '1.25rem',
               flexShrink: 0,
             }}
@@ -894,14 +957,13 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             {index + 1}
           </Box>
 
-          {/* Информация о вопросе */}
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography
               className="question-title"
               variant="h6"
               sx={{
-                fontWeight: 700,
-                color: NEUTRAL_COLORS.textPrimary,
+                fontWeight: 600,
+                color: GLASS_COLORS.textPrimary,
                 mb: 1,
                 fontSize: '1.125rem',
                 lineHeight: 1.4,
@@ -909,14 +971,13 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
+                letterSpacing: '-0.01em',
               }}
             >
               {question.title}
             </Typography>
 
-            {/* Теги и статус */}
             <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-              {/* Сложность - на мобиле только иконка */}
               <Tooltip title={question.difficulty} arrow>
                 <Chip
                   label={
@@ -930,13 +991,15 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                   size="small"
                   icon={<BoltIcon />}
                   sx={{
-                    fontWeight: 700,
-                    backgroundColor: alpha(getDifficultyColor(question.difficulty), 0.1),
+                    fontWeight: 600,
+                    backgroundColor: alpha(getDifficultyColor(question.difficulty), 0.15),
+                    backdropFilter: 'blur(10px)',
                     color: getDifficultyColor(question.difficulty),
-                    border: `2px solid ${alpha(getDifficultyColor(question.difficulty), 0.2)}`,
+                    border: '1px solid',
+                    borderColor: alpha(getDifficultyColor(question.difficulty), 0.3),
                     fontSize: '1rem',
                     height: { xs: 30, sm: 28 },
-                    width: { xs: 30, sm: 'auto' }, // Круг на мобиле
+                    width: { xs: 30, sm: 'auto' },
                     justifyContent: 'center',
                     '& .MuiChip-icon': {
                       color: getDifficultyColor(question.difficulty),
@@ -951,7 +1014,6 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 />
               </Tooltip>
 
-              {/* Категория */}
               {categoryName && (
                 <Tooltip title={categoryName} arrow>
                   <Chip
@@ -964,16 +1026,18 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                     size="small"
                     sx={{
                       fontWeight: 600,
-                      backgroundColor: alpha(NEUTRAL_COLORS.info, 0.1),
-                      color: NEUTRAL_COLORS.info,
-                      border: `2px solid ${alpha(NEUTRAL_COLORS.info, 0.2)}`,
+                      backgroundColor: alpha(GLASS_COLORS.info, 0.15),
+                      backdropFilter: 'blur(10px)',
+                      color: GLASS_COLORS.info,
+                      border: '1px solid',
+                      borderColor: alpha(GLASS_COLORS.info, 0.3),
                       fontSize: '1rem',
                       height: { xs: 30, sm: 28 },
                       width: { xs: 30, sm: 'auto' },
                       justifyContent: 'center',
                       '& .MuiChip-icon': {
                         fontSize: { xs: '1.3rem', sm: '0.875rem' },
-                        color: NEUTRAL_COLORS.info,
+                        color: GLASS_COLORS.info,
                         m: 0,
                       },
                       '& .MuiChip-label': {
@@ -985,7 +1049,6 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 </Tooltip>
               )}
               
-              {/* Бейдж "Твой вопрос" */}
               {isUserIdQuestion && (
                 <Tooltip title="Твой вопрос" arrow>
                   <Chip
@@ -997,17 +1060,19 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                     }
                     size="small"
                     sx={{
-                      fontWeight: 700,
-                      backgroundColor: alpha(NEUTRAL_COLORS.question, 0.15),
-                      color: NEUTRAL_COLORS.question,
-                      border: `1px solid ${alpha(NEUTRAL_COLORS.question, 0.3)}`,
+                      fontWeight: 600,
+                      backgroundColor: alpha(GLASS_COLORS.question, 0.15),
+                      backdropFilter: 'blur(10px)',
+                      color: GLASS_COLORS.question,
+                      border: '1px solid',
+                      borderColor: alpha(GLASS_COLORS.question, 0.3),
                       fontSize: '1rem',
                       height: { xs: 30, sm: 28 },
                       width: { xs: 30, sm: 'auto' },
                       justifyContent: 'center',
                       '& .MuiChip-icon': {
                         fontSize: { xs: '1.3rem', sm: '0.875rem' },
-                        color: NEUTRAL_COLORS.question,
+                        color: GLASS_COLORS.question,
                         m: 0,
                       },
                       '& .MuiChip-label': {
@@ -1022,7 +1087,6 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           </Box>
         </Box>
 
-        {/* Правая часть - кнопка выполнения и стрелка */}
         <Box
           sx={{
             display: 'flex',
@@ -1037,15 +1101,19 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             disabled={isCompletionLoading}
             size="small"
             sx={{
-              color: isCompleted ? NEUTRAL_COLORS.success : NEUTRAL_COLORS.textSecondary,
-              backgroundColor: alpha(NEUTRAL_COLORS.background, 0.8),
+              color: isCompleted ? GLASS_COLORS.success : GLASS_COLORS.textSecondary,
+              backgroundColor: alpha(GLASS_COLORS.background, 0.8),
+              backdropFilter: 'blur(10px)',
+              border: '1px solid',
+              borderColor: isCompleted ? alpha(GLASS_COLORS.success, 0.3) : GLASS_COLORS.border,
               '&:hover': {
-                backgroundColor: alpha(NEUTRAL_COLORS.success, 0.1),
+                backgroundColor: alpha(isCompleted ? GLASS_COLORS.success : GLASS_COLORS.primary, 0.1),
+                borderColor: isCompleted ? GLASS_COLORS.success : GLASS_COLORS.primary,
               },
             }}
           >
             {isCompletionLoading ? (
-              <CircularProgress size={20} />
+              <CircularProgress size={20} sx={{ color: GLASS_COLORS.primary }} />
             ) : isCompleted ? (
               <CheckCircleIcon />
             ) : (
@@ -1058,7 +1126,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             sx={{
               display: 'flex',
               alignItems: 'center',
-              color: NEUTRAL_COLORS.textSecondary,
+              color: GLASS_COLORS.textSecondary,
               transition: 'transform 0.2s',
               flexShrink: 0,
             }}
@@ -1071,45 +1139,46 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   );
 };
 
-// Стилизованная кнопка фильтров
-interface FilterButtonProps {
+// Стилизованная кнопка фильтров в стеклянном стиле
+interface GlassFilterButtonProps {
   active: boolean;
   onClick: () => void;
   children: React.ReactNode;
   color?: string;
 }
 
-const FilterButton: React.FC<FilterButtonProps> = ({ active, onClick, children, color }) => (
+const GlassFilterButton: React.FC<GlassFilterButtonProps> = ({ active, onClick, children, color }) => (
   <Button
     variant={active ? 'contained' : 'outlined'}
     onClick={onClick}
     sx={{
       textTransform: 'none',
-      fontWeight: 700,
-      borderRadius: 2,
+      fontWeight: 600,
+      borderRadius: 3,
       px: 2.5,
       py: 1,
-      borderWidth: 2,
-      borderColor: active ? (color || NEUTRAL_COLORS.accent) : NEUTRAL_COLORS.border,
-      backgroundColor: active ? (color || NEUTRAL_COLORS.accent) : 'transparent',
-      color: active ? NEUTRAL_COLORS.surface : (color || NEUTRAL_COLORS.textPrimary),
+      borderWidth: '2px',
+      borderColor: active ? (color || GLASS_COLORS.primary) : GLASS_COLORS.border,
+      background: active ? `linear-gradient(135deg, ${color || GLASS_COLORS.primary}, ${alpha(color || GLASS_COLORS.primary, 0.7)})` : GLASS_COLORS.surface,
+      backdropFilter: 'blur(10px)',
+      color: active ? 'white' : (color || GLASS_COLORS.textPrimary),
       fontSize: '0.875rem',
       '&:hover': {
-        borderColor: color || NEUTRAL_COLORS.accent,
-        backgroundColor: active 
-          ? alpha(color || NEUTRAL_COLORS.accent, 0.9) 
-          : alpha(color || NEUTRAL_COLORS.accent, 0.08),
+        borderColor: color || GLASS_COLORS.primary,
+        background: active 
+          ? `linear-gradient(135deg, ${alpha(color || GLASS_COLORS.primary, 0.9)}, ${alpha(color || GLASS_COLORS.primary, 0.6)})`
+          : alpha(color || GLASS_COLORS.primary, 0.1),
         transform: 'translateY(-1px)',
       },
-      transition: 'all 0.2s',
+      transition: 'all 0.3s ease',
     }}
   >
     {children}
   </Button>
 );
 
-// Компонент панели фильтров для Drawer и Desktop
-const FiltersPanel: React.FC<{
+// Компонент панели фильтров в стеклянном стиле
+const GlassFiltersPanel: React.FC<{
   search: string;
   setSearch: (value: string) => void;
   categoryId: string;
@@ -1153,22 +1222,39 @@ const FiltersPanel: React.FC<{
       elevation={0}
       sx={{
         p: 3,
-        borderRadius: 3,
-        border: `2px solid ${NEUTRAL_COLORS.border}`,
-        backgroundColor: NEUTRAL_COLORS.surface,
+        borderRadius: 4,
+        background: GLASS_COLORS.surface,
+        backdropFilter: 'blur(30px)',
+        WebkitBackdropFilter: 'blur(30px)',
+        border: '1px solid',
+        borderColor: GLASS_COLORS.border,
         height: 'fit-content',
         width: '100%',
+        position: 'relative',
+        overflow: 'hidden',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '100%',
+          background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+          opacity: 0.5,
+          pointerEvents: 'none',
+        },
       }}
     >
       <Typography
         variant="h5"
         sx={{
-          fontWeight: 800,
-          color: NEUTRAL_COLORS.textPrimary,
+          fontWeight: 600,
+          color: GLASS_COLORS.textPrimary,
           mb: 3,
           display: 'flex',
           alignItems: 'center',
           gap: 1,
+          letterSpacing: '-0.02em',
         }}
       >
         <FilterIcon />
@@ -1187,7 +1273,7 @@ const FiltersPanel: React.FC<{
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon sx={{ color: NEUTRAL_COLORS.textSecondary }} />
+                  <SearchIcon sx={{ color: GLASS_COLORS.textSecondary }} />
                 </InputAdornment>
               ),
               endAdornment: search && (
@@ -1195,7 +1281,7 @@ const FiltersPanel: React.FC<{
                   <IconButton
                     size="small"
                     onClick={() => setSearch('')}
-                    sx={{ color: NEUTRAL_COLORS.textSecondary }}
+                    sx={{ color: GLASS_COLORS.textSecondary }}
                   >
                     <ClearIcon fontSize="small" />
                   </IconButton>
@@ -1204,48 +1290,51 @@ const FiltersPanel: React.FC<{
             }}
             sx={{
               '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                backgroundColor: NEUTRAL_COLORS.background,
+                borderRadius: 3,
+                background: GLASS_COLORS.background,
+                backdropFilter: 'blur(10px)',
                 '&:hover fieldset': {
-                  borderColor: NEUTRAL_COLORS.accent,
+                  borderColor: GLASS_COLORS.primary,
                   borderWidth: 2,
                 },
                 '&.Mui-focused fieldset': {
-                  borderColor: NEUTRAL_COLORS.accent,
+                  borderColor: GLASS_COLORS.primary,
                   borderWidth: 2,
                 },
               },
               '& .MuiInputBase-input': {
-                color: NEUTRAL_COLORS.textPrimary,
+                color: GLASS_COLORS.textPrimary,
                 fontWeight: 500,
               },
             }}
           />
         </Box>
 
-        <Divider sx={{ borderColor: alpha(NEUTRAL_COLORS.border, 0.5) }} />
+        <Divider sx={{ borderColor: GLASS_COLORS.border }} />
         
         <Box>
           <Stack spacing={1}>            
-            <FilterButton
+            <GlassFilterButton
               active={isCompletedFilter === false}
               onClick={() => setIsCompletedFilter?.(isCompletedFilter === false ? undefined : false)}
+              color={GLASS_COLORS.warning}
             >
               Показать невыполненные
-            </FilterButton>
+            </GlassFilterButton>
           </Stack>
         </Box>
 
-        <Divider sx={{ borderColor: alpha(NEUTRAL_COLORS.border, 0.5) }} />
+        <Divider sx={{ borderColor: GLASS_COLORS.border }} />
 
         {/* Категория */}
         <Box>
           <Typography
             variant="subtitle1"
             sx={{
-              fontWeight: 700,
-              color: NEUTRAL_COLORS.textPrimary,
+              fontWeight: 600,
+              color: GLASS_COLORS.textPrimary,
               mb: 2,
+              letterSpacing: '-0.01em',
             }}
           >
             Выберите категорию
@@ -1255,12 +1344,19 @@ const FiltersPanel: React.FC<{
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
               displayEmpty
+                MenuProps={{
+                  PaperProps: {
+                    sx: {
+                      backgroundColor: 'white',
+                    },
+                  },
+                }}
               renderValue={(selected) => {
                 if (!selected) {
                   return (
                     <Stack direction="row" alignItems="center" spacing={1}>
-                      <CategoryIcon sx={{ color: NEUTRAL_COLORS.textSecondary, fontSize: '1rem' }} />
-                      <Typography sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+                      <CategoryIcon sx={{ color: GLASS_COLORS.textSecondary, fontSize: '1rem' }} />
+                      <Typography sx={{ color: GLASS_COLORS.textSecondary }}>
                         Все категории
                       </Typography>
                     </Stack>
@@ -1270,8 +1366,8 @@ const FiltersPanel: React.FC<{
                 if (!category) {
                   return (
                     <Stack direction="row" alignItems="center" spacing={1}>
-                      <CategoryIcon sx={{ color: NEUTRAL_COLORS.info, fontSize: '1rem' }} />
-                      <Typography sx={{ color: NEUTRAL_COLORS.textPrimary }}>
+                      <CategoryIcon sx={{ color: GLASS_COLORS.info, fontSize: '1rem' }} />
+                      <Typography sx={{ color: GLASS_COLORS.textPrimary }}>
                         Неизвестная категория
                       </Typography>
                     </Stack>
@@ -1279,8 +1375,8 @@ const FiltersPanel: React.FC<{
                 }
                 return (
                   <Stack direction="row" alignItems="center" spacing={1}>
-                    <CategoryIcon sx={{ color: NEUTRAL_COLORS.info, fontSize: '1rem' }} />
-                    <Typography sx={{ color: NEUTRAL_COLORS.textPrimary, fontWeight: 600 }}>
+                    <CategoryIcon sx={{ color: GLASS_COLORS.info, fontSize: '1rem' }} />
+                    <Typography sx={{ color: GLASS_COLORS.textPrimary, fontWeight: 600 }}>
                       {category.name}
                     </Typography>
                     {category.question_count && (
@@ -1290,8 +1386,11 @@ const FiltersPanel: React.FC<{
                         sx={{
                           height: 20,
                           fontSize: '0.7rem',
-                          backgroundColor: alpha(NEUTRAL_COLORS.info, 0.1),
-                          color: NEUTRAL_COLORS.info,
+                          backgroundColor: alpha(GLASS_COLORS.info, 0.15),
+                          backdropFilter: 'blur(10px)',
+                          color: GLASS_COLORS.info,
+                          border: '1px solid',
+                          borderColor: alpha(GLASS_COLORS.info, 0.3),
                         }}
                       />
                     )}
@@ -1299,12 +1398,14 @@ const FiltersPanel: React.FC<{
                 );
               }}
               sx={{
-                borderRadius: 2,
+                borderRadius: 3,
+                background: GLASS_COLORS.background,
+                backdropFilter: 'blur(10px)',
                 '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: NEUTRAL_COLORS.accent,
+                  borderColor: GLASS_COLORS.primary,
                 },
                 '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: NEUTRAL_COLORS.accent,
+                  borderColor: GLASS_COLORS.primary,
                   borderWidth: 2,
                 },
                 '& .MuiSelect-select': {
@@ -1317,8 +1418,8 @@ const FiltersPanel: React.FC<{
             >
               <MenuItem value="">
                 <Stack direction="row" alignItems="center" spacing={1}>
-                  <CategoryIcon sx={{ color: NEUTRAL_COLORS.textSecondary, fontSize: '1rem' }} />
-                  <Typography sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+                  <CategoryIcon sx={{ color: GLASS_COLORS.textSecondary, fontSize: '1rem' }} />
+                  <Typography sx={{ color: GLASS_COLORS.textSecondary }}>
                     Все категории
                   </Typography>
                 </Stack>
@@ -1327,8 +1428,8 @@ const FiltersPanel: React.FC<{
                 <MenuItem key={category.id} value={category.id}>
                   <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ width: '100%' }}>
                     <Stack direction="row" alignItems="center" spacing={1}>
-                      <CategoryIcon sx={{ color: NEUTRAL_COLORS.info, fontSize: '1rem' }} />
-                      <Typography>{category.name}</Typography>
+                      <CategoryIcon sx={{ color: GLASS_COLORS.textSecondary, fontSize: '1rem' }} />
+                      <Typography sx={{ color: GLASS_COLORS.textSecondary }}>{category.name}</Typography>
                     </Stack>
                     {category.question_count && (
                       <Chip
@@ -1337,8 +1438,11 @@ const FiltersPanel: React.FC<{
                         sx={{
                           height: 20,
                           fontSize: '0.7rem',
-                          backgroundColor: alpha(NEUTRAL_COLORS.info, 0.1),
-                          color: NEUTRAL_COLORS.info,
+                          backgroundColor: alpha(GLASS_COLORS.info, 0.15),
+                          backdropFilter: 'blur(10px)',
+                          color: GLASS_COLORS.info,
+                          border: '1px solid',
+                          borderColor: alpha(GLASS_COLORS.info, 0.3),
                         }}
                       />
                     )}
@@ -1353,69 +1457,71 @@ const FiltersPanel: React.FC<{
                   position: 'absolute', 
                   right: 40, 
                   top: '50%', 
-                  transform: 'translateY(-50%)' 
+                  transform: 'translateY(-50%)',
+                  color: GLASS_COLORS.primary,
                 }} 
               />
             )}
           </FormControl>
         </Box>
 
-        <Divider sx={{ borderColor: alpha(NEUTRAL_COLORS.border, 0.5) }} />
+        <Divider sx={{ borderColor: GLASS_COLORS.border }} />
 
         {/* Сложность */}
         <Box>
           <Typography
             variant="subtitle1"
             sx={{
-              fontWeight: 700,
-              color: NEUTRAL_COLORS.textPrimary,
+              fontWeight: 600,
+              color: GLASS_COLORS.textPrimary,
               mb: 2,
+              letterSpacing: '-0.01em',
             }}
           >
             Выберите сложность
           </Typography>
           <Stack spacing={1}>
-            <FilterButton
+            <GlassFilterButton
               active={difficulty === 'easy'}
               onClick={() => setDifficulty('easy')}
-              color={NEUTRAL_COLORS.success}
+              color={GLASS_COLORS.success}
             >
               Easy
-            </FilterButton>
-            <FilterButton
+            </GlassFilterButton>
+            <GlassFilterButton
               active={difficulty === 'medium'}
               onClick={() => setDifficulty('medium')}
-              color={NEUTRAL_COLORS.warning}
+              color={GLASS_COLORS.warning}
             >
               Medium
-            </FilterButton>
-            <FilterButton
+            </GlassFilterButton>
+            <GlassFilterButton
               active={difficulty === 'hard'}
               onClick={() => setDifficulty('hard')}
-              color={NEUTRAL_COLORS.error}
+              color={GLASS_COLORS.error}
             >
               Hard
-            </FilterButton>
+            </GlassFilterButton>
           </Stack>
         </Box>
 
-        <Divider sx={{ borderColor: alpha(NEUTRAL_COLORS.border, 0.5) }} />
+        <Divider sx={{ borderColor: GLASS_COLORS.border }} />
 
         {/* Сортировка */}
         <Box>
           <Typography
             variant="subtitle1"
             sx={{
-              fontWeight: 700,
-              color: NEUTRAL_COLORS.textPrimary,
+              fontWeight: 600,
+              color: GLASS_COLORS.textPrimary,
               mb: 2,
+              letterSpacing: '-0.01em',
             }}
           >
             Сортировка
           </Typography>
           
           <Stack spacing={2}>
-            {/* Поле сортировки */}
             <FormControl fullWidth size="medium">
               <Select
                 value={sortBy}
@@ -1424,7 +1530,7 @@ const FiltersPanel: React.FC<{
                 renderValue={(selected) => {
                   if (!selected) {
                     return (
-                      <Typography sx={{ color: NEUTRAL_COLORS.textSecondary }}>
+                      <Typography sx={{ color: GLASS_COLORS.textSecondary }}>
                         Выберите поле для сортировки
                       </Typography>
                     );
@@ -1436,26 +1542,28 @@ const FiltersPanel: React.FC<{
                           width: 6,
                           height: 6,
                           borderRadius: '50%',
-                          backgroundColor: NEUTRAL_COLORS.accent,
-                          boxShadow: `0 0 8px ${NEUTRAL_COLORS.accent}`,
+                          backgroundColor: GLASS_COLORS.primary,
+                          boxShadow: `0 0 8px ${GLASS_COLORS.primary}`,
                         }}
                       />
-                      <Typography sx={{ color: NEUTRAL_COLORS.textPrimary, fontWeight: 600 }}>
+                      <Typography sx={{ color: GLASS_COLORS.textPrimary, fontWeight: 600 }}>
                         {getSortLabel(selected)}
                       </Typography>
                     </Stack>
                   );
                 }}
                 sx={{
-                  borderRadius: 2,
-                  border: `2px solid ${alpha(NEUTRAL_COLORS.accent, 0.3)}`,
-                  backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.05),
+                  borderRadius: 3,
+                  border: '1px solid',
+                  borderColor: alpha(GLASS_COLORS.primary, 0.3),
+                  background: alpha(GLASS_COLORS.primary, 0.05),
+                  backdropFilter: 'blur(10px)',
                   '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: NEUTRAL_COLORS.accent,
+                    borderColor: GLASS_COLORS.primary,
                     borderWidth: 2,
                   },
                   '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: NEUTRAL_COLORS.accent,
+                    borderColor: GLASS_COLORS.primary,
                     borderWidth: 2,
                   },
                   '& .MuiOutlinedInput-notchedOutline': {
@@ -1476,12 +1584,12 @@ const FiltersPanel: React.FC<{
                         width: 6,
                         height: 6,
                         borderRadius: '50%',
-                        backgroundColor: sortBy === 'updated_at' ? NEUTRAL_COLORS.accent : 'transparent',
-                        border: `2px solid ${sortBy === 'updated_at' ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.border}`,
-                        boxShadow: sortBy === 'updated_at' ? `0 0 6px ${NEUTRAL_COLORS.accent}` : 'none',
+                        backgroundColor: sortBy === 'updated_at' ? GLASS_COLORS.primary : 'transparent',
+                        border: `2px solid ${sortBy === 'updated_at' ? GLASS_COLORS.primary : GLASS_COLORS.border}`,
+                        boxShadow: sortBy === 'updated_at' ? `0 0 6px ${GLASS_COLORS.primary}` : 'none',
                       }}
                     />
-                    <Typography sx={{ fontWeight: sortBy === 'updated_at' ? 700 : 400 }}>
+                    <Typography sx={{ fontWeight: sortBy === 'updated_at' ? 600 : 400 }}>
                       По дате обновления
                     </Typography>
                   </Stack>
@@ -1493,12 +1601,12 @@ const FiltersPanel: React.FC<{
                         width: 6,
                         height: 6,
                         borderRadius: '50%',
-                        backgroundColor: sortBy === 'created_at' ? NEUTRAL_COLORS.accent : 'transparent',
-                        border: `2px solid ${sortBy === 'created_at' ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.border}`,
-                        boxShadow: sortBy === 'created_at' ? `0 0 6px ${NEUTRAL_COLORS.accent}` : 'none',
+                        backgroundColor: sortBy === 'created_at' ? GLASS_COLORS.primary : 'transparent',
+                        border: `2px solid ${sortBy === 'created_at' ? GLASS_COLORS.primary : GLASS_COLORS.border}`,
+                        boxShadow: sortBy === 'created_at' ? `0 0 6px ${GLASS_COLORS.primary}` : 'none',
                       }}
                     />
-                    <Typography sx={{ fontWeight: sortBy === 'created_at' ? 700 : 400 }}>
+                    <Typography sx={{ fontWeight: sortBy === 'created_at' ? 600 : 400 }}>
                       По дате создания
                     </Typography>
                   </Stack>
@@ -1510,12 +1618,12 @@ const FiltersPanel: React.FC<{
                         width: 6,
                         height: 6,
                         borderRadius: '50%',
-                        backgroundColor: sortBy === 'title' ? NEUTRAL_COLORS.accent : 'transparent',
-                        border: `2px solid ${sortBy === 'title' ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.border}`,
-                        boxShadow: sortBy === 'title' ? `0 0 6px ${NEUTRAL_COLORS.accent}` : 'none',
+                        backgroundColor: sortBy === 'title' ? GLASS_COLORS.primary : 'transparent',
+                        border: `2px solid ${sortBy === 'title' ? GLASS_COLORS.primary : GLASS_COLORS.border}`,
+                        boxShadow: sortBy === 'title' ? `0 0 6px ${GLASS_COLORS.primary}` : 'none',
                       }}
                     />
-                    <Typography sx={{ fontWeight: sortBy === 'title' ? 700 : 400 }}>
+                    <Typography sx={{ fontWeight: sortBy === 'title' ? 600 : 400 }}>
                       По названию
                     </Typography>
                   </Stack>
@@ -1527,12 +1635,12 @@ const FiltersPanel: React.FC<{
                         width: 6,
                         height: 6,
                         borderRadius: '50%',
-                        backgroundColor: sortBy === 'difficulty' ? NEUTRAL_COLORS.accent : 'transparent',
-                        border: `2px solid ${sortBy === 'difficulty' ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.border}`,
-                        boxShadow: sortBy === 'difficulty' ? `0 0 6px ${NEUTRAL_COLORS.accent}` : 'none',
+                        backgroundColor: sortBy === 'difficulty' ? GLASS_COLORS.primary : 'transparent',
+                        border: `2px solid ${sortBy === 'difficulty' ? GLASS_COLORS.primary : GLASS_COLORS.border}`,
+                        boxShadow: sortBy === 'difficulty' ? `0 0 6px ${GLASS_COLORS.primary}` : 'none',
                       }}
                     />
-                    <Typography sx={{ fontWeight: sortBy === 'difficulty' ? 700 : 400 }}>
+                    <Typography sx={{ fontWeight: sortBy === 'difficulty' ? 600 : 400 }}>
                       По сложности
                     </Typography>
                   </Stack>
@@ -1540,7 +1648,6 @@ const FiltersPanel: React.FC<{
               </Select>
             </FormControl>
             
-            {/* Направление сортировки */}
             <Stack direction="row" spacing={1}>
               <Button
                 fullWidth
@@ -1553,13 +1660,17 @@ const FiltersPanel: React.FC<{
                 }
                 sx={{
                   borderWidth: 2,
-                  borderColor: sortDir === 'asc' ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.border,
-                  backgroundColor: sortDir === 'asc' ? NEUTRAL_COLORS.accent : 'transparent',
-                  color: sortDir === 'asc' ? NEUTRAL_COLORS.surface : NEUTRAL_COLORS.textPrimary,
+                  borderRadius: 3,
+                  borderColor: sortDir === 'asc' ? GLASS_COLORS.primary : GLASS_COLORS.border,
+                  background: sortDir === 'asc' ? `linear-gradient(135deg, ${GLASS_COLORS.primary}, ${alpha(GLASS_COLORS.primary, 0.7)})` : GLASS_COLORS.surface,
+                  backdropFilter: 'blur(10px)',
+                  color: sortDir === 'asc' ? 'white' : GLASS_COLORS.textPrimary,
                   fontWeight: 600,
                   '&:hover': {
-                    borderColor: sortDir === 'asc' ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.accent,
-                    backgroundColor: sortDir === 'asc' ? alpha(NEUTRAL_COLORS.accent, 0.9) : alpha(NEUTRAL_COLORS.accent, 0.08),
+                    borderColor: sortDir === 'asc' ? GLASS_COLORS.primary : GLASS_COLORS.primary,
+                    background: sortDir === 'asc' 
+                      ? `linear-gradient(135deg, ${alpha(GLASS_COLORS.primary, 0.9)}, ${alpha(GLASS_COLORS.primary, 0.6)})`
+                      : alpha(GLASS_COLORS.primary, 0.1),
                   },
                 }}
               >
@@ -1576,13 +1687,17 @@ const FiltersPanel: React.FC<{
                 }
                 sx={{
                   borderWidth: 2,
-                  borderColor: sortDir === 'desc' ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.border,
-                  backgroundColor: sortDir === 'desc' ? NEUTRAL_COLORS.accent : 'transparent',
-                  color: sortDir === 'desc' ? NEUTRAL_COLORS.surface : NEUTRAL_COLORS.textPrimary,
+                  borderRadius: 3,
+                  borderColor: sortDir === 'desc' ? GLASS_COLORS.primary : GLASS_COLORS.border,
+                  background: sortDir === 'desc' ? `linear-gradient(135deg, ${GLASS_COLORS.primary}, ${alpha(GLASS_COLORS.primary, 0.7)})` : GLASS_COLORS.surface,
+                  backdropFilter: 'blur(10px)',
+                  color: sortDir === 'desc' ? 'white' : GLASS_COLORS.textPrimary,
                   fontWeight: 600,
                   '&:hover': {
-                    borderColor: sortDir === 'desc' ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.accent,
-                    backgroundColor: sortDir === 'desc' ? alpha(NEUTRAL_COLORS.accent, 0.9) : alpha(NEUTRAL_COLORS.accent, 0.08),
+                    borderColor: sortDir === 'desc' ? GLASS_COLORS.primary : GLASS_COLORS.primary,
+                    background: sortDir === 'desc' 
+                      ? `linear-gradient(135deg, ${alpha(GLASS_COLORS.primary, 0.9)}, ${alpha(GLASS_COLORS.primary, 0.6)})`
+                      : alpha(GLASS_COLORS.primary, 0.1),
                   },
                 }}
               >
@@ -1592,16 +1707,17 @@ const FiltersPanel: React.FC<{
           </Stack>
         </Box>
 
-        <Divider sx={{ borderColor: alpha(NEUTRAL_COLORS.border, 0.5) }} />
+        <Divider sx={{ borderColor: GLASS_COLORS.border }} />
 
         {/* Количество на странице */}
         <Box>
           <Typography
             variant="subtitle1"
             sx={{
-              fontWeight: 700,
-              color: NEUTRAL_COLORS.textPrimary,
+              fontWeight: 600,
+              color: GLASS_COLORS.textPrimary,
               mb: 2,
+              letterSpacing: '-0.01em',
             }}
           >
             Показывать на странице
@@ -1613,23 +1729,29 @@ const FiltersPanel: React.FC<{
                 key={itemLimit}
                 label={`${itemLimit}`}
                 onClick={() => setLimit(itemLimit)}
-                color={limit === itemLimit ? 'primary' : 'default'}
                 sx={{
-                  fontWeight: 700,
-                  border: `2px solid ${limit === itemLimit ? NEUTRAL_COLORS.accent : NEUTRAL_COLORS.border}`,
-                  backgroundColor: limit === itemLimit ? NEUTRAL_COLORS.accent : 'transparent',
-                  color: limit === itemLimit ? NEUTRAL_COLORS.surface : NEUTRAL_COLORS.textPrimary,
+                  fontWeight: 600,
+                  border: '1px solid',
+                  borderColor: limit === itemLimit ? GLASS_COLORS.primary : GLASS_COLORS.border,
+                  background: limit === itemLimit 
+                    ? `linear-gradient(135deg, ${GLASS_COLORS.primary}, ${alpha(GLASS_COLORS.primary, 0.7)})`
+                    : GLASS_COLORS.surface,
+                  backdropFilter: 'blur(10px)',
+                  color: limit === itemLimit ? 'white' : GLASS_COLORS.textPrimary,
                   '&:hover': {
-                    borderColor: NEUTRAL_COLORS.accent,
-                    backgroundColor: limit === itemLimit ? NEUTRAL_COLORS.accent : alpha(NEUTRAL_COLORS.accent, 0.08),
+                    borderColor: GLASS_COLORS.primary,
+                    background: limit === itemLimit 
+                      ? `linear-gradient(135deg, ${alpha(GLASS_COLORS.primary, 0.9)}, ${alpha(GLASS_COLORS.primary, 0.6)})`
+                      : alpha(GLASS_COLORS.primary, 0.1),
                   },
+                  transition: 'all 0.3s ease',
                 }}
               />
             ))}
           </Stack>
         </Box>
 
-        <Divider sx={{ borderColor: alpha(NEUTRAL_COLORS.border, 0.5) }} />
+        <Divider sx={{ borderColor: GLASS_COLORS.border }} />
 
         {/* Сброс фильтров */}
         <Button
@@ -1639,18 +1761,20 @@ const FiltersPanel: React.FC<{
           onClick={handleResetFilters}
           sx={{
             borderWidth: 2,
-            borderColor: NEUTRAL_COLORS.border,
-            color: NEUTRAL_COLORS.textPrimary,
-            borderRadius: 2,
+            borderRadius: 3,
+            borderColor: GLASS_COLORS.border,
+            color: GLASS_COLORS.textPrimary,
             py: 1.5,
-            fontWeight: 700,
+            fontWeight: 600,
             fontSize: '1rem',
+            background: GLASS_COLORS.surface,
+            backdropFilter: 'blur(10px)',
             '&:hover': {
-              borderColor: NEUTRAL_COLORS.accent,
-              backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+              borderColor: GLASS_COLORS.primary,
+              background: alpha(GLASS_COLORS.primary, 0.1),
               transform: 'translateY(-1px)',
             },
-            transition: 'all 0.2s',
+            transition: 'all 0.3s ease',
           }}
         >
           Очистить все фильтры
@@ -1894,7 +2018,6 @@ export const QuestionsPage: React.FC = () => {
         title: '',
         slug: '',
         difficulty: 'easy',
-        is_published: false,
         category_id: '',
       });
       setContent([]);
@@ -1914,7 +2037,6 @@ export const QuestionsPage: React.FC = () => {
       title: '',
       slug: '',
       difficulty: 'easy',
-      is_published: false,
       category_id: '',
     });
     setContent([]);
@@ -1988,13 +2110,27 @@ export const QuestionsPage: React.FC = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: `linear-gradient(135deg, ${NEUTRAL_COLORS.background} 0%, ${alpha(
-          NEUTRAL_COLORS.background,
-          0.8
-        )} 100%)`,
+        background: 'linear-gradient(135deg, #E0F0FF 0%, #D0E4FF 50%, #B8D8FF 100%)',
+        position: 'relative',
+        overflow: 'hidden',
+        fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: `
+            radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.4) 0%, transparent 40%),
+            radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.3) 0%, transparent 50%),
+            radial-gradient(circle at 40% 80%, rgba(200, 220, 255, 0.5) 0%, transparent 60%)
+          `,
+          pointerEvents: 'none',
+        },
       }}
     >
-      {/* AppBar Header */}
+      {/* AppBar Header в стеклянном стиле */}
       <Box sx={{ 
         position: 'sticky', 
         zIndex: 1200, 
@@ -2006,9 +2142,11 @@ export const QuestionsPage: React.FC = () => {
             elevation={0}
             sx={{ 
               top: 0,
-              backgroundColor: alpha(NEUTRAL_COLORS.surface, 0.95),
-              backdropFilter: 'blur(12px)',
-              borderBottom: `1px solid ${NEUTRAL_COLORS.border}`,
+              background: GLASS_COLORS.surface,
+              backdropFilter: 'blur(30px)',
+              WebkitBackdropFilter: 'blur(30px)',
+              borderBottom: '1px solid',
+              borderColor: GLASS_COLORS.border,
               transition: 'all 0.3s ease',
             }}
           >
@@ -2022,21 +2160,37 @@ export const QuestionsPage: React.FC = () => {
                   variant="h6" 
                   sx={{ 
                     flexGrow: 1,
-                    fontWeight: 900,
-                    color: NEUTRAL_COLORS.textPrimary,
+                    fontWeight: 700,
+                    color: GLASS_COLORS.textPrimary,
                     fontSize: '1.45rem',
                     cursor: 'pointer',
-                    letterSpacing: '-0.025em',
+                    letterSpacing: '-0.02em',
                     display: 'flex',
                     alignItems: 'center',
                     '&:hover': { 
-                      color: NEUTRAL_COLORS.accent,
+                      color: GLASS_COLORS.primary,
                       opacity: 0.9 
                     }
                   }}
                   onClick={() => navigate('/')}
                 >
-                  Interview<span style={{ color: NEUTRAL_COLORS.accent }}>Box</span>
+                  Interview<span style={{ color: GLASS_COLORS.primary }}>Box</span>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 500,
+                    color: GLASS_COLORS.primary,
+                    marginLeft: '6px',
+                    backgroundColor: alpha('#FFFFFF', 0.3),
+                    padding: '2px 6px',
+                    borderRadius: '6px',
+                    alignSelf: 'flex-start',
+                    marginTop: '2px',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid',
+                    borderColor: alpha(GLASS_COLORS.primary, 0.3),
+                  }}>
+                    beta
+                  </span>
                 </Typography>
                 <Stack direction="row" spacing={1.5} alignItems="center">
                   {user?.is_admin && !isMobile && (
@@ -2045,13 +2199,16 @@ export const QuestionsPage: React.FC = () => {
                       startIcon={<MapIcon />}
                       onClick={() => navigate('/roadmap')}
                       sx={{
-                        borderColor: alpha(NEUTRAL_COLORS.accent, 0.5),
-                        color: NEUTRAL_COLORS.accent,
+                        borderColor: alpha(GLASS_COLORS.primary, 0.5),
+                        color: GLASS_COLORS.primary,
                         fontWeight: 600,
                         textTransform: 'none',
+                        borderRadius: 3,
+                        background: GLASS_COLORS.surface,
+                        backdropFilter: 'blur(10px)',
                         '&:hover': {
-                          backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.08),
-                          borderColor: NEUTRAL_COLORS.accent,
+                          backgroundColor: alpha(GLASS_COLORS.primary, 0.1),
+                          borderColor: GLASS_COLORS.primary,
                         }
                       }}
                     >
@@ -2065,8 +2222,11 @@ export const QuestionsPage: React.FC = () => {
                       size="medium"
                       sx={{ 
                         fontWeight: 600,
-                        backgroundColor: alpha(NEUTRAL_COLORS.success, 0.1),
-                        color: NEUTRAL_COLORS.success,
+                        backgroundColor: alpha(GLASS_COLORS.success, 0.15),
+                        backdropFilter: 'blur(10px)',
+                        color: GLASS_COLORS.success,
+                        border: '1px solid',
+                        borderColor: alpha(GLASS_COLORS.success, 0.3),
                       }}
                     />
                   )}
@@ -2077,10 +2237,13 @@ export const QuestionsPage: React.FC = () => {
                     }}
                     size="medium"
                     sx={{
-                      backgroundColor: alpha(NEUTRAL_COLORS.error, 0.1),
-                      color: NEUTRAL_COLORS.error,
+                      backgroundColor: alpha(GLASS_COLORS.error, 0.15),
+                      backdropFilter: 'blur(10px)',
+                      color: GLASS_COLORS.error,
+                      border: '1px solid',
+                      borderColor: alpha(GLASS_COLORS.error, 0.3),
                       '&:hover': {
-                        backgroundColor: alpha(NEUTRAL_COLORS.error, 0.2),
+                        backgroundColor: alpha(GLASS_COLORS.error, 0.25),
                       },
                       width: 40,
                       height: 40
@@ -2096,7 +2259,7 @@ export const QuestionsPage: React.FC = () => {
       </Box>
 
       <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3 } }}>
-        {/* Hero Section */}
+        {/* Hero Section в стеклянном стиле */}
         <Box sx={{ mb: 6, textAlign: 'center', position: 'relative' }}>
           {/* Кнопка назад в главное меню */}
           <Button
@@ -2110,21 +2273,23 @@ export const QuestionsPage: React.FC = () => {
               transform: 'translateY(-50%)',
               borderRadius: 3,
               borderWidth: 2,
-              borderColor: alpha(NEUTRAL_COLORS.accent, 0.3),
-              color: NEUTRAL_COLORS.accent,
+              borderColor: alpha(GLASS_COLORS.primary, 0.3),
+              color: GLASS_COLORS.primary,
               fontWeight: 600,
               px: 3,
               py: 1.5,
               display: { xs: 'none', sm: 'flex' },
               alignItems: 'center',
               gap: 1,
+              background: GLASS_COLORS.surface,
+              backdropFilter: 'blur(10px)',
               '&:hover': {
-                borderColor: NEUTRAL_COLORS.accent,
-                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+                borderColor: GLASS_COLORS.primary,
+                background: alpha(GLASS_COLORS.primary, 0.1),
                 transform: 'translateY(-50%) translateX(-4px)',
-                boxShadow: `0 8px 24px ${alpha(NEUTRAL_COLORS.accent, 0.1)}`,
+                boxShadow: `0 8px 24px ${alpha(GLASS_COLORS.primary, 0.2)}`,
               },
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              transition: 'all 0.3s cubic-bezier(0.2, 0, 0, 1)',
             }}
           >
             {isMobile ? <AssignmentRoundedIcon /> : 'В главное меню'}
@@ -2139,10 +2304,13 @@ export const QuestionsPage: React.FC = () => {
               top: '50%',
               transform: 'translateY(-50%)',
               display: { xs: 'flex', sm: 'none' },
-              color: NEUTRAL_COLORS.accent,
-              backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
+              color: GLASS_COLORS.primary,
+              backgroundColor: alpha(GLASS_COLORS.primary, 0.15),
+              backdropFilter: 'blur(10px)',
+              border: '1px solid',
+              borderColor: alpha(GLASS_COLORS.primary, 0.3),
               '&:hover': {
-                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.2),
+                backgroundColor: alpha(GLASS_COLORS.primary, 0.25),
               },
             }}
           >
@@ -2161,21 +2329,23 @@ export const QuestionsPage: React.FC = () => {
               transform: 'translateY(-50%)',
               borderRadius: 3,
               borderWidth: 2,
-              borderColor: alpha(NEUTRAL_COLORS.accent, 0.3),
-              color: NEUTRAL_COLORS.accent,
+              borderColor: alpha(GLASS_COLORS.primary, 0.3),
+              color: GLASS_COLORS.primary,
               fontWeight: 600,
               px: 3,
               py: 1.5,
               display: { xs: 'none', sm: 'flex' },
               alignItems: 'center',
               gap: 1,
+              background: GLASS_COLORS.surface,
+              backdropFilter: 'blur(10px)',
               '&:hover': {
-                borderColor: NEUTRAL_COLORS.accent,
-                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+                borderColor: GLASS_COLORS.primary,
+                background: alpha(GLASS_COLORS.primary, 0.1),
                 transform: 'translateY(-50%) translateX(4px)',
-                boxShadow: `0 8px 24px ${alpha(NEUTRAL_COLORS.accent, 0.1)}`,
+                boxShadow: `0 8px 24px ${alpha(GLASS_COLORS.primary, 0.2)}`,
               },
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              transition: 'all 0.3s cubic-bezier(0.2, 0, 0, 1)',
             }}
           >
             {isMobile ? <PersonIcon /> : 'Мой профиль'}
@@ -2190,10 +2360,13 @@ export const QuestionsPage: React.FC = () => {
               top: '50%',
               transform: 'translateY(-50%)',
               display: { xs: 'flex', sm: 'none' },
-              color: NEUTRAL_COLORS.accent,
-              backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
+              color: GLASS_COLORS.primary,
+              backgroundColor: alpha(GLASS_COLORS.primary, 0.15),
+              backdropFilter: 'blur(10px)',
+              border: '1px solid',
+              borderColor: alpha(GLASS_COLORS.primary, 0.3),
               '&:hover': {
-                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.2),
+                backgroundColor: alpha(GLASS_COLORS.primary, 0.25),
               },
             }}
           >
@@ -2222,10 +2395,13 @@ export const QuestionsPage: React.FC = () => {
                 display: 'inline-flex',
                 p: 3,
                 borderRadius: '24px',
-                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
-                color: NEUTRAL_COLORS.accent,
-                boxShadow: `0 8px 32px ${alpha(NEUTRAL_COLORS.accent, 0.2)}`,
-                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                background: alpha(GLASS_COLORS.primary, 0.15),
+                backdropFilter: 'blur(20px)',
+                border: '1px solid',
+                borderColor: alpha(GLASS_COLORS.primary, 0.3),
+                color: GLASS_COLORS.primary,
+                boxShadow: `0 8px 32px ${alpha(GLASS_COLORS.primary, 0.2)}`,
+                transition: 'all 0.4s cubic-bezier(0.2, 0, 0, 1)',
                 position: 'relative',
                 overflow: 'hidden',
                 '&:before': {
@@ -2235,7 +2411,7 @@ export const QuestionsPage: React.FC = () => {
                   left: 0,
                   right: 0,
                   bottom: 0,
-                  background: `conic-gradient(from 0deg, ${alpha(NEUTRAL_COLORS.accent, 0.3)} 0%, transparent 30%)`,
+                  background: `conic-gradient(from 0deg, ${alpha(GLASS_COLORS.primary, 0.3)} 0%, transparent 30%)`,
                   opacity: 0,
                   transition: 'opacity 0.3s',
                 },
@@ -2257,22 +2433,25 @@ export const QuestionsPage: React.FC = () => {
               className="question-count"
               sx={{
                 position: 'absolute',
-                top: -8,
+                top: -22,
                 right: -8,
                 width: 48,
                 height: 48,
                 borderRadius: '50%',
-                backgroundColor: NEUTRAL_COLORS.success,
-                color: NEUTRAL_COLORS.surface,
+                background: `linear-gradient(135deg, ${GLASS_COLORS.success}, ${alpha(GLASS_COLORS.success, 0.7)})`,
+                backdropFilter: 'blur(10px)',
+                border: '1px solid',
+                borderColor: alpha('#FFFFFF', 0.3),
+                color: 'white',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontWeight: 800,
+                fontWeight: 700,
                 fontSize: '1.125rem',
-                boxShadow: `0 4px 16px ${alpha(NEUTRAL_COLORS.success, 0.4)}`,
+                boxShadow: `0 4px 16px ${alpha(GLASS_COLORS.success, 0.4)}`,
                 opacity: 0.8,
                 transform: 'translateY(10px)',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                transition: 'all 0.3s cubic-bezier(0.2, 0, 0, 1)',
               }}
             >
               {total}
@@ -2282,7 +2461,7 @@ export const QuestionsPage: React.FC = () => {
             <Box
               sx={{
                 position: 'absolute',
-                bottom: -8,
+                bottom: 10,
                 left: '50%',
                 transform: 'translateX(-50%)',
                 display: 'flex',
@@ -2294,7 +2473,8 @@ export const QuestionsPage: React.FC = () => {
                   width: 8,
                   height: 8,
                   borderRadius: '50%',
-                  backgroundColor: totalCounts.easy > 0 ? NEUTRAL_COLORS.success : alpha(NEUTRAL_COLORS.success, 0.3),
+                  backgroundColor: totalCounts.easy > 0 ? GLASS_COLORS.success : alpha(GLASS_COLORS.success, 0.3),
+                  boxShadow: totalCounts.easy > 0 ? `0 0 8px ${GLASS_COLORS.success}` : 'none',
                   transition: 'all 0.3s',
                 }}
               />
@@ -2303,7 +2483,8 @@ export const QuestionsPage: React.FC = () => {
                   width: 8,
                   height: 8,
                   borderRadius: '50%',
-                  backgroundColor: totalCounts.medium > 0 ? NEUTRAL_COLORS.warning : alpha(NEUTRAL_COLORS.warning, 0.3),
+                  backgroundColor: totalCounts.medium > 0 ? GLASS_COLORS.warning : alpha(GLASS_COLORS.warning, 0.3),
+                  boxShadow: totalCounts.medium > 0 ? `0 0 8px ${GLASS_COLORS.warning}` : 'none',
                   transition: 'all 0.3s',
                 }}
               />
@@ -2312,7 +2493,8 @@ export const QuestionsPage: React.FC = () => {
                   width: 8,
                   height: 8,
                   borderRadius: '50%',
-                  backgroundColor: totalCounts.hard > 0 ? NEUTRAL_COLORS.error : alpha(NEUTRAL_COLORS.error, 0.3),
+                  backgroundColor: totalCounts.hard > 0 ? GLASS_COLORS.error : alpha(GLASS_COLORS.error, 0.3),
+                  boxShadow: totalCounts.hard > 0 ? `0 0 8px ${GLASS_COLORS.error}` : 'none',
                   transition: 'all 0.3s',
                 }}
               />
@@ -2340,15 +2522,12 @@ export const QuestionsPage: React.FC = () => {
             <Typography
               variant="h1"
               sx={{
-                fontWeight: 900,
-                color: NEUTRAL_COLORS.textPrimary,
-                letterSpacing: '-0.025em',
+                fontWeight: 700,
+                color: GLASS_COLORS.textPrimary,
+                letterSpacing: '-0.02em',
                 mb: 3,
                 fontSize: { xs: '2.5rem', sm: '3rem', md: '3.5rem' },
-                background: `linear-gradient(135deg, ${NEUTRAL_COLORS.textPrimary} 0%, ${NEUTRAL_COLORS.accent} 100%)`,
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
+                textShadow: '0 4px 20px rgba(255,255,255,0.5)',
                 position: 'relative',
                 display: 'inline-block',
                 mr: 2,
@@ -2356,32 +2535,6 @@ export const QuestionsPage: React.FC = () => {
               }}
             >
               InterviewBox
-              <Box
-                component="span"
-                sx={{
-                  fontSize: { xs: '0.7rem', sm: '1.0rem' },
-                  fontWeight: 700,
-                  marginLeft: '10px',
-                  padding: { xs: '2px 10px', sm: '3px 12px' },
-                  borderRadius: '12px',
-                  verticalAlign: 'middle',
-                  animation: 'pulse 2s infinite',
-                  '@keyframes pulse': {
-                    '0%': {
-                      boxShadow: `0 0 0 0 ${NEUTRAL_COLORS.accent}80`
-                    },
-                    '70%': {
-                      boxShadow: `0 0 0 6px ${NEUTRAL_COLORS.accent}00`
-                    },
-                    '100%': {
-                      boxShadow: `0 0 0 0 ${NEUTRAL_COLORS.accent}00`
-                    }
-                  }
-                }}
-              >
-                BETA
-              </Box>
-              
               {/* Подчеркивание-прогресс бар */}
               <Box
                 className="progress-bar"
@@ -2392,8 +2545,8 @@ export const QuestionsPage: React.FC = () => {
                   width: '60%',
                   height: 4,
                   borderRadius: 2,
-                  background: `linear-gradient(90deg, ${NEUTRAL_COLORS.accent} 0%, ${NEUTRAL_COLORS.success} 100%)`,
-                  transition: 'width 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                  background: `linear-gradient(90deg, ${GLASS_COLORS.primary} 0%, ${GLASS_COLORS.success} 100%)`,
+                  transition: 'width 0.6s cubic-bezier(0.2, 0, 0, 1)',
                 }}
               />
             </Typography>
@@ -2405,7 +2558,7 @@ export const QuestionsPage: React.FC = () => {
             <Typography
               variant="h6"
               sx={{
-                color: NEUTRAL_COLORS.textSecondary,
+                color: GLASS_COLORS.textSecondary,
                 fontWeight: 400,
                 lineHeight: 1.6,
                 fontSize: { xs: '1rem', sm: '1.125rem' },
@@ -2426,18 +2579,22 @@ export const QuestionsPage: React.FC = () => {
                   setPage(1);
                 }}
                 sx={{
-                  backgroundColor: NEUTRAL_COLORS.success,
-                  color: NEUTRAL_COLORS.surface,
-                  borderRadius: 2,
+                  background: `linear-gradient(135deg, ${GLASS_COLORS.primary}, ${GLASS_COLORS.secondary})`,
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid',
+                  borderColor: alpha('#FFFFFF', 0.3),
+                  color: 'white',
+                  borderRadius: 3,
                   px: 3,
                   py: 1,
-                  fontWeight: 700,
+                  fontWeight: 600,
                   fontSize: '0.875rem',
                   '&:hover': {
-                    backgroundColor: alpha(NEUTRAL_COLORS.success, 0.9),
+                    background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.primary, 0.9)}, ${alpha(GLASS_COLORS.secondary, 0.9)})`,
                     transform: 'translateY(-2px)',
+                    boxShadow: `0 8px 16px ${alpha(GLASS_COLORS.primary, 0.3)}`,
                   },
-                  transition: 'all 0.2s',
+                  transition: 'all 0.3s ease',
                 }}
               >
                 Начни с легких вопросов
@@ -2447,8 +2604,8 @@ export const QuestionsPage: React.FC = () => {
                 variant="body2"
                 sx={{
                   px: 2,
-                  fontWeight: 800,
-                  color: NEUTRAL_COLORS.accent,
+                  fontWeight: 600,
+                  color: GLASS_COLORS.primary,
                   textTransform: 'uppercase',
                   letterSpacing: '1px',
                   position: 'relative',
@@ -2458,7 +2615,7 @@ export const QuestionsPage: React.FC = () => {
                     top: '50%',
                     width: 12,
                     height: 2,
-                    backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.3),
+                    backgroundColor: alpha(GLASS_COLORS.primary, 0.3),
                     borderRadius: 1,
                   },
                   '&:before': {
@@ -2482,19 +2639,21 @@ export const QuestionsPage: React.FC = () => {
                   }
                 }}
                 sx={{
-                  borderColor: NEUTRAL_COLORS.accent,
-                  color: NEUTRAL_COLORS.accent,
-                  borderRadius: 2,
+                  borderColor: GLASS_COLORS.primary,
+                  color: GLASS_COLORS.primary,
+                  borderRadius: 3,
                   px: 3,
                   py: 1,
-                  fontWeight: 700,
+                  fontWeight: 600,
                   fontSize: '0.875rem',
+                  background: GLASS_COLORS.surface,
+                  backdropFilter: 'blur(10px)',
                   '&:hover': {
-                    borderColor: NEUTRAL_COLORS.accent,
-                    backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+                    borderColor: GLASS_COLORS.primary,
+                    backgroundColor: alpha(GLASS_COLORS.primary, 0.1),
                     transform: 'translateY(-2px)',
                   },
-                  transition: 'all 0.2s',
+                  transition: 'all 0.3s ease',
                 }}
               >
                 Найди то, что нужно
@@ -2509,16 +2668,18 @@ export const QuestionsPage: React.FC = () => {
                   sx={{
                     mt: 3,
                     p: 2,
-                    borderRadius: 2,
-                    border: `1px dashed ${alpha(NEUTRAL_COLORS.accent, 0.3)}`,
-                    backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.05),
+                    borderRadius: 3,
+                    border: '1px dashed',
+                    borderColor: alpha(GLASS_COLORS.primary, 0.3),
+                    background: alpha(GLASS_COLORS.primary, 0.1),
+                    backdropFilter: 'blur(10px)',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: 1,
                   }}
                 >
-                  <FilterIcon fontSize="small" sx={{ color: NEUTRAL_COLORS.accent }} />
-                  <Typography variant="caption" sx={{ color: NEUTRAL_COLORS.accent, fontWeight: 600 }}>
+                  <FilterIcon fontSize="small" sx={{ color: GLASS_COLORS.primary }} />
+                  <Typography variant="caption" sx={{ color: GLASS_COLORS.primary, fontWeight: 600 }}>
                     Есть активные фильтры
                   </Typography>
                   <Chip
@@ -2533,9 +2694,12 @@ export const QuestionsPage: React.FC = () => {
                     sx={{
                       height: 20,
                       fontSize: '0.7rem',
-                      fontWeight: 700,
-                      backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
-                      color: NEUTRAL_COLORS.accent,
+                      fontWeight: 600,
+                      backgroundColor: alpha(GLASS_COLORS.primary, 0.2),
+                      backdropFilter: 'blur(10px)',
+                      color: GLASS_COLORS.primary,
+                      border: '1px solid',
+                      borderColor: alpha(GLASS_COLORS.primary, 0.3),
                     }}
                   />
                 </Paper>
@@ -2544,10 +2708,10 @@ export const QuestionsPage: React.FC = () => {
           </Box>
         </Box>
 
-        {/* Улучшенная статистика */}
+        {/* Улучшенная статистика в стеклянном стиле */}
         {!isMobileFilter && (
         <div id="statistics-section">
-          <StatisticsSection
+          <GlassStatisticsSection
             total={total}
             easy={totalCounts.easy}
             medium={totalCounts.medium}
@@ -2560,7 +2724,8 @@ export const QuestionsPage: React.FC = () => {
           />
         </div>
         )}
-        {/* Drawer для мобильных фильтров */}
+        
+        {/* Drawer для мобильных фильтров в стеклянном стиле */}
         <SwipeableDrawer
           anchor="left"
           open={mobileOpen}
@@ -2577,11 +2742,15 @@ export const QuestionsPage: React.FC = () => {
               width: '85%',
               maxWidth: 350,
               p: 3,
-              backgroundColor: NEUTRAL_COLORS.background,
+              background: GLASS_COLORS.background,
+              backdropFilter: 'blur(30px)',
+              WebkitBackdropFilter: 'blur(30px)',
+              borderRight: '1px solid',
+              borderColor: GLASS_COLORS.border,
             },
           }}
         >
-          <FiltersPanel
+          <GlassFiltersPanel
             search={search}
             setSearch={setSearch}
             categoryId={categoryId}
@@ -2603,12 +2772,12 @@ export const QuestionsPage: React.FC = () => {
           />
         </SwipeableDrawer>
 
-        {/* Основной контент - новая структура */}
+        {/* Основной контент */}
         <Box sx={{ display: 'flex', gap: 3 }}>
           {/* Левая колонка - фильтры (фиксированная ширина) */}
           {!isMobileFilter && (
             <Box className="filters-column" sx={{ width: 320, flexShrink: 0 }}>
-              <FiltersPanel
+              <GlassFiltersPanel
                 search={search}
                 setSearch={setSearch}
                 categoryId={categoryId}
@@ -2643,14 +2812,16 @@ export const QuestionsPage: React.FC = () => {
                   onClick={handleDrawerToggle}
                   sx={{
                     borderWidth: 2,
-                    borderColor: NEUTRAL_COLORS.accent,
-                    color: NEUTRAL_COLORS.accent,
-                    fontWeight: 700,
+                    borderRadius: 3,
+                    borderColor: GLASS_COLORS.primary,
+                    color: GLASS_COLORS.primary,
+                    fontWeight: 600,
                     py: 1.5,
                     fontSize: '1rem',
-                    borderRadius: 3,
+                    background: GLASS_COLORS.surface,
+                    backdropFilter: 'blur(10px)',
                     '&:hover': {
-                      backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.08),
+                      backgroundColor: alpha(GLASS_COLORS.primary, 0.1),
                     },
                   }}
                 >
@@ -2661,16 +2832,19 @@ export const QuestionsPage: React.FC = () => {
 
             {isLoading ? (
               <Box display="flex" justifyContent="center" alignItems="center" sx={{ py: 12 }}>
-                <CircularProgress size={64} sx={{ color: NEUTRAL_COLORS.accent }} />
+                <CircularProgress size={64} sx={{ color: GLASS_COLORS.primary }} />
               </Box>
             ) : filteredQuestions.length === 0 ? (
               <Paper
                 elevation={0}
                 sx={{
                   p: 8,
-                  borderRadius: 3,
-                  border: `2px solid ${alpha(NEUTRAL_COLORS.border, 0.5)}`,
-                  backgroundColor: NEUTRAL_COLORS.surface,
+                  borderRadius: 4,
+                  background: GLASS_COLORS.surface,
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  border: '1px solid',
+                  borderColor: GLASS_COLORS.border,
                   textAlign: 'center',
                   width: '100%',
                 }}
@@ -2679,19 +2853,23 @@ export const QuestionsPage: React.FC = () => {
                   sx={{
                     p: 3,
                     borderRadius: '50%',
-                    backgroundColor: alpha(NEUTRAL_COLORS.background, 0.8),
+                    background: alpha(GLASS_COLORS.background, 0.8),
+                    backdropFilter: 'blur(10px)',
                     display: 'inline-flex',
                     mb: 3,
+                    border: '1px solid',
+                    borderColor: GLASS_COLORS.border,
                   }}
                 >
-                  <QuestionIcon sx={{ fontSize: 64, color: NEUTRAL_COLORS.textSecondary }} />
+                  <QuestionIcon sx={{ fontSize: 64, color: GLASS_COLORS.textSecondary }} />
                 </Box>
                 <Typography
                   variant="h5"
                   sx={{
-                    color: NEUTRAL_COLORS.textSecondary,
+                    color: GLASS_COLORS.textSecondary,
                     mb: 2,
-                    fontWeight: 700,
+                    fontWeight: 600,
+                    letterSpacing: '-0.01em',
                   }}
                 >
                   {debouncedSearch ? 'По вашему запросу ничего не найдено' : 'Вопросов пока нет'}
@@ -2701,18 +2879,22 @@ export const QuestionsPage: React.FC = () => {
                     variant="contained"
                     onClick={handleResetFilters}
                     sx={{
-                      backgroundColor: NEUTRAL_COLORS.accent,
-                      color: NEUTRAL_COLORS.surface,
-                      borderRadius: 2,
+                      background: `linear-gradient(135deg, ${GLASS_COLORS.primary}, ${alpha(GLASS_COLORS.primary, 0.7)})`,
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid',
+                      borderColor: alpha('#FFFFFF', 0.3),
+                      color: 'white',
+                      borderRadius: 3,
                       px: 4,
                       py: 1.5,
-                      fontWeight: 700,
+                      fontWeight: 600,
                       fontSize: '1rem',
                       '&:hover': {
-                        backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.9),
+                        background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.primary, 0.9)}, ${alpha(GLASS_COLORS.primary, 0.6)})`,
                         transform: 'translateY(-2px)',
+                        boxShadow: `0 8px 16px ${alpha(GLASS_COLORS.primary, 0.3)}`,
                       },
-                      transition: 'all 0.2s',
+                      transition: 'all 0.3s ease',
                     }}
                   >
                     Очистить поиск
@@ -2735,9 +2917,10 @@ export const QuestionsPage: React.FC = () => {
                     <Typography
                       variant="h4"
                       sx={{
-                        fontWeight: 800,
-                        color: NEUTRAL_COLORS.textPrimary,
+                        fontWeight: 700,
+                        color: GLASS_COLORS.textPrimary,
                         fontSize: { xs: '1.5rem', sm: '2rem' },
+                        letterSpacing: '-0.02em',
                       }}
                     >
                       {total} Вопрос{total !== 1 ? (total > 1 && total < 5 ? 'а' : 'ов') : ''}
@@ -2752,7 +2935,7 @@ export const QuestionsPage: React.FC = () => {
                       disabled={isAddButtonDisabled && !user?.is_admin}
                       sx={{
                         textTransform: 'none',
-                        fontWeight: 700,
+                        fontWeight: 600,
                         borderRadius: 3,
                         px: 3,
                         py: 1.5,
@@ -2760,27 +2943,30 @@ export const QuestionsPage: React.FC = () => {
                         transition: 'all 0.3s ease',
                         minWidth: { xs: 'auto', sm: 180 },
                         ...(user?.is_admin ? {
-                          backgroundColor: NEUTRAL_COLORS.success,
-                          color: NEUTRAL_COLORS.surface,
-                          boxShadow: `0 4px 12px ${alpha(NEUTRAL_COLORS.success, 0.3)}`,
+                          background: `linear-gradient(135deg, ${GLASS_COLORS.success}, ${alpha(GLASS_COLORS.success, 0.7)})`,
+                          backdropFilter: 'blur(10px)',
+                          border: '1px solid',
+                          borderColor: alpha('#FFFFFF', 0.3),
+                          color: 'white',
+                          boxShadow: `0 4px 12px ${alpha(GLASS_COLORS.success, 0.3)}`,
                           '&:hover': {
-                            backgroundColor: alpha(NEUTRAL_COLORS.success, 0.9),
+                            background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.success, 0.9)}, ${alpha(GLASS_COLORS.success, 0.6)})`,
                             transform: 'translateY(-2px)',
-                            boxShadow: `0 8px 20px ${alpha(NEUTRAL_COLORS.success, 0.4)}`,
+                            boxShadow: `0 8px 20px ${alpha(GLASS_COLORS.success, 0.4)}`,
                           }
                         } : {
-                          borderColor: NEUTRAL_COLORS.border,
-                          color: NEUTRAL_COLORS.textSecondary,
-                          backgroundColor: alpha(NEUTRAL_COLORS.background, 0.8),
+                          borderColor: GLASS_COLORS.border,
+                          color: GLASS_COLORS.textSecondary,
+                          background: GLASS_COLORS.surface,
                           backdropFilter: 'blur(8px)',
                           '&:hover': {
-                            borderColor: NEUTRAL_COLORS.accent,
-                            backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.05),
+                            borderColor: GLASS_COLORS.primary,
+                            backgroundColor: alpha(GLASS_COLORS.primary, 0.1),
                           },
                           ...(isAddButtonDisabled && {
-                            borderColor: NEUTRAL_COLORS.success,
-                            color: NEUTRAL_COLORS.success,
-                            backgroundColor: alpha(NEUTRAL_COLORS.success, 0.1),
+                            borderColor: GLASS_COLORS.success,
+                            color: GLASS_COLORS.success,
+                            backgroundColor: alpha(GLASS_COLORS.success, 0.1),
                           })
                         })
                       }}
@@ -2800,10 +2986,12 @@ export const QuestionsPage: React.FC = () => {
                         size="small"
                         onDelete={() => setDifficulty('')}
                         sx={{
-                          fontWeight: 700,
-                          backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.1),
-                          color: NEUTRAL_COLORS.accent,
-                          border: `2px solid ${alpha(NEUTRAL_COLORS.accent, 0.3)}`,
+                          fontWeight: 600,
+                          backgroundColor: alpha(GLASS_COLORS.primary, 0.15),
+                          backdropFilter: 'blur(10px)',
+                          color: GLASS_COLORS.primary,
+                          border: '1px solid',
+                          borderColor: alpha(GLASS_COLORS.primary, 0.3),
                           fontSize: '0.875rem',
                         }}
                       />
@@ -2815,10 +3003,12 @@ export const QuestionsPage: React.FC = () => {
                         onDelete={() => setCategoryId('')}
                         icon={<CategoryIcon />}
                         sx={{
-                          fontWeight: 700,
-                          backgroundColor: alpha(NEUTRAL_COLORS.info, 0.1),
-                          color: NEUTRAL_COLORS.info,
-                          border: `2px solid ${alpha(NEUTRAL_COLORS.info, 0.3)}`,
+                          fontWeight: 600,
+                          backgroundColor: alpha(GLASS_COLORS.info, 0.15),
+                          backdropFilter: 'blur(10px)',
+                          color: GLASS_COLORS.info,
+                          border: '1px solid',
+                          borderColor: alpha(GLASS_COLORS.info, 0.3),
                           fontSize: '0.875rem',
                         }}
                       />
@@ -2832,10 +3022,12 @@ export const QuestionsPage: React.FC = () => {
                           setDebouncedSearch('');
                         }}
                         sx={{
-                          fontWeight: 700,
-                          backgroundColor: alpha(NEUTRAL_COLORS.warning, 0.1),
-                          color: NEUTRAL_COLORS.warning,
-                          border: `2px solid ${alpha(NEUTRAL_COLORS.warning, 0.3)}`,
+                          fontWeight: 600,
+                          backgroundColor: alpha(GLASS_COLORS.warning, 0.15),
+                          backdropFilter: 'blur(10px)',
+                          color: GLASS_COLORS.warning,
+                          border: '1px solid',
+                          borderColor: alpha(GLASS_COLORS.warning, 0.3),
                           fontSize: '0.875rem',
                         }}
                       />
@@ -2847,14 +3039,16 @@ export const QuestionsPage: React.FC = () => {
                         onDelete={() => setIsCompletedFilter(undefined)}
                         icon={isCompletedFilter ? <CheckCircleIcon /> : <RadioButtonUncheckedIcon />}
                         sx={{
-                          fontWeight: 700,
+                          fontWeight: 600,
                           backgroundColor: isCompletedFilter 
-                            ? alpha(NEUTRAL_COLORS.success, 0.1) 
-                            : alpha(NEUTRAL_COLORS.warning, 0.1),
-                          color: isCompletedFilter ? NEUTRAL_COLORS.success : NEUTRAL_COLORS.warning,
-                          border: `2px solid ${isCompletedFilter 
-                            ? alpha(NEUTRAL_COLORS.success, 0.3) 
-                            : alpha(NEUTRAL_COLORS.warning, 0.3)}`,
+                            ? alpha(GLASS_COLORS.success, 0.15) 
+                            : alpha(GLASS_COLORS.warning, 0.15),
+                          backdropFilter: 'blur(10px)',
+                          color: isCompletedFilter ? GLASS_COLORS.success : GLASS_COLORS.warning,
+                          border: '1px solid',
+                          borderColor: isCompletedFilter 
+                            ? alpha(GLASS_COLORS.success, 0.3) 
+                            : alpha(GLASS_COLORS.warning, 0.3),
                           fontSize: '0.875rem',
                         }}
                       />
@@ -2865,10 +3059,12 @@ export const QuestionsPage: React.FC = () => {
                         size="small"
                         onDelete={() => setSortBy('updated_at')}
                         sx={{
-                          fontWeight: 700,
-                          backgroundColor: alpha(NEUTRAL_COLORS.success, 0.1),
-                          color: NEUTRAL_COLORS.success,
-                          border: `2px solid ${alpha(NEUTRAL_COLORS.success, 0.3)}`,
+                          fontWeight: 600,
+                          backgroundColor: alpha(GLASS_COLORS.success, 0.15),
+                          backdropFilter: 'blur(10px)',
+                          color: GLASS_COLORS.success,
+                          border: '1px solid',
+                          borderColor: alpha(GLASS_COLORS.success, 0.3),
                           fontSize: '0.875rem',
                         }}
                       />
@@ -2879,10 +3075,12 @@ export const QuestionsPage: React.FC = () => {
                         size="small"
                         onDelete={() => setLimit(10)}
                         sx={{
-                          fontWeight: 700,
-                          backgroundColor: alpha(NEUTRAL_COLORS.warning, 0.1),
-                          color: NEUTRAL_COLORS.warning,
-                          border: `2px solid ${alpha(NEUTRAL_COLORS.warning, 0.3)}`,
+                          fontWeight: 600,
+                          backgroundColor: alpha(GLASS_COLORS.warning, 0.15),
+                          backdropFilter: 'blur(10px)',
+                          color: GLASS_COLORS.warning,
+                          border: '1px solid',
+                          borderColor: alpha(GLASS_COLORS.warning, 0.3),
                           fontSize: '0.875rem',
                         }}
                       />
@@ -2893,14 +3091,14 @@ export const QuestionsPage: React.FC = () => {
                 {/* Список вопросов (вертикальный) */}
                 <Box sx={{ mb: 4 }}>
                   {filteredQuestions.map((question, index) => (
-                    <QuestionCard
+                    <GlassQuestionCard
                       key={question.id}
                       question={question}
                       onClick={() => navigate(`/questions/${question.id}`)}
                       index={(page - 1) * limit + index}
                       categories={categories}
                       onCompletionChange={refreshStats}
-                      currentUserId={user?.id || undefined} // Передаем ID пользователя
+                      currentUserId={user?.id || undefined}
                     />
                   ))}
                 </Box>
@@ -2911,9 +3109,12 @@ export const QuestionsPage: React.FC = () => {
                     elevation={0}
                     sx={{
                       p: 3,
-                      borderRadius: 3,
-                      border: `2px solid ${NEUTRAL_COLORS.border}`,
-                      backgroundColor: NEUTRAL_COLORS.surface,
+                      borderRadius: 4,
+                      background: GLASS_COLORS.surface,
+                      backdropFilter: 'blur(20px)',
+                      WebkitBackdropFilter: 'blur(20px)',
+                      border: '1px solid',
+                      borderColor: GLASS_COLORS.border,
                       width: '100%',
                     }}
                   >
@@ -2922,28 +3123,30 @@ export const QuestionsPage: React.FC = () => {
                         count={totalPages}
                         page={page}
                         onChange={(_, value) => setPage(value)}
-                        color="primary"
                         shape="rounded"
                         size="large"
                         sx={{
                           '& .MuiPaginationItem-root': {
                             fontWeight: 600,
                             fontSize: '1rem',
-                            color: NEUTRAL_COLORS.textSecondary,
-                            border: `2px solid ${NEUTRAL_COLORS.border}`,
+                            color: GLASS_COLORS.textSecondary,
+                            border: '1px solid',
+                            borderColor: GLASS_COLORS.border,
+                            background: GLASS_COLORS.surface,
+                            backdropFilter: 'blur(10px)',
                             minWidth: 44,
                             height: 44,
                             '&:hover': {
-                              backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.08),
-                              borderColor: NEUTRAL_COLORS.accent,
-                              color: NEUTRAL_COLORS.accent,
+                              backgroundColor: alpha(GLASS_COLORS.primary, 0.1),
+                              borderColor: GLASS_COLORS.primary,
+                              color: GLASS_COLORS.primary,
                             },
                             '&.Mui-selected': {
-                              backgroundColor: NEUTRAL_COLORS.accent,
-                              color: NEUTRAL_COLORS.surface,
-                              borderColor: NEUTRAL_COLORS.accent,
+                              background: `linear-gradient(135deg, ${GLASS_COLORS.primary}, ${alpha(GLASS_COLORS.primary, 0.7)})`,
+                              color: 'white',
+                              borderColor: GLASS_COLORS.primary,
                               '&:hover': {
-                                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.9),
+                                background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.primary, 0.9)}, ${alpha(GLASS_COLORS.primary, 0.6)})`,
                               },
                             },
                           },
@@ -2958,7 +3161,7 @@ export const QuestionsPage: React.FC = () => {
         </Box>
       </Container>
 
-      {/* Модалка добавления вопроса (по аналогии с админкой) */}
+      {/* Модалка добавления вопроса в стеклянном стиле */}
       <Dialog 
         open={openDialog} 
         onClose={handleCloseDialog} 
@@ -2966,21 +3169,27 @@ export const QuestionsPage: React.FC = () => {
         fullWidth
         PaperProps={{
           sx: {
-            borderRadius: 3,
-            border: `1px solid ${NEUTRAL_COLORS.border}`,
+            borderRadius: 4,
+            background: GLASS_COLORS.surfaceDark,
+            backdropFilter: 'blur(30px)',
+            WebkitBackdropFilter: 'blur(30px)',
+            border: '1px solid',
+            borderColor: GLASS_COLORS.border,
+            boxShadow: '0 24px 48px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.5) inset',
             maxHeight: '90vh',
-            backgroundColor: NEUTRAL_COLORS.secondary,
           }
         }}
       >
         <DialogTitle sx={{ 
-          borderBottom: `1px solid ${NEUTRAL_COLORS.border}`,
+          borderBottom: '1px solid',
+          borderColor: GLASS_COLORS.border,
           pb: 2,
-          fontWeight: 700,
-          color: NEUTRAL_COLORS.surface,
+          fontWeight: 600,
+          color: GLASS_COLORS.textPrimary,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          letterSpacing: '-0.01em',
         }}>
           Создать новый вопрос
           {dialogError && (
@@ -2988,8 +3197,12 @@ export const QuestionsPage: React.FC = () => {
               severity="error" 
               sx={{ 
                 mt: 2,
-                borderRadius: 2,
-                border: `1px solid ${alpha(NEUTRAL_COLORS.error, 0.2)}`,
+                borderRadius: 3,
+                background: alpha(GLASS_COLORS.error, 0.15),
+                backdropFilter: 'blur(10px)',
+                border: '1px solid',
+                borderColor: alpha(GLASS_COLORS.error, 0.3),
+                color: GLASS_COLORS.error,
               }}
               onClose={() => setDialogError(null)}
             >
@@ -3018,11 +3231,16 @@ export const QuestionsPage: React.FC = () => {
                 size="medium"
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
+                    borderRadius: 3,
+                    background: GLASS_COLORS.background,
+                    backdropFilter: 'blur(10px)',
                     '&:hover fieldset': {
-                      borderColor: NEUTRAL_COLORS.accent,
-                    }
-                  }
+                      borderColor: GLASS_COLORS.primary,
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: GLASS_COLORS.primary,
+                    },
+                  },
                 }}
               />
               <TextField
@@ -3033,33 +3251,49 @@ export const QuestionsPage: React.FC = () => {
                 size="medium"
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
+                    borderRadius: 3,
+                    background: GLASS_COLORS.background,
+                    backdropFilter: 'blur(10px)',
                     '&:hover fieldset': {
-                      borderColor: NEUTRAL_COLORS.accent,
-                    }
-                  }
+                      borderColor: GLASS_COLORS.primary,
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: GLASS_COLORS.primary,
+                    },
+                  },
                 }}
                 helperText="URL-friendly версия названия (генерируется автоматически)"
+                FormHelperTextProps={{
+                  sx: { color: GLASS_COLORS.textSecondary }
+                }}
               />
               
               {/* Категория */}
               <FormControl fullWidth size="medium">
-                <InputLabel>Категория *</InputLabel>
+                <InputLabel sx={{ color: GLASS_COLORS.textSecondary }}>Категория *</InputLabel>
                 <Select
                   value={formData.category_id}
                   label="Категория *"
                   onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
                   disabled={isLoadingCategories}
                   sx={{
-                    borderRadius: 2,
+                    borderRadius: 3,
+                    background: GLASS_COLORS.background,
+                    backdropFilter: 'blur(10px)',
                     '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: NEUTRAL_COLORS.accent,
-                    }
+                      borderColor: GLASS_COLORS.primary,
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: GLASS_COLORS.primary,
+                    },
+                    '& .MuiSelect-select': {
+                      color: GLASS_COLORS.textPrimary,
+                    },
                   }}
                 >
                   <MenuItem value="">
                     <em>Выберите категорию</em>
-                  </MenuItem>
+                  </MenuItem >
                   {categories.map((category) => (
                     <MenuItem key={category.id} value={category.id}>
                       {category.name}
@@ -3073,23 +3307,32 @@ export const QuestionsPage: React.FC = () => {
                       position: 'absolute', 
                       right: 40, 
                       top: '50%', 
-                      transform: 'translateY(-50%)' 
+                      transform: 'translateY(-50%)',
+                      color: GLASS_COLORS.primary,
                     }} 
                   />
                 )}
               </FormControl>
 
               <FormControl fullWidth size="medium">
-                <InputLabel>Сложность</InputLabel>
+                <InputLabel sx={{ color: GLASS_COLORS.textSecondary }}>Сложность</InputLabel>
                 <Select
                   value={formData.difficulty}
                   label="Сложность"
                   onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as any })}
                   sx={{
-                    borderRadius: 2,
+                    borderRadius: 3,
+                    background: GLASS_COLORS.background,
+                    backdropFilter: 'blur(10px)',
                     '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: NEUTRAL_COLORS.accent,
-                    }
+                      borderColor: GLASS_COLORS.primary,
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: GLASS_COLORS.primary,
+                    },
+                    '& .MuiSelect-select': {
+                      color: GLASS_COLORS.textPrimary,
+                    },
                   }}
                 >
                   <MenuItem value="easy">Легкий</MenuItem>
@@ -3107,7 +3350,8 @@ export const QuestionsPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions sx={{ 
-          borderTop: `1px solid ${NEUTRAL_COLORS.border}`,
+          borderTop: '1px solid',
+          borderColor: GLASS_COLORS.border,
           pt: 2,
           px: 3,
           pb: 3
@@ -3117,15 +3361,17 @@ export const QuestionsPage: React.FC = () => {
             onClick={handleCloseDialog}
             sx={{
               borderWidth: 2,
-              borderColor: NEUTRAL_COLORS.border,
-              color: NEUTRAL_COLORS.surface,
-              borderRadius: 2,
+              borderRadius: 3,
+              borderColor: GLASS_COLORS.border,
+              color: GLASS_COLORS.textPrimary,
               px: 3,
               py: 1,
               fontWeight: 600,
+              background: GLASS_COLORS.surface,
+              backdropFilter: 'blur(10px)',
               '&:hover': {
-                borderColor: NEUTRAL_COLORS.accent,
-                backgroundColor: alpha(NEUTRAL_COLORS.accent, 0.04),
+                borderColor: GLASS_COLORS.primary,
+                backgroundColor: alpha(GLASS_COLORS.primary, 0.1),
               }
             }}
           >
@@ -3137,14 +3383,21 @@ export const QuestionsPage: React.FC = () => {
             disabled={!formData.category_id || !formData.title.trim() || !formData.slug.trim() || isSaving}
             startIcon={isSaving ? <CircularProgress size={20} color="inherit" /> : null}
             sx={{
-              backgroundColor: NEUTRAL_COLORS.success,
-              color: NEUTRAL_COLORS.surface,
-              borderRadius: 2,
+              background: `linear-gradient(135deg, ${GLASS_COLORS.success}, ${alpha(GLASS_COLORS.success, 0.7)})`,
+              backdropFilter: 'blur(10px)',
+              border: '1px solid',
+              borderColor: alpha('#FFFFFF', 0.3),
+              color: 'white',
+              borderRadius: 3,
               px: 3,
               py: 1,
               fontWeight: 600,
               '&:hover': {
-                backgroundColor: alpha(NEUTRAL_COLORS.success, 0.9),
+                background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.success, 0.9)}, ${alpha(GLASS_COLORS.success, 0.6)})`,
+              },
+              '&:disabled': {
+                background: alpha(GLASS_COLORS.surface, 0.5),
+                color: GLASS_COLORS.textSecondary,
               }
             }}
           >
