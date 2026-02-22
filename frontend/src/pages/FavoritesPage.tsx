@@ -20,7 +20,7 @@ import {
   DialogActions,
   Fab,
   Pagination,
-  useTheme,
+  useTheme as useMuiTheme,
   useMediaQuery,
   Alert,
   Collapse,
@@ -44,39 +44,79 @@ import {
 } from '@mui/icons-material';
 import { favoriteService } from '../services/favoriteService';
 import { questionCompletionService } from '../services/questionCompletionService';
+import { ThemeToggle } from '../components/ThemeToggle';
+import { useTheme as useThemeContext } from '../context/ThemeContext';
 
-// Стеклянная цветовая палитра iOS 26 Liquid Glass
-const GLASS_COLORS = {
-  primary: 'rgba(10, 132, 255, 0.8)', // iOS синий с прозрачностью
-  secondary: 'rgba(94, 92, 230, 0.75)', // Фиолетово-синий
-  accent: 'rgba(90, 200, 250, 0.9)', // Голубой акцент
-  background: 'rgba(240, 244, 250, 0.4)', // Полупрозрачный фон
-  surface: 'rgba(255, 255, 255, 0.6)', // Стеклянная поверхность
-  surfaceDark: 'rgba(255, 255, 255, 0.8)', // Более плотное стекло
-  textPrimary: 'rgba(0, 0, 0, 0.8)',
-  textSecondary: 'rgba(60, 60, 67, 0.6)',
-  border: 'rgba(255, 255, 255, 0.5)', // Стеклянная граница
-  borderGlow: 'rgba(255, 255, 255, 0.8)',
-  success: 'rgba(52, 199, 89, 0.8)', // iOS зеленый
-  error: 'rgba(255, 59, 48, 0.8)', // iOS красный
-  warning: 'rgba(255, 149, 0, 0.8)', // iOS оранжевый
-  purple: 'rgba(175, 82, 222, 0.8)', // iOS фиолетовый
-  blue: 'rgba(0, 122, 255, 0.8)', // iOS синий
-  info: 'rgba(90, 200, 250, 0.8)',
-  gradientStart: 'rgba(255, 255, 255, 0.3)',
-  gradientEnd: 'rgba(255, 255, 255, 0.1)',
-  glassOverlay: 'rgba(255, 255, 255, 0.2)',
-  glassHighlight: 'rgba(255, 255, 255, 0.5)',
-  easy: 'rgba(52, 199, 89, 0.8)',
-  medium: 'rgba(255, 149, 0, 0.8)',
-  hard: 'rgba(255, 59, 48, 0.8)',
-  gold: 'rgba(212, 175, 55, 0.8)',
-  silver: 'rgba(192, 192, 192, 0.7)',
-  bronze: 'rgba(205, 127, 50, 0.7)',
+
+// Стеклянная цветовая палитра iOS 26 Liquid Glass - теперь реагирует на смену темы
+const getGlassColors = (mode: 'light' | 'dark') => {
+  if (mode === 'dark') {
+    return {
+      primary: 'rgba(0, 212, 255, 0.9)', // Яркий киберпанк голубой
+      secondary: 'rgba(138, 43, 226, 0.8)', // Яркий фиолетовый
+      accent: 'rgba(0, 255, 200, 0.9)', // Киберпанк аква
+      background: 'rgba(20, 20, 40, 0.6)', // Тёмный фон
+      surface: 'rgba(30, 30, 60, 0.7)', // Тёмная поверхность
+      surfaceDark: 'rgba(40, 40, 80, 0.8)', // Ещё темнее
+      textPrimary: 'rgba(255, 255, 255, 0.95)',
+      textSecondary: 'rgba(180, 180, 200, 0.7)',
+      border: 'rgba(0, 212, 255, 0.3)', // Тёмная граница
+      borderGlow: 'rgba(0, 212, 255, 0.6)',
+      success: 'rgba(0, 228, 91, 0.9)', // Яркий зеленый
+      error: 'rgba(255, 50, 100, 0.9)', // Яркий красный
+      warning: 'rgba(255, 150, 0, 0.9)', // Яркий оранжевый
+      info: 'rgba(90, 200, 250, 0.8)',
+      purple: 'rgba(200, 100, 255, 0.9)', // Яркий фиолетовый
+      blue: 'rgba(0, 180, 255, 0.9)', // Яркий голубой
+      gradientStart: 'rgba(0, 212, 255, 0.2)',
+      gradientEnd: 'rgba(138, 43, 226, 0.1)',
+      glassOverlay: 'rgba(0, 212, 255, 0.1)',
+      glassHighlight: 'rgba(0, 212, 255, 0.2)',
+      mainColor: 'linear-gradient(135deg, #464646ff 0%, #292929ff 50%, #000000ff 100%)',
+      gold: 'rgba(212, 175, 55, 0.8)',
+      silver: 'rgba(107, 107, 107, 0.7)',
+      bronze: 'rgba(205, 127, 50, 0.7)',
+      easy: 'rgba(52, 199, 89, 0.8)',
+      medium: 'rgba(255, 149, 0, 0.8)',
+      hard: 'rgba(255, 59, 48, 0.8)',
+    };
+  }
+  
+  // Light mode
+  return {
+    primary: 'rgba(10, 132, 255, 0.8)', // iOS синий с прозрачностью
+    secondary: 'rgba(94, 92, 230, 0.75)', // Фиолетово-синий
+    accent: 'rgba(90, 200, 250, 0.9)', // Голубой акцент
+    background: 'rgba(240, 244, 250, 0.4)', // Полупрозрачный фон
+    surface: 'rgba(255, 255, 255, 0.6)', // Стеклянная поверхность
+    surfaceDark: 'rgba(255, 255, 255, 0.8)', // Более плотное стекло
+    textPrimary: 'rgba(0, 0, 0, 0.8)',
+    textSecondary: 'rgba(60, 60, 67, 0.6)',
+    border: 'rgba(255, 255, 255, 0.5)', // Стеклянная граница
+    borderGlow: 'rgba(255, 255, 255, 0.8)',
+    success: 'rgba(52, 199, 89, 0.8)', // iOS зеленый
+    error: 'rgba(255, 59, 48, 0.8)', // iOS красный
+    warning: 'rgba(255, 149, 0, 0.8)', // iOS оранжевый
+    info: 'rgba(90, 200, 250, 0.8)',
+    purple: 'rgba(175, 82, 222, 0.8)', // iOS фиолетовый
+    blue: 'rgba(0, 122, 255, 0.8)', // iOS синий
+    gradientStart: 'rgba(255, 255, 255, 0.3)',
+    gradientEnd: 'rgba(255, 255, 255, 0.1)',
+    glassOverlay: 'rgba(255, 255, 255, 0.2)',
+    glassHighlight: 'rgba(255, 255, 255, 0.5)',
+    mainColor: 'linear-gradient(135deg, #E0F0FF 0%, #D0E4FF 50%, #B8D8FF 100%)',
+    gold: 'rgba(212, 175, 55, 0.8)',
+    silver: 'rgba(107, 107, 107, 0.7)',
+    bronze: 'rgba(205, 127, 50, 0.7)',
+    easy: 'rgba(52, 199, 89, 0.8)',
+    medium: 'rgba(255, 149, 0, 0.8)',
+    hard: 'rgba(255, 59, 48, 0.8)',
+  };
 };
 
-// Тот же градиент фона, что и в профиле
-const BACKGROUND_GRADIENT = 'linear-gradient(135deg, #E0F0FF 0%, #D0E4FF 50%, #B8D8FF 100%)';
+// Старая константа оставляем для совместимости, по умолчанию light mode
+const GLASS_COLORS = getGlassColors('light');
+
 
 const getDifficultyColor = (difficulty: string) => {
   switch (difficulty) {
@@ -602,9 +642,12 @@ const GlassStatCard = ({
 // Главный компонент страницы избранного в стеклянном стиле
 export const FavoritesPage: React.FC = () => {
   const navigate = useNavigate();
-  const theme = useTheme();
+  const theme = useMuiTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isMobileFilter = useMediaQuery(theme.breakpoints.down(930));
+
+  const { mode: themeMode } = useThemeContext();
+  const GLASS_COLORS = getGlassColors(themeMode);
 
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const [completedQuestions, setCompletedQuestions] = useState<Set<string>>(new Set());
@@ -732,7 +775,7 @@ export const FavoritesPage: React.FC = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: BACKGROUND_GRADIENT,
+        background: GLASS_COLORS.mainColor,
         position: 'relative',
         overflow: 'hidden',
         fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif',

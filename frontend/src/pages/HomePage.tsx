@@ -14,7 +14,7 @@ import {
   IconButton,
   Chip,
   Stack,
-  useTheme,
+  useTheme as useMuiTheme,
   useMediaQuery,
   Fade,
   Grow,
@@ -59,35 +59,69 @@ import {
   TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
+import { useTheme as useThemeContext } from '../context/ThemeContext';
 import { questionService } from '../services/questionService';
 import { categoryService } from '../services/categoryService';
 import { answerService } from '../services/answerService';
 import type { User } from '../types';
 import { userService } from '../services/userService';
 import { ContentRenderer } from '../components/ContentRenderer';
+import { ThemeToggle } from '../components/ThemeToggle';
 
-// Стеклянная цветовая палитра iOS 26 Liquid Glass
-const GLASS_COLORS = {
-  primary: 'rgba(10, 132, 255, 0.8)', // iOS синий с прозрачностью
-  secondary: 'rgba(94, 92, 230, 0.75)', // Фиолетово-синий
-  accent: 'rgba(90, 200, 250, 0.9)', // Голубой акцент
-  background: 'rgba(240, 244, 250, 0.4)', // Полупрозрачный фон
-  surface: 'rgba(255, 255, 255, 0.6)', // Стеклянная поверхность
-  surfaceDark: 'rgba(255, 255, 255, 0.8)', // Более плотное стекло
-  textPrimary: 'rgba(0, 0, 0, 0.8)',
-  textSecondary: 'rgba(60, 60, 67, 0.6)',
-  border: 'rgba(255, 255, 255, 0.5)', // Стеклянная граница
-  borderGlow: 'rgba(255, 255, 255, 0.8)',
-  success: 'rgba(52, 199, 89, 0.8)', // iOS зеленый
-  error: 'rgba(255, 59, 48, 0.8)', // iOS красный
-  warning: 'rgba(255, 149, 0, 0.8)', // iOS оранжевый
-  purple: 'rgba(175, 82, 222, 0.8)', // iOS фиолетовый
-  blue: 'rgba(0, 122, 255, 0.8)', // iOS синий
-  gradientStart: 'rgba(255, 255, 255, 0.3)',
-  gradientEnd: 'rgba(255, 255, 255, 0.1)',
-  glassOverlay: 'rgba(255, 255, 255, 0.2)',
-  glassHighlight: 'rgba(255, 255, 255, 0.5)',
+// Стеклянная цветовая палитра iOS 26 Liquid Glass - теперь реагирует на смену темы
+const getGlassColors = (mode: 'light' | 'dark') => {
+  if (mode === 'dark') {
+    return {
+      primary: 'rgba(0, 212, 255, 0.9)', // Яркий киберпанк голубой
+      secondary: 'rgba(138, 43, 226, 0.8)', // Яркий фиолетовый
+      accent: 'rgba(0, 255, 200, 0.9)', // Киберпанк аква
+      background: 'rgba(20, 20, 40, 0.6)', // Тёмный фон
+      surface: 'rgba(30, 30, 60, 0.7)', // Тёмная поверхность
+      surfaceDark: 'rgba(40, 40, 80, 0.8)', // Ещё темнее
+      textPrimary: 'rgba(255, 255, 255, 0.95)',
+      textSecondary: 'rgba(180, 180, 200, 0.7)',
+      border: 'rgba(0, 212, 255, 0.3)', // Тёмная граница
+      borderGlow: 'rgba(0, 212, 255, 0.6)',
+      success: 'rgba(0, 228, 91, 0.9)', // Яркий зеленый
+      error: 'rgba(255, 50, 100, 0.9)', // Яркий красный
+      warning: 'rgba(255, 150, 0, 0.9)', // Яркий оранжевый
+      purple: 'rgba(200, 100, 255, 0.9)', // Яркий фиолетовый
+      blue: 'rgba(0, 180, 255, 0.9)', // Яркий голубой
+      gradientStart: 'rgba(0, 212, 255, 0.2)',
+      gradientEnd: 'rgba(138, 43, 226, 0.1)',
+      glassOverlay: 'rgba(0, 212, 255, 0.1)',
+      glassHighlight: 'rgba(0, 212, 255, 0.2)',
+      mainColor: 'linear-gradient(135deg, #464646ff 0%, #292929ff 50%, #000000ff 100%)',
+    };
+  }
+  
+  // Light mode
+  return {
+    primary: 'rgba(10, 132, 255, 0.8)', // iOS синий с прозрачностью
+    secondary: 'rgba(94, 92, 230, 0.75)', // Фиолетово-синий
+    accent: 'rgba(90, 200, 250, 0.9)', // Голубой акцент
+    background: 'rgba(240, 244, 250, 0.4)', // Полупрозрачный фон
+    surface: 'rgba(255, 255, 255, 0.6)', // Стеклянная поверхность
+    surfaceDark: 'rgba(255, 255, 255, 0.8)', // Более плотное стекло
+    textPrimary: 'rgba(0, 0, 0, 0.8)',
+    textSecondary: 'rgba(60, 60, 67, 0.6)',
+    border: 'rgba(255, 255, 255, 0.5)', // Стеклянная граница
+    borderGlow: 'rgba(255, 255, 255, 0.8)',
+    success: 'rgba(52, 199, 89, 0.8)', // iOS зеленый
+    error: 'rgba(255, 59, 48, 0.8)', // iOS красный
+    warning: 'rgba(255, 149, 0, 0.8)', // iOS оранжевый
+    purple: 'rgba(175, 82, 222, 0.8)', // iOS фиолетовый
+    blue: 'rgba(0, 122, 255, 0.8)', // iOS синий
+    gradientStart: 'rgba(255, 255, 255, 0.3)',
+    gradientEnd: 'rgba(255, 255, 255, 0.1)',
+    glassOverlay: 'rgba(255, 255, 255, 0.2)',
+    glassHighlight: 'rgba(255, 255, 255, 0.5)',
+    mainColor: 'linear-gradient(135deg, #E0F0FF 0%, #D0E4FF 50%, #B8D8FF 100%)',
+  };
 };
+
+// Старая константа оставляем для совместимости, по умолчанию light mode
+const GLASS_COLORS = getGlassColors('light');
 
 interface Stats {
   questions: number;
@@ -2244,9 +2278,11 @@ const ScrollToTop = memo(() => {
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const theme = useTheme();
+  const theme = useMuiTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { user, isAuthenticated, logout } = useAuth();
+  const { mode: themeMode } = useThemeContext();
+  const GLASS_COLORS = getGlassColors(themeMode);
   const [stats, setStats] = useState<Stats>({ questions: 0, categories: 0 });
   const [categories, setCategories] = useState<ApiCategory[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -2341,7 +2377,7 @@ export const HomePage: React.FC = () => {
   return (
     <Box sx={{ 
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #E0F0FF 0%, #D0E4FF 50%, #B8D8FF 100%)',
+      background: GLASS_COLORS.mainColor,
       position: 'relative',
       overflow: 'hidden',
       fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif',
@@ -2456,6 +2492,7 @@ export const HomePage: React.FC = () => {
                         )}
                       </>
                   )}
+                  <ThemeToggle />
                   <IconButton
                     onClick={handleLogout}
                     size="medium"
@@ -3719,18 +3756,6 @@ export const HomePage: React.FC = () => {
                   position: 'relative',
                   paddingLeft: '12px',
                   textShadow: '0 2px 10px rgba(255,255,255,0.5)',
-                  '&::after': {
-                    content: '""',
-                    position: 'absolute',
-                    left: '2px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    width: '2px',
-                    height: '40%',
-                    background: alpha('#FFFFFF', 0.8),
-                    borderRadius: '4px',
-                    filter: 'blur(2px)',
-                  }
                 }}
               >
                 <Box 
@@ -3913,7 +3938,7 @@ export const HomePage: React.FC = () => {
                 </Typography>
               </Box>
 
-              {/* Правая часть - информация и кнопка */}
+              {/* Правая часть - информация, Telegram и кнопка */}
               <Box sx={{ 
                 display: 'flex',
                 flexDirection: { xs: 'column', sm: 'row' },
@@ -3942,6 +3967,40 @@ export const HomePage: React.FC = () => {
                     v1.0.0
                   </Typography>
                 </Box>
+
+                {/* Telegram кнопка */}
+                <IconButton
+                  component="a"
+                  href="https://t.me/sandbox_devv" // Замените на ссылку вашего Telegram канала
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  size="small"
+                  sx={{
+                    color: GLASS_COLORS.textPrimary,
+                    backgroundColor: alpha(GLASS_COLORS.primary, 0.1),
+                    border: '1px solid',
+                    borderColor: alpha(GLASS_COLORS.primary, 0.3),
+                    borderRadius: '30px',
+                    width: '40px',
+                    height: '40px',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      backgroundColor: GLASS_COLORS.primary,
+                      color: '#FFFFFF',
+                      transform: 'translateY(-2px)',
+                      boxShadow: `0 4px 12px ${alpha(GLASS_COLORS.primary, 0.3)}`,
+                    }
+                  }}
+                >
+                  <svg 
+                    width="20" 
+                    height="20" 
+                    viewBox="0 0 24 24" 
+                    fill="currentColor"
+                  >
+                    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161l-1.732 8.166c-.129.58-.472.723-.956.45l-2.64-1.944-1.274 1.225c-.141.141-.26.26-.533.26l.191-2.67 4.87-4.395c.212-.189-.046-.295-.33-.106l-6.02 3.786-2.594-.81c-.563-.176-.574-.563.117-.833l10.133-3.91c.47-.173.881.104.727.816z"/>
+                  </svg>
+                </IconButton>
 
                 <Button
                   variant="contained"

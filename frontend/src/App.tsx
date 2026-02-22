@@ -1,21 +1,171 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, createTheme, CssBaseline, Box, GlobalStyles } from '@mui/material';
-import { AuthProvider } from './context/AuthContext';
-import { ProtectedRoute } from './components/ProtectedRoute';
+import { ThemeProvider as MuiThemeProvider, createTheme, CssBaseline } from '@mui/material';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
+import AppContent from './AppContent';
 
-// Pages
-import { HomePage } from './pages/HomePage';
-import { LoginPage } from './pages/LoginPage';
-import { RegisterPage } from './pages/RegisterPage';
-import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
-import { QuestionsPage } from './pages/QuestionsPage';
-import { QuestionDetailPage } from './pages/QuestionDetailPage';
-import { AdminPage } from './pages/AdminPage';
-import { UserProfilePage } from './pages/UserProfilePage';
-import { FavoritesPage } from './pages/FavoritesPage';
-// import { RoadmapsPage } from './pages/RoadmapsPage';
+// Светлая тема
+const lightTheme = createTheme({
+  palette: {
+    mode: 'light',
+    primary: {
+      main: '#0066cc',
+      light: '#3385ff',
+      dark: '#004499',
+    },
+    secondary: {
+      main: '#cc0066',
+      light: '#ff3399',
+      dark: '#990044',
+    },
+    background: {
+      default: '#f5f5f5',
+      paper: '#ffffff',
+    },
+    text: {
+      primary: '#212121',
+      secondary: '#757575',
+    },
+    success: {
+      main: '#00aa44',
+    },
+    warning: {
+      main: '#ff8800',
+    },
+    error: {
+      main: '#cc0000',
+    },
+  },
+  typography: {
+    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    h1: {
+      fontWeight: 700,
+      letterSpacing: '-0.5px',
+    },
+    h2: {
+      fontWeight: 700,
+      letterSpacing: '-0.5px',
+    },
+    h3: {
+      fontWeight: 600,
+    },
+    h4: {
+      fontWeight: 600,
+    },
+    h5: {
+      fontWeight: 600,
+    },
+    h6: {
+      fontWeight: 600,
+    },
+  },
+  components: {
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          backgroundImage: 'linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%)',
+          border: '1px solid rgba(0, 102, 204, 0.15)',
+          backdropFilter: 'blur(10px)',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          '&:hover': {
+            borderColor: 'rgba(0, 102, 204, 0.3)',
+            boxShadow: '0 8px 32px rgba(0, 102, 204, 0.15)',
+          },
+        },
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          fontWeight: 600,
+          borderRadius: '8px',
+          transition: 'all 0.3s ease',
+        },
+        contained: {
+          background: 'linear-gradient(135deg, #0066cc 0%, #004499 100%)',
+          '&:hover': {
+            background: 'linear-gradient(135deg, #3385ff 0%, #0055bb 100%)',
+            boxShadow: '0 8px 24px rgba(0, 102, 204, 0.3)',
+          },
+        },
+        outlined: {
+          borderColor: 'rgba(0, 102, 204, 0.5)',
+          color: '#0066cc',
+          '&:hover': {
+            borderColor: '#0066cc',
+            backgroundColor: 'rgba(0, 102, 204, 0.1)',
+          },
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          fontWeight: 600,
+          borderRadius: '6px',
+        },
+      },
+    },
+    MuiAccordion: {
+      styleOverrides: {
+        root: {
+          backgroundImage: 'linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%)',
+          border: '1px solid rgba(0, 102, 204, 0.15)',
+          '&:before': {
+            display: 'none',
+          },
+          '&.Mui-expanded': {
+            borderColor: 'rgba(0, 102, 204, 0.3)',
+          },
+        },
+      },
+    },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          '& input:-webkit-autofill': {
+            WebkitBoxShadow: '0 0 0 1000px #ffffff inset !important',
+            WebkitTextFillColor: '#212121 !important',
+            caretColor: '#212121',
+            borderRadius: 'inherit',
+          },
+          '& input:-webkit-autofill:hover': {
+            WebkitBoxShadow: '0 0 0 1000px #ffffff inset !important',
+            WebkitTextFillColor: '#212121 !important',
+          },
+          '& input:-webkit-autofill:focus': {
+            WebkitBoxShadow: '0 0 0 1000px #fcfdff inset !important',
+            WebkitTextFillColor: '#212121 !important',
+          },
+        },
+      },
+    },
+    MuiInputBase: {
+      styleOverrides: {
+        root: {
+          '& input:-webkit-autofill': {
+            WebkitBoxShadow: '0 0 0 1000px #ffffff inset !important',
+            WebkitTextFillColor: '#212121 !important',
+            caretColor: '#212121',
+            borderRadius: 'inherit',
+          },
+        },
+      },
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& input:-webkit-autofill': {
+            WebkitBoxShadow: '0 0 0 1000px #ffffff inset !important',
+            WebkitTextFillColor: '#212121 !important',
+          },
+        },
+      },
+    },
+  },
+});
 
-const theme = createTheme({
+// Тёмная тема
+const darkTheme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
@@ -31,6 +181,10 @@ const theme = createTheme({
     background: {
       default: '#0a0e27',
       paper: '#1a1f3a',
+    },
+    text: {
+      primary: '#ffffff',
+      secondary: '#b0b0b0',
     },
     success: {
       main: '#00ff88',
@@ -127,27 +281,22 @@ const theme = createTheme({
         },
       },
     },
-    // Стили для полей ввода
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
           '& input:-webkit-autofill': {
-            WebkitBoxShadow: '0 0 0 1000px #ffffffff inset !important',
-            WebkitTextFillColor: '#000000ff !important',
+            WebkitBoxShadow: '0 0 0 1000px #1a1f3a inset !important',
+            WebkitTextFillColor: '#ffffff !important',
             caretColor: '#ffffff',
             borderRadius: 'inherit',
           },
           '& input:-webkit-autofill:hover': {
-            WebkitBoxShadow: '0 0 0 1000px #ffffffff inset !important',
-            WebkitTextFillColor: '#000000ff !important',
+            WebkitBoxShadow: '0 0 0 1000px #1a1f3a inset !important',
+            WebkitTextFillColor: '#ffffff !important',
           },
           '& input:-webkit-autofill:focus': {
-            WebkitBoxShadow: '0 0 0 1000px #fcfdffff inset !important',
-            WebkitTextFillColor: '#000000ff !important',
-          },
-          '& input:-webkit-autofill:active': {
-            WebkitBoxShadow: '0 0 0 1000px #ffffffff inset !important',
-            WebkitTextFillColor: '#000000ff !important',
+            WebkitBoxShadow: '0 0 0 1000px #1a1f3a inset !important',
+            WebkitTextFillColor: '#ffffff !important',
           },
         },
       },
@@ -177,150 +326,22 @@ const theme = createTheme({
   },
 });
 
-// Глобальные стили для автозаполнения
-const autocompleteStyles = {
-  '@keyframes autofill': {
-    '0%,100%': {
-      color: '#ffffff',
-      background: '#1a1f3a',
-    },
-  },
-  'input:-webkit-autofill': {
-    animationName: 'autofill',
-    animationDuration: '0s',
-    animationFillMode: 'forwards',
-    WebkitAnimationName: 'autofill',
-    WebkitAnimationDuration: '0s',
-    WebkitAnimationFillMode: 'forwards',
-    transition: 'background-color 9999s ease-in-out 0s',
-    WebkitTransition: 'background-color 9999s ease-in-out 0s',
-    caretColor: '#ffffff !important',
-    WebkitTextFillColor: '#ffffff !important',
-    color: '#ffffff !important',
-    // backgroundColor: '#1a1f3a !important',
-    backgroundClip: 'content-box !important',
-    boxShadow: '0 0 0 1000px #1a1f3a inset !important',
-    WebkitBoxShadow: '0 0 0 1000px #1a1f3a inset !important',
-    border: 'none',
-  },
-  'input:-webkit-autofill:hover': {
-    WebkitBoxShadow: '0 0 0 1000px #1a1f3a inset !important',
-    WebkitTextFillColor: '#ffffff !important',
-  },
-  'input:-webkit-autofill:focus': {
-    WebkitBoxShadow: '0 0 0 1000px #1a1f3a inset !important',
-    WebkitTextFillColor: '#ffffff !important',
-  },
-  'input:-webkit-autofill:active': {
-    WebkitBoxShadow: '0 0 0 1000px #1a1f3a inset !important',
-    WebkitTextFillColor: '#ffffff !important',
-  },
-  // Для Firefox
-  'input:autofill': {
-    // backgroundColor: '#1a1f3a !important',
-    color: '#ffffff !important',
-    boxShadow: '0 0 0 1000px #1a1f3a inset !important',
-  },
-  // Для Edge
-  'input:-internal-autofill-selected': {
-    // backgroundColor: '#1a1f3a !important',
-    color: '#ffffff !important',
-    boxShadow: '0 0 0 1000px #1a1f3a inset !important',
-  },
-  // Для всех браузеров через анимацию
-  'input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:-webkit-autofill:active': {
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: '#ffffff !important',
-    transition: 'background-color 5000s ease-in-out 0s',
-    boxShadow: 'inset 0 0 20px 20px #1a1f3a !important',
-  },
-  // Специфичные селекторы для разных браузеров
-  'input:-webkit-autofill, textarea:-webkit-autofill, select:-webkit-autofill': {
-    '&, &:hover, &:focus, &:active': {
-      WebkitBoxShadow: '0 0 0 1000px #1a1f3a inset !important',
-      WebkitTextFillColor: '#ffffff !important',
-      caretColor: '#ffffff',
-      transition: 'background-color 5000s ease-in-out 0s',
-    },
-  },
-};
+function AppWithTheme() {
+  const { mode } = useTheme();
+  const theme = mode === 'light' ? lightTheme : darkTheme;
+
+  return (
+    <MuiThemeProvider theme={theme}>
+      <CssBaseline />
+      <AppContent />
+    </MuiThemeProvider>
+  );
+}
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      {/* Глобальные стили для автозаполнения */}
-      <GlobalStyles
-        styles={autocompleteStyles}
-      />
-      <Router>
-        <AuthProvider>
-          <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-            <Box component="main" sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-              <Routes>
-                {/* Public Routes */}
-                <Route path="/" element={<HomePage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-
-                {/* Protected Routes */}
-                <Route
-                  path="/questions"
-                  element={
-                    <ProtectedRoute>
-                      <QuestionsPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/questions/:questionId"
-                  element={
-                    <ProtectedRoute>
-                      <QuestionDetailPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute requiredRole="admin">
-                      <AdminPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/profile"
-                  element={
-                    <ProtectedRoute>
-                      <UserProfilePage />
-                    </ProtectedRoute>
-                  }
-                />
-                {/* <Route
-                  path="/roadmap"
-                  element={
-                    <ProtectedRoute>
-                      <RoadmapsPage />
-                    </ProtectedRoute>
-                  }
-                /> */}
-                <Route
-                  path="/favorites"
-                  element={
-                    <ProtectedRoute>
-                      <FavoritesPage />
-                    </ProtectedRoute>
-                  }
-                />
-
-                {/* Catch all */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </Box>
-          </Box>
-        </AuthProvider>
-      </Router>
+    <ThemeProvider>
+      <AppWithTheme />
     </ThemeProvider>
   );
 }
