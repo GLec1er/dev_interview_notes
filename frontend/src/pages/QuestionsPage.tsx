@@ -68,6 +68,8 @@ import type { Question, Category, ContentBlock } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { ContentEditor } from '../components/Admin/ContentEditor';
 import { useTheme as useThemeContext } from '../context/ThemeContext';
+import { Header } from '../components/Header';
+import { Footer } from '../components/Footer';
 
 // Стеклянная цветовая палитра iOS 26 Liquid Glass - теперь реагирует на смену темы
 const getGlassColors = (mode: 'light' | 'dark') => {
@@ -2229,135 +2231,7 @@ export const QuestionsPage: React.FC = () => {
         },
       }}
     >
-      {/* AppBar Header в стеклянном стиле */}
-      <Box sx={{ 
-        position: 'sticky', 
-        zIndex: 1200, 
-        mb: 2, 
-      }}>
-        <Fade in timeout={400}>
-          <AppBar 
-            position="static" 
-            elevation={0}
-            sx={{ 
-              top: 0,
-              background: GLASS_COLORS.surface,
-              backdropFilter: 'blur(30px)',
-              WebkitBackdropFilter: 'blur(30px)',
-              borderBottom: '1px solid',
-              borderColor: GLASS_COLORS.border,
-              transition: 'all 0.3s ease',
-            }}
-          >
-            <Container maxWidth="xl">
-              <Toolbar sx={{ 
-                px: { xs: 1, sm: 2 },
-                py: 1.5,
-                minHeight: '64px !important'
-              }}>
-                <Typography 
-                  variant="h6" 
-                  sx={{ 
-                    flexGrow: 1,
-                    fontWeight: 700,
-                    color: GLASS_COLORS.textPrimary,
-                    fontSize: '1.45rem',
-                    cursor: 'pointer',
-                    letterSpacing: '-0.02em',
-                    display: 'flex',
-                    alignItems: 'center',
-                    '&:hover': { 
-                      color: GLASS_COLORS.primary,
-                      opacity: 0.9 
-                    }
-                  }}
-                  onClick={() => navigate('/')}
-                >
-                  Interview<span style={{ color: GLASS_COLORS.primary }}>Box</span>
-                  <span style={{
-                    fontSize: '0.75rem',
-                    fontWeight: 500,
-                    color: GLASS_COLORS.primary,
-                    marginLeft: '6px',
-                    backgroundColor: alpha('#FFFFFF', 0.3),
-                    padding: '2px 6px',
-                    borderRadius: '6px',
-                    alignSelf: 'flex-start',
-                    marginTop: '2px',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid',
-                    borderColor: alpha(GLASS_COLORS.primary, 0.3),
-                  }}>
-                    beta
-                  </span>
-                </Typography>
-                <Stack direction="row" spacing={1.5} alignItems="center">
-                  {user?.is_admin && !isMobile && (
-                    <Button
-                      variant="outlined"
-                      startIcon={<MapIcon />}
-                      onClick={() => navigate('/roadmap')}
-                      sx={{
-                        borderColor: alpha(GLASS_COLORS.primary, 0.5),
-                        color: GLASS_COLORS.primary,
-                        fontWeight: 600,
-                        textTransform: 'none',
-                        borderRadius: 3,
-                        background: GLASS_COLORS.surface,
-                        backdropFilter: 'blur(10px)',
-                        '&:hover': {
-                          backgroundColor: alpha(GLASS_COLORS.primary, 0.1),
-                          borderColor: GLASS_COLORS.primary,
-                        }
-                      }}
-                    >
-                      Дорожные карты
-                    </Button>
-                  )}
-                  <ThemeToggle />
-                  {user?.is_admin && (
-                    <Chip 
-                      label="Admin"
-                      onClick={() => navigate('/admin')}
-                      size="medium"
-                      sx={{ 
-                        fontWeight: 600,
-                        backgroundColor: alpha(GLASS_COLORS.success, 0.15),
-                        backdropFilter: 'blur(10px)',
-                        color: GLASS_COLORS.success,
-                        border: '1px solid',
-                        borderColor: alpha(GLASS_COLORS.success, 0.3),
-                      }}
-                    />
-                  )}
-                  <IconButton
-                    onClick={async () => {
-                      await logout();
-                      navigate('/login');
-                    }}
-                    size="medium"
-                    sx={{
-                      backgroundColor: alpha(GLASS_COLORS.error, 0.15),
-                      backdropFilter: 'blur(10px)',
-                      color: GLASS_COLORS.error,
-                      border: '1px solid',
-                      borderColor: alpha(GLASS_COLORS.error, 0.3),
-                      '&:hover': {
-                        backgroundColor: alpha(GLASS_COLORS.error, 0.25),
-                      },
-                      width: 40,
-                      height: 40
-                    }}
-                  >
-                    <LogoutIcon fontSize="small" />
-                  </IconButton>
-                </Stack>
-              </Toolbar>
-            </Container>
-          </AppBar>
-        </Fade>
-      </Box>
-
+      <Header />
       <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3 } }}>
         {/* Hero Section в стеклянном стиле */}
         <Box sx={{ mb: 6, textAlign: 'center', position: 'relative' }}>
@@ -3208,7 +3082,7 @@ export const QuestionsPage: React.FC = () => {
                   <Paper
                     elevation={0}
                     sx={{
-                      p: 3,
+                      p: { xs: 2, sm: 3 },
                       borderRadius: 4,
                       background: GLASS_COLORS.surface,
                       backdropFilter: 'blur(20px)',
@@ -3216,6 +3090,19 @@ export const QuestionsPage: React.FC = () => {
                       border: '1px solid',
                       borderColor: GLASS_COLORS.border,
                       width: '100%',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: '100%',
+                        background: `linear-gradient(135deg, ${GLASS_COLORS.glassHighlight} 0%, transparent 100%)`,
+                        opacity: 0.3,
+                        pointerEvents: 'none',
+                      },
                     }}
                   >
                     <Box sx={{ display: 'flex', justifyContent: 'center' }}>
@@ -3224,30 +3111,72 @@ export const QuestionsPage: React.FC = () => {
                         page={page}
                         onChange={(_, value) => setPage(value)}
                         shape="rounded"
-                        size="large"
                         sx={{
+                          '& .MuiPagination-ul': {
+                            flexWrap: 'nowrap',
+                            justifyContent: 'center',
+                          },
                           '& .MuiPaginationItem-root': {
                             fontWeight: 600,
-                            fontSize: '1rem',
+                            fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1rem' },
                             color: GLASS_COLORS.textSecondary,
                             border: '1px solid',
                             borderColor: GLASS_COLORS.border,
                             background: GLASS_COLORS.surface,
                             backdropFilter: 'blur(10px)',
-                            minWidth: 44,
-                            height: 44,
+                            minWidth: { xs: 36, sm: 40, md: 44 },
+                            height: { xs: 36, sm: 40, md: 44 },
+                            margin: { xs: '0 2px', sm: '0 4px' },
+                            transition: 'all 0.3s ease',
                             '&:hover': {
                               backgroundColor: alpha(GLASS_COLORS.primary, 0.1),
                               borderColor: GLASS_COLORS.primary,
                               color: GLASS_COLORS.primary,
+                              transform: 'translateY(-2px)',
                             },
                             '&.Mui-selected': {
                               background: `linear-gradient(135deg, ${GLASS_COLORS.primary}, ${alpha(GLASS_COLORS.primary, 0.7)})`,
                               color: 'white',
                               borderColor: GLASS_COLORS.primary,
+                              boxShadow: `0 4px 12px ${alpha(GLASS_COLORS.primary, 0.3)}`,
                               '&:hover': {
                                 background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.primary, 0.9)}, ${alpha(GLASS_COLORS.primary, 0.6)})`,
+                                transform: 'translateY(-2px)',
                               },
+                            },
+                            '&.Mui-disabled': {
+                              opacity: 0.5,
+                              background: alpha(GLASS_COLORS.surface, 0.3),
+                            },
+                            // Стили для иконок навигации
+                            '&.MuiPaginationItem-previousNext': {
+                              backgroundColor: alpha(GLASS_COLORS.primary, 0.05),
+                              borderColor: alpha(GLASS_COLORS.primary, 0.3),
+                              '&:hover': {
+                                backgroundColor: alpha(GLASS_COLORS.primary, 0.15),
+                                borderColor: GLASS_COLORS.primary,
+                              },
+                            },
+                            // Стили для многоточия
+                            '&.MuiPaginationItem-ellipsis': {
+                              border: 'none',
+                              background: 'transparent',
+                              backdropFilter: 'none',
+                              minWidth: { xs: 24, sm: 32, md: 36 },
+                              color: GLASS_COLORS.textSecondary,
+                              '&:hover': {
+                                backgroundColor: 'transparent',
+                                transform: 'none',
+                              },
+                            },
+                          },
+                          // Адаптивные медиа-запросы для очень маленьких экранов
+                          '@media (max-width: 380px)': {
+                            '& .MuiPaginationItem-root': {
+                              minWidth: 32,
+                              height: 32,
+                              fontSize: '0.75rem',
+                              margin: '0 1px',
                             },
                           },
                         }}
@@ -3508,6 +3437,7 @@ export const QuestionsPage: React.FC = () => {
 
       {/* Плавающая кнопка обратной связи */}
       <FeedbackFab />
+      <Footer />
     </Box>
   );
 };

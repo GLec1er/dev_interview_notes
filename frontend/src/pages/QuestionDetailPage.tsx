@@ -63,6 +63,8 @@ import { ContentEditor } from '../components/Admin/ContentEditor';
 import { useAuth } from '../context/AuthContext';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { useTheme as useThemeContext } from '../context/ThemeContext';
+import { Header } from '../components/Header';
+import { Footer } from '../components/Footer';
 
 
 // Стеклянная цветовая палитра iOS 26 Liquid Glass - теперь реагирует на смену темы
@@ -1015,7 +1017,6 @@ const handleCloseAnswerEdit = () => {
         position: 'relative',
         overflow: 'hidden',
         fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif',
-        py: 4,
         '&::before': {
           content: '""',
           position: 'absolute',
@@ -1032,6 +1033,7 @@ const handleCloseAnswerEdit = () => {
         },
       }}
     >
+      <Header />
       <Container maxWidth="lg">
         {/* Уведомления */}
         {showCopyNotification && (
@@ -2431,6 +2433,7 @@ const handleCloseAnswerEdit = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      <Footer />
     </Box>
   );
 };

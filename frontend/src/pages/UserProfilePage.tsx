@@ -53,6 +53,8 @@ import { useAuth } from '../context/AuthContext';
 import { questionCompletionService } from '../services/questionCompletionService';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { useTheme as useThemeContext } from '../context/ThemeContext';
+import { Header } from '../components/Header';
+import { Footer } from '../components/Footer';
 
 // Стеклянная цветовая палитра iOS 26 Liquid Glass - теперь реагирует на смену темы
 const getGlassColors = (mode: 'light' | 'dark') => {
@@ -1054,7 +1056,6 @@ export const UserProfilePage: React.FC = () => {
         position: 'relative',
         overflow: 'hidden',
         fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif',
-        py: 4,
         '&::before': {
           content: '""',
           position: 'absolute',
@@ -1071,6 +1072,7 @@ export const UserProfilePage: React.FC = () => {
         },
       }}
     >
+      <Header />
       <Container maxWidth="lg">
         {/* Кнопка назад */}
         <Stack 
@@ -2363,6 +2365,7 @@ export const UserProfilePage: React.FC = () => {
           </Stack>
         </Paper>
       </Container>
+      <Footer />
     </Box>
   );
 };

@@ -3924,6 +3924,21 @@ export const HomePage: React.FC = () => {
                   onClick={() => handleNavigation('/')}
                 >
                   Interview<span style={{ color: GLASS_COLORS.primary }}>Box</span>
+                  <Chip
+                                    label="beta"
+                                    size="small"
+                                    sx={{
+                                      ml: 1.5,
+                                      fontSize: '0.7rem',
+                                      fontWeight: 600,
+                                      height: 20,
+                                      backgroundColor: alpha(GLASS_COLORS.primary, 0.15),
+                                      backdropFilter: 'blur(10px)',
+                                      color: GLASS_COLORS.primary,
+                                      border: '1px solid',
+                                      borderColor: alpha(GLASS_COLORS.primary, 0.3),
+                                    }}
+                />
                 </Typography>
                 <Typography 
                   variant="body2" 
@@ -3934,7 +3949,8 @@ export const HomePage: React.FC = () => {
                     lineHeight: 1.5
                   }}
                 >
-                  Готовься к собеседованиям эффективно
+                  Платформа для подготовки к техническим собеседованиям.
+                  Большая база вопросов с подробными ответами.
                 </Typography>
               </Box>
 
