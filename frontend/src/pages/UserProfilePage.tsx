@@ -1056,20 +1056,6 @@ export const UserProfilePage: React.FC = () => {
         position: 'relative',
         overflow: 'hidden',
         fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: `
-            radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.4) 0%, transparent 40%),
-            radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.3) 0%, transparent 50%),
-            radial-gradient(circle at 40% 80%, rgba(200, 220, 255, 0.5) 0%, transparent 60%)
-          `,
-          pointerEvents: 'none',
-        },
       }}
     >
       <Header />
@@ -1280,7 +1266,7 @@ export const UserProfilePage: React.FC = () => {
                       sx={{
                         fontWeight: 700,
                         color: GLASS_COLORS.textPrimary,
-                        background: `linear-gradient(90deg, ${GLASS_COLORS.gold} 0%, ${GLASS_COLORS.silver} 50%, ${GLASS_COLORS.bronze} 100%)`,
+                        background: `linear-gradient(90deg, ${GLASS_COLORS.gold} 0%, ${GLASS_COLORS.bronze} 100%)`,
                         backgroundClip: 'text',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
