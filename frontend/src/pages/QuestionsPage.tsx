@@ -54,6 +54,12 @@ import {
   AssignmentRounded as AssignmentRoundedIcon,
   Add as AddIcon,
   Lock as LockIcon,
+  AccountTree,
+  Storage,
+  Code,
+  Bolt,
+  Terminal,
+  BubbleChart,
 } from '@mui/icons-material';
 import { questionService } from '../services/questionService';
 import { categoryService } from '../services/categoryService';
@@ -1078,10 +1084,12 @@ const GlassQuestionCard: React.FC<GlassQuestionCardProps> = ({
               {categoryName && (
                 <Tooltip title={categoryName} arrow placement="top">
                   <Chip
-                    icon={<CategoryIcon sx={{ 
-                      fontSize: { xs: '1.2rem', sm: '0.9rem' },
-                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
-                    }} />}
+                    icon={React.createElement(categoryIconMap[categoryName] || CategoryIcon, { 
+                      sx: { 
+                        fontSize: { xs: '1.2rem', sm: '0.9rem' },
+                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
+                      } 
+                    })}
                     label={
                       <Box sx={{ 
                         display: { xs: 'none', sm: 'inline' },
@@ -1099,7 +1107,7 @@ const GlassQuestionCard: React.FC<GlassQuestionCardProps> = ({
                       color: GLASS_COLORS.info,
                       border: '1px solid',
                       borderColor: alpha(GLASS_COLORS.info, 0.3),
-                      fontSize: '0.9rem',
+                      fontSize: '1.0rem',
                       height: { xs: 32, sm: 28 },
                       width: { xs: 32, sm: 'auto' },
                       justifyContent: 'center',
@@ -1109,11 +1117,9 @@ const GlassQuestionCard: React.FC<GlassQuestionCardProps> = ({
                       '& .MuiChip-icon': {
                         fontSize: { xs: '1.2rem', sm: '0.9rem' },
                         color: GLASS_COLORS.info,
-                        m: 0,
                       },
                       '& .MuiChip-label': {
                         display: { xs: 'none', sm: 'block' },
-                        px: 1.5,
                       },
                       '&:hover': {
                         background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.info, 0.25)} 0%, ${alpha(GLASS_COLORS.info, 0.15)} 100%)`,
@@ -1270,6 +1276,16 @@ const GlassFilterButton: React.FC<GlassFilterButtonProps> = ({ active, onClick, 
     {children}
   </Button>
 );
+
+
+const categoryIconMap: Record<string, React.ElementType> = {
+  'Django': Code,
+  'FastAPI': Bolt,
+  'Python': Terminal,
+  'SQL': Storage,
+  'System Design': AccountTree,
+  'Алгоритмы': BubbleChart,
+};
 
 // Компонент панели фильтров в стеклянном стиле
 const GlassFiltersPanel: React.FC<{
@@ -1467,9 +1483,11 @@ const GlassFiltersPanel: React.FC<{
                     </Stack>
                   );
                 }
+
+                const IconComponent = categoryIconMap[category.name] || CategoryIcon;
                 return (
                   <Stack direction="row" alignItems="center" spacing={1}>
-                    <CategoryIcon sx={{ color: GLASS_COLORS.info, fontSize: '1rem' }} />
+                    <IconComponent sx={{ color: GLASS_COLORS.info, fontSize: '1.2rem' }} />
                     <Typography sx={{ color: GLASS_COLORS.textPrimary, fontWeight: 600 }}>
                       {category.name}
                     </Typography>
@@ -1518,12 +1536,17 @@ const GlassFiltersPanel: React.FC<{
                   </Typography>
                 </Stack>
               </MenuItem>
-              {categories.map((category) => (
+              {categories.map((category) => {
+                const IconComponent = categoryIconMap[category.name] || CategoryIcon;
+
+              return (
                 <MenuItem key={category.id} value={category.id}>
                   <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ width: '100%' }}>
                     <Stack direction="row" alignItems="center" spacing={1}>
-                      <CategoryIcon sx={{ color: GLASS_COLORS.textSecondary, fontSize: '1rem' }} />
-                      <Typography sx={{ color: GLASS_COLORS.textSecondary }}>{category.name}</Typography>
+                      <IconComponent sx={{ color: GLASS_COLORS.textSecondary, fontSize: '1rem' }} />
+                      <Typography sx={{ color: GLASS_COLORS.textSecondary }}>
+                        {category.name}
+                      </Typography>
                     </Stack>
                     {category.question_count && (
                       <Chip
@@ -1542,7 +1565,8 @@ const GlassFiltersPanel: React.FC<{
                     )}
                   </Stack>
                 </MenuItem>
-              ))}
+              );
+            })}
             </Select>
             {isLoadingCategories && (
               <CircularProgress 
@@ -2103,6 +2127,13 @@ export const QuestionsPage: React.FC = () => {
     if (!categoryId) return null;
     const category = categories.find(c => c.id === categoryId);
     return category?.name || null;
+  };
+
+  const getSelectedCategoryIcon = () => {
+    if (!categoryId) return CategoryIcon;
+    const category = categories.find(c => c.id === categoryId);
+    if (!category) return CategoryIcon;
+    return categoryIconMap[category.name] || CategoryIcon;
   };
 
   const totalPages = Math.ceil(total / limit);
@@ -2958,7 +2989,9 @@ export const QuestionsPage: React.FC = () => {
                         label={`Категория: ${getSelectedCategoryName() || 'Неизвестно'}`}
                         size="small"
                         onDelete={() => setCategoryId('')}
-                        icon={<CategoryIcon />}
+                        icon={React.createElement(getSelectedCategoryIcon(), { 
+                          sx: { fontSize: '1rem' } 
+                        })}
                         sx={{
                           fontWeight: 600,
                           backgroundColor: alpha(GLASS_COLORS.info, 0.15),

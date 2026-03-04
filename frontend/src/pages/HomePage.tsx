@@ -57,6 +57,12 @@ import {
   School as SchoolIcon,
   Work as WorkIcon,
   TrendingUp as TrendingUpIcon,
+  AccountTree,
+  Storage,
+  Code,
+  Bolt,
+  Terminal,
+  BubbleChart,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { useTheme as useThemeContext } from '../context/ThemeContext';
@@ -301,11 +307,21 @@ const GlassStatCard = memo(({ title, value, color, icon, onClick }: {
   </Grow>
 ));
 
+const categoryIconMap: Record<string, React.ElementType> = {
+  'Django': Code,
+  'FastAPI': Bolt,
+  'Python': Terminal,
+  'SQL': Storage,
+  'System Design': AccountTree,
+  'Алгоритмы': BubbleChart,
+};
+
 const GlassCategoryCard = memo(({ category, onClick }: {
   category: ApiCategory;
   onClick: () => void;
 }) => {
   const color = getCategoryColor(category.name);
+  const CategoryIconComponent = categoryIconMap[category.name] || CategoryIcon;
   
   return (
     <Grow in timeout={1000}>
@@ -373,7 +389,7 @@ const GlassCategoryCard = memo(({ category, onClick }: {
               color: color,
               transition: 'all 0.3s ease',
             }}>
-              <CategoryIcon fontSize="large" />
+              <CategoryIconComponent fontSize="large" />
             </Box>
             <Typography 
               variant="h6" 
