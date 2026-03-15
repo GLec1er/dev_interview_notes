@@ -20,6 +20,8 @@ import {
   Add as AddIcon,
   Logout as LogoutIcon,
   Map as MapIcon,
+  Business as CompanyIcon,
+  AccountBox as AccountBoxIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -159,29 +161,26 @@ export const Header: React.FC<HeaderProps> = ({ onAddQuestion, showAddButton = f
                 <Stack direction="row" spacing={1.5} alignItems="center">
                   {isAuthenticated && (
                     <>
-                      {user?.is_admin && (
-                        <Button
-                          variant="outlined"
-                          startIcon={<MapIcon />}
-                          onClick={() => handleNavigation('/roadmap')}
-                          sx={{
-                            borderColor: alpha(GLASS_COLORS.primary, 0.5),
-                            color: GLASS_COLORS.primary,
-                            fontWeight: 600,
-                            textTransform: 'none',
-                            borderRadius: 3,
-                            background: GLASS_COLORS.surface,
-                            backdropFilter: 'blur(10px)',
+                      <Chip 
+                        label={`${user?.first_name} ${user?.last_name}`}
+                        size="medium"
+                        onClick={() => handleNavigation('/profile')}
+                        sx={{ 
+                          fontWeight: 500,
+                          backgroundColor: alpha(GLASS_COLORS.primary, 0.1),
+                          color: GLASS_COLORS.textPrimary,
+                          cursor: 'pointer',
+                          backdropFilter: 'blur(10px)',
+                          border: '1px solid',
+                          borderColor: alpha(GLASS_COLORS.primary, 0.2),
+                            '& .MuiChip-label': {
+                              px: 1.5,
+                            },
                             '&:hover': {
-                              backgroundColor: alpha(GLASS_COLORS.primary, 0.1),
-                              borderColor: GLASS_COLORS.primary,
+                              backgroundColor: alpha(GLASS_COLORS.primary, 0.2),
                             }
-                          }}
-                        >
-                          Дорожные карты
-                        </Button>
-                      )}
-                      
+                        }}
+                      />
                       {user?.is_admin && (
                         <Chip 
                           label="Admin"
@@ -337,6 +336,52 @@ export const Header: React.FC<HeaderProps> = ({ onAddQuestion, showAddButton = f
               >
                 {isAuthenticated && (
                   <>
+                    <Button
+                        fullWidth
+                        startIcon={<AccountBoxIcon />}
+                        sx={{
+                          justifyContent: 'flex-start',
+                          textTransform: 'none',
+                          color: GLASS_COLORS.warning,
+                          fontWeight: 500,
+                          fontSize: '0.95rem',
+                          px: 2,
+                          py: 1.5,
+                          borderRadius: 2,
+                          transition: 'all 0.2s ease',
+                          backgroundColor: alpha(GLASS_COLORS.warning, 0.05),
+                          '&:hover': {
+                            backgroundColor: alpha(GLASS_COLORS.warning, 0.15),
+                          },
+                        }}
+                        onClick={() => handleNavigation('/companies')}
+                      >
+                        {user?.first_name} {user?.last_name}
+                      </Button>
+                    {user?.is_admin && (
+                      <Button
+                        fullWidth
+                        startIcon={<CompanyIcon />}
+                        sx={{
+                          justifyContent: 'flex-start',
+                          textTransform: 'none',
+                          color: GLASS_COLORS.purple,
+                          fontWeight: 500,
+                          fontSize: '0.95rem',
+                          px: 2,
+                          py: 1.5,
+                          borderRadius: 2,
+                          transition: 'all 0.2s ease',
+                          backgroundColor: alpha(GLASS_COLORS.purple, 0.05),
+                          '&:hover': {
+                            backgroundColor: alpha(GLASS_COLORS.purple, 0.15),
+                          },
+                        }}
+                        onClick={() => handleNavigation('/companies')}
+                      >
+                        Пройти собеседование
+                      </Button>
+                    )}
                     {user?.is_admin && (
                       <Button
                         fullWidth
