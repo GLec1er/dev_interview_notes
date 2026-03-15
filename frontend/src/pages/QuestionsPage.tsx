@@ -72,6 +72,7 @@ import { ContentEditor } from '../components/Admin/ContentEditor';
 import { useTheme as useThemeContext } from '../context/ThemeContext';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
+import { NavigationBar } from '../components/NavigationBar';
 
 // Стеклянная цветовая палитра iOS 26 Liquid Glass - теперь реагирует на смену темы
 const getGlassColors = (mode: 'light' | 'dark') => {
@@ -1151,12 +1152,12 @@ const GlassQuestionCard: React.FC<GlassQuestionCardProps> = ({
                     size="small"
                     sx={{
                       fontWeight: 500,
-                      background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.question, 0.15)} 0%, ${alpha(GLASS_COLORS.question, 0.05)} 100%)`,
+                      background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.purple, 0.15)} 0%, ${alpha(GLASS_COLORS.purple, 0.05)} 100%)`,
                       backdropFilter: 'blur(20px)',
                       WebkitBackdropFilter: 'blur(20px)',
-                      color: GLASS_COLORS.question,
+                      color: GLASS_COLORS.purple,
                       border: '1px solid',
-                      borderColor: alpha(GLASS_COLORS.question, 0.3),
+                      borderColor: alpha(GLASS_COLORS.purple, 0.3),
                       fontSize: '0.9rem',
                       height: { xs: 32, sm: 28 },
                       width: { xs: 32, sm: 'auto' },
@@ -1166,18 +1167,17 @@ const GlassQuestionCard: React.FC<GlassQuestionCardProps> = ({
                       transition: 'all 0.2s ease',
                       '& .MuiChip-icon': {
                         fontSize: { xs: '1.2rem', sm: '0.9rem' },
-                        color: GLASS_COLORS.question,
-                        m: 0,
+                        color: GLASS_COLORS.purple,
                       },
                       '& .MuiChip-label': {
                         display: { xs: 'none', sm: 'block' },
                         px: 1.5,
                       },
                       '&:hover': {
-                        background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.question, 0.25)} 0%, ${alpha(GLASS_COLORS.question, 0.15)} 100%)`,
+                        background: `linear-gradient(135deg, ${alpha(GLASS_COLORS.purple, 0.25)} 0%, ${alpha(GLASS_COLORS.purple, 0.15)} 100%)`,
                         transform: 'translateY(-1px)',
-                        boxShadow: `0 4px 12px ${alpha(GLASS_COLORS.question, 0.15)}, 0 0 0 1px rgba(255,255,255,0.5) inset`,
-                        borderColor: alpha(GLASS_COLORS.question, 0.5),
+                        boxShadow: `0 4px 12px ${alpha(GLASS_COLORS.purple, 0.15)}, 0 0 0 1px rgba(255,255,255,0.5) inset`,
+                        borderColor: alpha(GLASS_COLORS.purple, 0.5),
                       },
                     }}
                   />
@@ -2247,120 +2247,17 @@ export const QuestionsPage: React.FC = () => {
     >
       <Header />
       <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3 } }}>
+        {/* Панель навигации */}
+        <Box sx={{ mb: 4 }}>
+          <NavigationBar 
+            showProfile={true}
+            showQuestions={true}
+            showCompanies={true}
+          />
+        </Box>
+
         {/* Hero Section в стеклянном стиле */}
-        <Box sx={{ mb: 6, textAlign: 'center', position: 'relative' }}>
-          {/* Кнопка назад в главное меню */}
-          <Button
-            variant="outlined"
-            startIcon={<ArrowBackIcon />}
-            onClick={() => navigate('/')}
-            sx={{
-              position: 'absolute',
-              left: 0,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              borderRadius: 3,
-              borderWidth: 2,
-              borderColor: alpha(GLASS_COLORS.primary, 0.3),
-              color: GLASS_COLORS.primary,
-              fontWeight: 600,
-              px: 3,
-              py: 1.5,
-              display: { xs: 'none', sm: 'flex' },
-              alignItems: 'center',
-              gap: 1,
-              background: GLASS_COLORS.surface,
-              backdropFilter: 'blur(10px)',
-              '&:hover': {
-                borderColor: GLASS_COLORS.primary,
-                background: alpha(GLASS_COLORS.primary, 0.1),
-                transform: 'translateY(-50%) translateX(-4px)',
-                boxShadow: `0 8px 24px ${alpha(GLASS_COLORS.primary, 0.2)}`,
-              },
-              transition: 'all 0.3s cubic-bezier(0.2, 0, 0, 1)',
-            }}
-          >
-            {isMobile ? <AssignmentRoundedIcon /> : 'В главное меню'}
-          </Button>
-
-          {/* Мобильная кнопка назад */}
-          <IconButton
-            onClick={() => navigate('/')}
-            sx={{
-              position: 'absolute',
-              left: 0,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              display: { xs: 'flex', sm: 'none' },
-              color: GLASS_COLORS.primary,
-              backgroundColor: alpha(GLASS_COLORS.primary, 0.15),
-              backdropFilter: 'blur(10px)',
-              border: '1px solid',
-              borderColor: alpha(GLASS_COLORS.primary, 0.3),
-              '&:hover': {
-                backgroundColor: alpha(GLASS_COLORS.primary, 0.25),
-              },
-            }}
-          >
-            <ArrowBackIcon />
-          </IconButton>
-
-          {/* Правая кнопка - в профиль */}
-          <Button
-            variant="outlined"
-            endIcon={<ArrowForwardIcon />}
-            onClick={() => navigate('/profile')}
-            sx={{
-              position: 'absolute',
-              right: 0,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              borderRadius: 3,
-              borderWidth: 2,
-              borderColor: alpha(GLASS_COLORS.primary, 0.3),
-              color: GLASS_COLORS.primary,
-              fontWeight: 600,
-              px: 3,
-              py: 1.5,
-              display: { xs: 'none', sm: 'flex' },
-              alignItems: 'center',
-              gap: 1,
-              background: GLASS_COLORS.surface,
-              backdropFilter: 'blur(10px)',
-              '&:hover': {
-                borderColor: GLASS_COLORS.primary,
-                background: alpha(GLASS_COLORS.primary, 0.1),
-                transform: 'translateY(-50%) translateX(4px)',
-                boxShadow: `0 8px 24px ${alpha(GLASS_COLORS.primary, 0.2)}`,
-              },
-              transition: 'all 0.3s cubic-bezier(0.2, 0, 0, 1)',
-            }}
-          >
-            {isMobile ? <PersonIcon /> : 'Мой профиль'}
-          </Button>
-
-          {/* Мобильная кнопка профиля */}
-          <IconButton
-            onClick={() => navigate('/profile')}
-            sx={{
-              position: 'absolute',
-              right: 0,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              display: { xs: 'flex', sm: 'none' },
-              color: GLASS_COLORS.primary,
-              backgroundColor: alpha(GLASS_COLORS.primary, 0.15),
-              backdropFilter: 'blur(10px)',
-              border: '1px solid',
-              borderColor: alpha(GLASS_COLORS.primary, 0.3),
-              '&:hover': {
-                backgroundColor: alpha(GLASS_COLORS.primary, 0.25),
-              },
-            }}
-          >
-            <PersonIcon />
-          </IconButton>
-
+        <Box sx={{ mb: 6, textAlign: 'center', position: 'relative', mt: 7}}>
           {/* Основная иконка с интерактивными элементами */}
           <Box
             sx={{
@@ -2542,7 +2439,6 @@ export const QuestionsPage: React.FC = () => {
 
           {/* Описание с кнопками быстрого доступа */}
           <Box sx={{ position: 'relative', maxWidth: '600px', mx: 'auto' }}>
-            {!isMobileFilter && (
             <Typography
               variant="h6"
               sx={{
@@ -2555,7 +2451,6 @@ export const QuestionsPage: React.FC = () => {
             >
               Совершенствуйте свои навыки прохождения собеседований с помощью нашей коллекции
             </Typography>
-            )}
             {/* Быстрые действия */}
             {!isMobileFilter && (
             <Stack direction="row" alignItems="center" justifyContent="center" flexWrap="wrap" gap={1}>

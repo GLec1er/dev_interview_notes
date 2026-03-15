@@ -55,6 +55,7 @@ import { ThemeToggle } from '../components/ThemeToggle';
 import { useTheme as useThemeContext } from '../context/ThemeContext';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
+import { NavigationBar } from '../components/NavigationBar';
 
 // Стеклянная цветовая палитра iOS 26 Liquid Glass - теперь реагирует на смену темы
 const getGlassColors = (mode: 'light' | 'dark') => {
@@ -1060,69 +1061,14 @@ export const UserProfilePage: React.FC = () => {
     >
       <Header />
       <Container maxWidth="lg">
-        {/* Кнопка назад */}
-        <Stack 
-          direction="row" 
-          spacing={2} 
-          sx={{ 
-            mb: 3,
-            flexWrap: 'wrap',
-            gap: 2,
-            alignItems: 'center'
-          }}
-        >
-          <Button
-            startIcon={<ArrowBackIcon />}
-            onClick={() => navigate('/questions')}
-            sx={{
-              borderRadius: 3,
-              background: GLASS_COLORS.surface,
-              backdropFilter: 'blur(10px)',
-              border: '1px solid',
-              borderColor: GLASS_COLORS.border,
-              color: GLASS_COLORS.primary,
-              px: 3,
-              py: 1,
-              fontWeight: 600,
-              '&:hover': {
-                background: alpha(GLASS_COLORS.primary, 0.1),
-                borderColor: GLASS_COLORS.primary,
-                transform: 'translateY(-1px)',
-              },
-              transition: 'all 0.3s ease',
-            }}
-            variant="text"
-          >
-            Назад
-          </Button>
-          
-          {/* Кнопка перехода к избранным вопросам */}
-          <Button
-            startIcon={<FavoriteIcon />}
-            onClick={() => navigate('/favorites')}
-            sx={{
-              borderRadius: 3,
-              background: GLASS_COLORS.surface,
-              backdropFilter: 'blur(10px)',
-              border: '1px solid',
-              borderColor: alpha(GLASS_COLORS.primary, 0.5),
-              color: GLASS_COLORS.primary,
-              px: 3,
-              py: 1,
-              fontWeight: 600,
-              '&:hover': {
-                background: alpha(GLASS_COLORS.primary, 0.1),
-                borderColor: GLASS_COLORS.primary,
-                transform: 'translateY(-1px)',
-                boxShadow: `0 4px 12px ${alpha(GLASS_COLORS.primary, 0.2)}`,
-              },
-              transition: 'all 0.3s ease',
-            }}
-            variant="outlined"
-          >
-            {isMobileFilter ? "Вопросы" : "Избранные вопросы"}
-          </Button>
-        </Stack>
+        {/* Панель навигации */}
+        <Box sx={{ mb: 4 }}>
+          <NavigationBar 
+            showProfile={true}
+            showQuestions={true}
+            showCompanies={true}
+          />
+        </Box>
 
         {/* Уведомления */}
         {(authError || localError) && (

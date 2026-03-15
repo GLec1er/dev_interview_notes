@@ -48,6 +48,7 @@ import { ThemeToggle } from '../components/ThemeToggle';
 import { useTheme as useThemeContext } from '../context/ThemeContext';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
+import { NavigationBar } from '../components/NavigationBar';
 
 
 // Стеклянная цветовая палитра iOS 26 Liquid Glass - теперь реагирует на смену темы
@@ -785,6 +786,14 @@ export const FavoritesPage: React.FC = () => {
     >
       <Header />
       <Container maxWidth="lg">
+        {/* Панель навигации */}
+        <Box sx={{ mb: 4 }}>
+          <NavigationBar 
+            showProfile={true}
+            showQuestions={true}
+            showCompanies={true}
+          />
+        </Box>
         {/* Кнопка "Наверх" */}
         {showScrollTop && (
           <Fab
@@ -812,31 +821,6 @@ export const FavoritesPage: React.FC = () => {
             <ScrollTopIcon />
           </Fab>
         )}
-
-        {/* Навигация */}
-        <Box sx={{ mb: 3 }}>
-          <Button
-            startIcon={<ArrowBackIcon />}
-            onClick={() => navigate('/profile')}
-            sx={{
-              color: GLASS_COLORS.primary,
-              background: GLASS_COLORS.surface,
-              backdropFilter: 'blur(10px)',
-              borderRadius: 3,
-              border: '1px solid',
-              borderColor: GLASS_COLORS.border,
-              px: 3,
-              py: 1,
-              '&:hover': {
-                background: alpha(GLASS_COLORS.primary, 0.1),
-                borderColor: GLASS_COLORS.primary,
-              },
-            }}
-            variant="text"
-          >
-            Назад в профиль
-          </Button>
-        </Box>
 
         {/* Уведомления об ошибках */}
         {error && (

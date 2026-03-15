@@ -66,6 +66,7 @@ import { useTheme as useThemeContext } from '../context/ThemeContext';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { ContentRendererQuestion } from '../components/ContentRendererQuestion';
+import { NavigationBar } from '../components/NavigationBar';
 
 
 // Стеклянная цветовая палитра iOS 26 Liquid Glass - теперь реагирует на смену темы
@@ -1022,6 +1023,14 @@ const handleCloseAnswerEdit = () => {
     >
       <Header />
       <Container maxWidth="lg">
+      {/* Панель навигации */}
+      <Box sx={{ mb: 4 }}>
+        <NavigationBar 
+          showProfile={true}
+          showQuestions={true}
+          showCompanies={true}
+        />
+      </Box>
         {/* Уведомления */}
         {showCopyNotification && (
           <Alert
@@ -1072,62 +1081,6 @@ const handleCloseAnswerEdit = () => {
             <ScrollTopIcon />
           </Fab>
         )}
-
-        {/* Кнопка назад */}
-        <Box sx={{ 
-          mb: 3, 
-          display: 'flex', 
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: 2
-        }}>
-          {/* Левая кнопка - назад к вопросам */}
-          <Button
-            startIcon={<ArrowBackIcon />}
-            onClick={() => navigate('/questions')}
-            sx={{
-              color: GLASS_COLORS.primary,
-              background: GLASS_COLORS.surface,
-              backdropFilter: 'blur(10px)',
-              borderRadius: 3,
-              border: '1px solid',
-              borderColor: GLASS_COLORS.border,
-              px: 3,
-              py: 1,
-              '&:hover': {
-                background: alpha(GLASS_COLORS.primary, 0.1),
-                borderColor: GLASS_COLORS.primary,
-              },
-            }}
-            variant="text"
-          >
-            Назад к вопросам
-          </Button>
-
-          {/* Правая кнопка - в профиль */}
-          <Button
-            endIcon={<ArrowForwardIcon />}
-            onClick={() => navigate('/profile')}
-            sx={{
-              color: GLASS_COLORS.primary,
-              background: GLASS_COLORS.surface,
-              backdropFilter: 'blur(10px)',
-              borderRadius: 3,
-              border: '1px solid',
-              borderColor: GLASS_COLORS.border,
-              px: 3,
-              py: 1,
-              '&:hover': {
-                background: alpha(GLASS_COLORS.primary, 0.1),
-                borderColor: GLASS_COLORS.primary,
-              },
-            }}
-            variant="text"
-          >
-            Мой профиль
-          </Button>
-        </Box>
 
         {/* Карточка вопроса в стеклянном стиле */}
         <Paper
