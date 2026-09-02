@@ -7,6 +7,10 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15%2B-4169E1?logo=postgresql&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)
 
+<p align="center">
+  <img src="docs/hero.svg" alt="Dev Interview Notes product overview" width="100%">
+</p>
+
 Dev Interview Notes is a full-stack interview preparation platform for organizing technical questions, studying by topic and difficulty, tracking progress, and practicing company-specific interview sets.
 
 The project is designed as a portfolio application and demonstrates a layered backend architecture, asynchronous database access, secure cookie-based authentication, role-based access control, migrations, and a responsive React user interface.
@@ -38,27 +42,51 @@ The project is designed as a portfolio application and demonstrates a layered ba
 
 ## Application architecture
 
-```text
-Browser
-  |
-  v
-React + TypeScript + Vite
-  |
-  | REST/JSON, credentials included
-  v
-FastAPI application
-  |-- Routers       HTTP endpoints and access checks
-  |-- Services      Business rules and orchestration
-  |-- Repositories  Database queries
-  |-- Schemas       Request/response validation
-  v
-SQLAlchemy async engine
-  |
-  v
-PostgreSQL
+```mermaid
+flowchart LR
+    Browser["Browser"]
+    Frontend["React + TypeScript<br/>Vite + Material UI"]
+    API["FastAPI API<br/><small>Routers · Services · Repositories</small>"]
+    DB[("PostgreSQL<br/>SQLAlchemy async")]
+    Migrations["Alembic<br/>migrations"]
+
+    Browser -->|"REST/JSON<br/>credentials included"| Frontend
+    Frontend -->|"HTTP /api/v1"| API
+    API --> DB
+    Migrations -.->|"schema changes"| DB
+
+    classDef client fill:#172554,stroke:#60A5FA,color:#EFF6FF
+    classDef backend fill:#12372A,stroke:#5BE7A9,color:#ECFDF5
+    classDef data fill:#3B1D5A,stroke:#C084FC,color:#FAF5FF
+    class Browser,Frontend client
+    class API,Migrations backend
+    class DB data
 ```
 
 The backend follows a router → service → repository separation. Database schema changes are versioned with Alembic rather than being created implicitly at application startup.
+
+## How the product works
+
+```mermaid
+flowchart LR
+    A["Create an account"] --> B["Explore questions"]
+    B --> C{"Choose a path"}
+    C --> D["Study by category"]
+    C --> E["Practice by company"]
+    C --> F["Follow a roadmap"]
+    D --> G["Save favorites"]
+    E --> G
+    F --> G
+    G --> H["Mark progress"]
+    H --> I["Review completion stats"]
+
+    classDef start fill:#172554,stroke:#60A5FA,color:#EFF6FF
+    classDef action fill:#12372A,stroke:#5BE7A9,color:#ECFDF5
+    classDef result fill:#3B1D5A,stroke:#C084FC,color:#FAF5FF
+    class A,B,C start
+    class D,E,F,G action
+    class H,I result
+```
 
 ## Repository structure
 
