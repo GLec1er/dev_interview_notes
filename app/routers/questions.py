@@ -30,7 +30,7 @@ router = APIRouter(
 @router.post(
     "/", 
     response_model=QuestionResponse, 
-    description="Создание нового вопроса",
+    description="Создание нового вопроса - таблица Question",
 )
 @check_permission(required_role=UserRole.ADMIN)
 async def create_question(

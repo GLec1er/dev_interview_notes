@@ -38,6 +38,14 @@ class QuestionCreate(BaseModel):
         description="Опубликован ли вопрос",
     )
     category_id: UUID
+    user_id: Optional[UUID] = Field(
+        None,
+        description="ID пользователя, создавшего вопрос",
+    )
+    company_id: Optional[UUID] = Field(
+        None,
+        description="ID компании, связанной с вопросом",
+    )
 
     class Config:
         from_attributes = True
@@ -54,6 +62,8 @@ class QuestionResponse(BaseModel):
     category_id: UUID
     updated_at: datetime
     user_id: UUID | None = None
+    company_id: UUID | None = None
+    answers: Optional[List[AnswerResponse]] = None
 
     class Config:
         from_attributes = True
@@ -72,6 +82,14 @@ class QuestionUpdate(BaseModel):
     difficulty: Optional[DifficultyQuestionLevel] = None
     is_published: Optional[bool] = None
     category_id: UUID
+    user_id: Optional[UUID] = Field(
+        None,
+        description="ID пользователя, создавшего вопрос",
+    )
+    company_id: Optional[UUID] = Field(
+        None,
+        description="ID компании, связанной с вопросом",
+    )
 
     class Config:
         from_attributes = True
@@ -104,6 +122,7 @@ class QuestionFilterParams(BaseModel):
     is_published: Optional[bool] = None
     difficulty: Optional[DifficultyQuestionLevel] = None
     category_id: Optional[UUID] = None
+    company_id: Optional[UUID] = None
 
     # доп.фильтры
     is_completed: Optional[bool] = None
@@ -121,6 +140,9 @@ class QuestionFilterParams(BaseModel):
         
         if self.category_id is not None:
             filters["category_id"] = self.category_id
+        
+        if self.company_id is not None:
+            filters["company_id"] = self.company_id
 
         if self.is_completed is not None:
             filters["is_completed"] = self.is_completed

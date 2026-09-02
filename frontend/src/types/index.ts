@@ -41,9 +41,12 @@ export interface Question {
   updated_at: string;
   category_id?: string; // ID категории
   category?: Category;
+  company_id?: string | null; // ID компании
+  company?: Company;
+  user_id?: string | null; // ID пользователя
+  answers?: Answer[]; // Ответы на вопрос
   exclude_inactive_categories?: boolean,
   is_completed?: boolean;
-  user_id?: string | null;
 }
 
 export interface QuestionCreate {
@@ -53,6 +56,8 @@ export interface QuestionCreate {
   difficulty: 'easy' | 'medium' | 'hard';
   is_published: boolean;
   category_id: string;
+  user_id?: string | null;
+  company_id?: string | null;
 }
 
 export interface QuestionUpdate {
@@ -62,6 +67,8 @@ export interface QuestionUpdate {
   difficulty?: 'easy' | 'medium' | 'hard';
   is_published?: boolean;
   category_id?: string;
+  user_id?: string | null;
+  company_id?: string | null;
 }
 
 export interface QuestionListResponse {
@@ -114,6 +121,43 @@ export interface CategoryUpdate {
 export interface CategoryListResponse {
   items: Category[];
   total: number;
+}
+
+// Company types
+export interface Company {
+  id: string;
+  name: string;
+  level: string;
+  slug: string;
+  description?: string;
+  logo_url?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  questions_count?: number;
+  completed_questions_count?: number;
+}
+
+export interface CompanyCreate {
+  name: string;
+  slug: string;
+  description?: string;
+  logo_url?: string;
+}
+
+export interface CompanyUpdate {
+  name?: string;
+  slug?: string;
+  description?: string;
+  logo_url?: string;
+  is_active?: boolean;
+}
+
+export interface CompanyListResponse {
+  items: Company[];
+  total: number;
+  page: number;
+  page_size: number;
 }
 
 // Content block types

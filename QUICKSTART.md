@@ -1,181 +1,73 @@
-# Запуск приложения
+# Quick Start
 
-## 1. Предварительные требования
+This guide starts the complete local development environment for Dev Interview Notes.
 
-- Docker и Docker Compose установлены
-- Или Python 3.11+ и PostgreSQL 15+ (для локального запуска)
+## Prerequisites
 
-## 2. Запуск через Docker Compose
+- Docker Engine 24+ with Docker Compose
+- Git
 
-### Для первого запуска:
+## Start with Docker Compose
 
 ```bash
-# Клонировать репозиторий
+git clone <your-repository-url>
 cd dev_interview_notes
-
-# Создать .env файл (если его нет)
 cp .env.example .env
-
-# Сборка и запуск контейнеров
-docker-compose up --build
+cp frontend/.env.example frontend/.env
+docker compose up --build db migrations api frontend
 ```
 
-Приложение будет доступно по адресу: **http://localhost:8888**
+Open the application at <http://localhost:5173>.
 
-- API Documentation: http://localhost:8888/docs
-- Alternative API Docs: http://localhost:8888/redoc
+The API is available at <http://localhost:8888>. Interactive documentation is available at <http://localhost:8888/docs>, and the health endpoint is <http://localhost:8888/health>.
 
-### Для последующих запусков:
+The database is exposed to the host on port `5454`. Inside Docker Compose, the API and migrations service connect to PostgreSQL through `db:5432`.
+
+## Common commands
 
 ```bash
-# Просто стартовать контейнеры
-docker-compose up
+# Run in the background
+docker compose up -d db migrations api frontend
 
-# Или в фоновом режиме
-docker-compose up -d
+# Follow application logs
+docker compose logs -f api
 
-# Остановить контейнеры
-docker-compose down
+# Stop services
+docker compose down
 
-# Остановить с удалением volumes (база данных)
-docker-compose down -v
+# Stop services and delete database data
+docker compose down -v
 ```
 
-## 3. Локальный запуск (без Docker)
+The optional `nginx` service requires reverse-proxy configuration and SSL files under `nginx/`. Those files are not included in the current development setup.
 
-### Установка зависимостей:
+## Local backend run
 
 ```bash
-# Создать виртуальное окружение
-python3 -m venv venv
-
-# Активировать окружение
-source venv/bin/activate  # macOS/Linux
-# или
-venv\Scripts\activate  # Windows
-
-# Установить зависимости
-pip install -r requirements.txt
-# или
-pip install -e .  # если используется pyproject.toml
+poetry install
+cp .env.example .env
+poetry run alembic upgrade head
+poetry run uvicorn app.core.main:app --reload --host 0.0.0.0 --port 8888
 ```
 
-### Запуск PostgreSQL локально:
+For a local PostgreSQL instance, update `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME` in `.env`.
+
+## Local frontend run
 
 ```bash
-# macOS с Homebrew
-brew services start postgresql
-
-# Или через Docker контейнер
-docker run --name interview_db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=interview_notes -p 5432:5432 -d postgres:15-alpine
+cd frontend
+cp .env.example .env
+yarn install
+yarn dev
 ```
 
-### Создание БД:
+Set `VITE_API_URL=http://localhost:8888/api/v1` in `frontend/.env` when the API runs locally.
+
+## First checks
 
 ```bash
-# Подключиться к PostgreSQL
-psql -U postgres
-
-# Создать БД (если её нет)
-CREATE DATABASE interview_notes;
-
-# Выход
-\q
-```
-
-### Запуск приложения:
-
-```bash
-# В корневой директории проекта
-uvicorn app.main:app --reload
-
-# Или с указанием хоста и порта
-uvicorn app.main:app --host 0.0.0.0 --port 8888 --reload
-```
-
-## 4. Проверка здоровья приложения
-
-```bash
-# Health check
+curl http://localhost:8888/
 curl http://localhost:8888/health
-
-# Должен вернуть:
-# {"status":"ok"}
 ```
 
-## 5. Переменные окружения
-
-Создайте `.env` файл в корневой директории:
-
-```env
-# Database
-DB_HOST=postgres          # или localhost для локального запуска
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_NAME=interview_notes
-DATABASE_URL=postgresql://postgres:postgres@postgres:5432/interview_notes
-
-# App
-DEBUG=True
-ENVIRONMENT=development
-```
-
-## 6. Тестирование API
-
-После запуска приложения, откройте в браузере:
-
-**http://localhost:8888/docs**
-
-Это откроет Swagger UI интерфейс где можно тестировать все endpoints.
-
-## 7. Решение проблем
-
-### Ошибка: "Could not connect to database"
-
-```bash
-# Проверить статус PostgreSQL контейнера
-docker-compose ps
-
-# Просмотреть логи БД
-docker-compose logs postgres
-
-# Перезапустить контейнер БД
-docker-compose restart postgres
-```
-
-### Таблицы не создаются
-
-Таблицы создаются автоматически при запуске приложения (в lifespan контексте).
-Если не создаются, проверить логи:
-
-```bash
-docker-compose logs app
-```
-
-### Ошибка с импортами
-
-```bash
-# Переустановить зависимости
-pip install -r requirements.txt --force-reinstall
-
-# Или с pyproject.toml
-pip install -e . --force-reinstall
-```
-
-## 8. Остановка и очистка
-
-```bash
-# Остановить контейнеры
-docker-compose down
-
-# Полная очистка (удалит БД)
-docker-compose down -v
-
-# Удалить образы
-docker-compose down -v --rmi all
-```
-
----
-
-**Готово!** Приложение должно быть запущено и готово к использованию.
+For configuration, architecture, API routes, and contribution workflow, see the [main README](README.md) and the [docs](docs/).

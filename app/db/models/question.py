@@ -55,6 +55,13 @@ class ProgrammingLanguage(str, Enum):
     OTHER = "other"
 
 
+class LevelCompanyInterview(str, Enum):
+    """Уровни компаний по сложности интервью."""
+    JUNIOR = "junior"
+    MIDDLE = "middle"
+    SENIOR = "senior"
+
+
 class Company(Base):
     """Модель компании."""
     
@@ -70,6 +77,13 @@ class Company(Base):
         nullable=False, 
         index=True,
         comment='Название компании'
+    )
+    level: Mapped[LevelCompanyInterview] = mapped_column(
+        SQLEnum(LevelCompanyInterview), 
+        nullable=True,
+        default=LevelCompanyInterview.JUNIOR.value,
+        index=True,
+        comment='Уровень сложности интервью в компании'
     )
     slug: Mapped[str] = mapped_column(
         String(255), 
@@ -460,3 +474,139 @@ class Category(Base):
 #             'created_at'
 #         ),
 #     )
+
+
+class Roadmap(Base):
+    """Модель дорожной карты профессии."""
+    
+    __tablename__ = "roadmaps"
+    
+    id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4
+    )
+    title: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        index=True,
+        comment='Название дорожной карты'
+    )
+    slug: Mapped[str] = mapped_column(
+        String(255),
+        unique=True,
+        nullable=False,
+        index=True,
+        comment='Уникальный слаг дорожной карты'
+    )
+    profession: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False,
+        index=True,
+        comment='Профессия/специальность (например: Backend Developer)'
+    )
+    description: Mapped[Optional[str]] = mapped_column(
+        TEXT,
+        nullable=True,
+        comment='Описание дорожной карты'
+    )
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
+        index=True,
+        comment='Активна ли дорожная карта'
+    )
+    
+    ############# Time metadata #############
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        server_default=func.now(),
+        nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+    
+    ############# Relationships #############
+    roadmap_items: Mapped[List["RoadmapItem"]] = relationship(
+        "RoadmapItem",
+        back_populates="roadmap",
+        cascade="all, delete-orphan",
+    )
+    
+    __table_args__ = (
+        Index(
+            'idx_roadmaps_profession_active',
+            'profession',
+            'is_active'
+        ),
+    )
+
+
+class RoadmapItem(Base):
+    """Модель элемента дорожной карты (связь категория-вопросы)."""
+    
+    __tablename__ = "roadmap_items"
+    
+    id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4
+    )
+    roadmap_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("roadmaps.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+        comment='ID дорожной карты'
+    )
+    category_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("categories.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+        comment='ID категории'
+    )
+    # Может содержать выбранные вопросы из категории (JSON array с ID)
+    question_ids: Mapped[Optional[List[str]]] = mapped_column(
+        JSONB,
+        nullable=True,
+        default=list,
+        comment='Список ID вопросов из этой категории (если пусто - все вопросы)'
+    )
+    order: Mapped[int] = mapped_column(
+        nullable=False,
+        default=0,
+        comment='Порядок элемента в дорожной карте'
+    )
+    
+    ############# Time metadata #############
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        server_default=func.now(),
+        nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+    
+    ############# Relationships #############
+    roadmap: Mapped["Roadmap"] = relationship(
+        "Roadmap",
+        back_populates="roadmap_items"
+    )
+    category: Mapped["Category"] = relationship("Category")
+    
+    __table_args__ = (
+        Index(
+            'idx_roadmap_items_roadmap_order',
+            'roadmap_id',
+            'order'
+        ),
+    )

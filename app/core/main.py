@@ -15,10 +15,12 @@ from app.core.loggers import log
 from app.routers.questions import router as question_router
 from app.routers.answers import router as answer_router
 from app.routers.category import router as category_router
+from app.routers.companies import router as companies_router
 from app.routers.auth import router as auth_router
 from app.routers.users import router as users_router
 from app.routers.question_completion import router as question_completion_router
 from app.routers.question_favorite import router as question_favorite_router
+from app.routers.roadmap import router as roadmap_router
 
 
 @asynccontextmanager
@@ -54,8 +56,10 @@ app.add_middleware(CookieAuthMiddleware)
 app.include_router(question_router)
 app.include_router(answer_router)
 app.include_router(category_router)
+app.include_router(companies_router)
 app.include_router(question_completion_router)
 app.include_router(question_favorite_router)
+app.include_router(roadmap_router)
 app.include_router(auth_router)
 app.include_router(users_router)
 
@@ -94,9 +98,9 @@ async def health():
     health_info = {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
-        "service": settings.app_name,
-        "version": settings.app_version,
-        "environment": settings.environment,
+        "service": settings.app.app_name,
+        "version": settings.app.app_version,
+        "environment": settings.app.environment,
         "dependencies": {
             "database": db_status,
         }

@@ -52,11 +52,15 @@ class QuestionService:
             ValueError: Если вопрос с таким слагом уже существует
         """
         try:
+            # Для обычных пользователей вопрос будет привязан к их ID, для админов - без привязки
             question_user = None
             if not current_user.is_admin:
                 question_user = current_user.id
 
-            question = await self.repository.create(data, user_id=question_user)
+            question = await self.repository.create(
+                obj_in=data, 
+                user_id=question_user,
+            )
             log.info(f"✅ Вопрос успешно создан: {question.id}")
             return QuestionResponse.model_validate(question)
         except ValueError as e:

@@ -120,6 +120,7 @@ class UserInternal(BaseModel):
 
 # ================ User Schemas ====================
 class UserMe(UserBase):
+    id: UUID
     role: UserRole = Field(
         ..., 
         description="Роль пользователя",

@@ -44,12 +44,12 @@ import {
   Category as CategoryIcon,
   Search as SearchIcon,
   Clear as ClearIcon,
-  ArrowUpward as ArrowUpIcon,
-  ArrowDownward as ArrowDownIcon,
 } from '@mui/icons-material';
 import { questionService } from '../../services/questionService';
 import { categoryService } from '../../services/categoryService';
-import type { Question, Category, ContentBlock } from '../../types';
+import { companyService } from '../../services/companyService';
+import { userService } from '../../services/userService';
+import type { Question, Category, Company, ContentBlock } from '../../types';
 import { ContentEditor } from './ContentEditor';
 
 // Нейтральная цветовая палитра
@@ -135,8 +135,12 @@ export const AdminQuestions: React.FC = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [filteredQuestions, setFilteredQuestions] = useState<Question[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [isLoadingCompanies, setIsLoadingCompanies] = useState(false);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [contentTab, setContentTab] = useState(0);
@@ -146,6 +150,8 @@ export const AdminQuestions: React.FC = () => {
     difficulty: 'easy' as 'easy' | 'medium' | 'hard',
     is_published: false,
     category_id: '',
+    user_id: '',
+    company_id: '',
   });
   const [content, setContent] = useState<ContentBlock[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -214,6 +220,32 @@ export const AdminQuestions: React.FC = () => {
     }
   }, []);
 
+  const loadCompanies = useCallback(async () => {
+    try {
+      setIsLoadingCompanies(true);
+      const data = await companyService.getCompanies(1, 100);
+      setCompanies(data.items);
+    } catch (err) {
+      console.error('Failed to load companies:', err);
+      setError('Failed to load companies.');
+    } finally {
+      setIsLoadingCompanies(false);
+    }
+  }, []);
+
+  const loadUsers = useCallback(async () => {
+    try {
+      setIsLoadingUsers(true);
+      const data = await userService.getUsers(1, 100);
+      setUsers(data.items);
+    } catch (err) {
+      console.error('Failed to load users:', err);
+      setError('Failed to load users.');
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  }, []);
+
   useEffect(() => {
     loadQuestions();
   }, [loadQuestions]);
@@ -221,6 +253,14 @@ export const AdminQuestions: React.FC = () => {
   useEffect(() => {
     loadCategories();
   }, [loadCategories]);
+
+  useEffect(() => {
+    loadCompanies();
+  }, [loadCompanies]);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
 
   // Фильтрация по поиску
   useEffect(() => {
@@ -249,6 +289,8 @@ export const AdminQuestions: React.FC = () => {
           is_published: fullQuestion.is_published,
           // Используем category_id из вопроса, если он есть
           category_id: fullQuestion.category_id || question.category_id || '',
+          user_id: fullQuestion.user_id || '',
+          company_id: fullQuestion.company_id || '',
         });
         
         // Конвертируем контент в правильный формат
@@ -279,6 +321,8 @@ export const AdminQuestions: React.FC = () => {
           difficulty: question.difficulty,
           is_published: question.is_published,
           category_id: question.category_id || '',
+          user_id: question.user_id || '',
+          company_id: question.company_id || '',
         });
         
         // Конвертируем для базового вопроса
@@ -308,6 +352,8 @@ export const AdminQuestions: React.FC = () => {
         difficulty: 'easy',
         is_published: false,
         category_id: '',
+        user_id: '',
+        company_id: '',
       });
       setContent([]);
     }
@@ -348,6 +394,8 @@ export const AdminQuestions: React.FC = () => {
         is_published: formData.is_published,
         content: content,
         category_id: formData.category_id,
+        user_id: formData.user_id || undefined,
+        company_id: formData.company_id || undefined,
       };
 
       if (editingQuestion) {
@@ -387,6 +435,8 @@ export const AdminQuestions: React.FC = () => {
         is_published: !question.is_published,
         content: question.content,
         category_id: question.category_id,
+        user_id: question.user_id || undefined,
+        company_id: question.company_id || undefined,
       });
 
       // Обновляем локальное состояние
@@ -452,11 +502,6 @@ export const AdminQuestions: React.FC = () => {
     }
     
     return 'No category';
-  };
-
-  // Функция для получения ID категории из вопроса
-  const getCategoryId = (question: Question) => {
-    return question.category_id || question.category?.id || '';
   };
 
   const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
@@ -1189,7 +1234,7 @@ export const AdminQuestions: React.FC = () => {
         <DialogContent sx={{ pt: 3 }}>
           <Tabs 
             value={contentTab} 
-            onChange={(e, v) => setContentTab(v)}
+            onChange={(_, v) => setContentTab(v)}
             sx={{ mb: 3 }}
           >
             <Tab label="Basic Info" />
@@ -1255,6 +1300,80 @@ export const AdminQuestions: React.FC = () => {
                   ))}
                 </Select>
                 {isLoadingCategories && (
+                  <CircularProgress 
+                    size={20} 
+                    sx={{ 
+                      position: 'absolute', 
+                      right: 40, 
+                      top: '50%', 
+                      transform: 'translateY(-50%)' 
+                    }} 
+                  />
+                )}
+              </FormControl>
+
+              {/* Company */}
+              <FormControl fullWidth size="medium">
+                <InputLabel>Company (Optional)</InputLabel>
+                <Select
+                  value={formData.company_id}
+                  label="Company (Optional)"
+                  onChange={(e) => setFormData({ ...formData, company_id: e.target.value })}
+                  disabled={isLoadingCompanies}
+                  sx={{
+                    borderRadius: 2,
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: NEUTRAL_COLORS.accent,
+                    }
+                  }}
+                >
+                  <MenuItem value="">
+                    <em>No company</em>
+                  </MenuItem>
+                  {companies.map((company) => (
+                    <MenuItem key={company.id} value={company.id}>
+                      {company.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {isLoadingCompanies && (
+                  <CircularProgress 
+                    size={20} 
+                    sx={{ 
+                      position: 'absolute', 
+                      right: 40, 
+                      top: '50%', 
+                      transform: 'translateY(-50%)' 
+                    }} 
+                  />
+                )}
+              </FormControl>
+
+              {/* User */}
+              <FormControl fullWidth size="medium">
+                <InputLabel>User (Optional)</InputLabel>
+                <Select
+                  value={formData.user_id}
+                  label="User (Optional)"
+                  onChange={(e) => setFormData({ ...formData, user_id: e.target.value })}
+                  disabled={isLoadingUsers}
+                  sx={{
+                    borderRadius: 2,
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: NEUTRAL_COLORS.accent,
+                    }
+                  }}
+                >
+                  <MenuItem value="">
+                    <em>No user assigned</em>
+                  </MenuItem>
+                  {users.map((user) => (
+                    <MenuItem key={user.id} value={user.id}>
+                      {user.first_name} {user.last_name} ({user.email})
+                    </MenuItem>
+                  ))}
+                </Select>
+                {isLoadingUsers && (
                   <CircularProgress 
                     size={20} 
                     sx={{ 

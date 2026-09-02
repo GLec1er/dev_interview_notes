@@ -13,7 +13,7 @@ import {
   Chip,
   Stack,
   Paper,
-  useTheme,
+  useTheme as useMuiTheme,
   useMediaQuery,
   Fade,
   alpha,
@@ -26,12 +26,18 @@ import {
   Chat as AnswersIcon,
   AdminPanelSettings as AdminIcon,
   People as UsersIcon,
+  Map as RoadmapsIcon,
+  MapOutlined as MapOutlinedIcons,
+  Business as CompanyIcon
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { AdminQuestions } from '../components/Admin/AdminQuestions';
 import { AdminCategories } from '../components/Admin/AdminCategories';
 import { AdminAnswers } from '../components/Admin/AdminAnswers';
 import { AdminUsers } from '../components/Admin/AdminUsers';
+import { AdminRoadmaps } from '../components/Admin/AdminRoadmaps';
+import { AdminRoadmapItems } from '../components/Admin/AdminRoadmapItems';
+import { AdminCompanies } from '../components/Admin/AdminCompanies';
 
 // Нейтральная цветовая палитра (такая же как на главной)
 const NEUTRAL_COLORS = {
@@ -85,12 +91,12 @@ function a11yProps(index: number) {
 
 export const AdminPage: React.FC = () => {
   const navigate = useNavigate();
-  const theme = useTheme();
+  const theme = useMuiTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { user, logout } = useAuth();
   const [tabValue, setTabValue] = useState(0);
 
-  const handleTabChange = useCallback((event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = useCallback((_: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   }, []);
 
@@ -375,11 +381,29 @@ export const AdminPage: React.FC = () => {
                 {...a11yProps(2)} 
               />
               <Tab 
+                icon={<CompanyIcon />} 
+                iconPosition="start"
+                label="Companies" 
+                {...a11yProps(3)} 
+              />
+              <Tab 
                 icon={<UsersIcon />} 
                 iconPosition="start"
                 label="Users" 
-                {...a11yProps(3)} 
+                {...a11yProps(4)} 
               />
+              <Tab 
+              icon={<MapOutlinedIcons />} 
+              iconPosition="start"
+              label="Roadmaps" 
+              {...a11yProps(5)} 
+            />
+            <Tab 
+              icon={<RoadmapsIcon />} 
+              iconPosition="start"
+              label="Roadmap Items" 
+              {...a11yProps(6)} 
+            />
             </Tabs>
           </Box>
 
@@ -398,7 +422,17 @@ export const AdminPage: React.FC = () => {
             </TabPanel>
 
             <TabPanel value={tabValue} index={3}>
+              <AdminCompanies />
+            </TabPanel>
+
+            <TabPanel value={tabValue} index={4}>
               <AdminUsers />
+            </TabPanel>
+            <TabPanel value={tabValue} index={5}>
+              <AdminRoadmaps />
+            </TabPanel>
+            <TabPanel value={tabValue} index={6}>
+              <AdminRoadmapItems />
             </TabPanel>
           </Box>
         </Paper>

@@ -50,7 +50,7 @@ const getGlassColors = (mode: 'light' | 'dark') => {
       warning: 'rgba(255, 150, 0, 0.9)',
       purple: 'rgba(200, 100, 255, 0.9)',
       glassHighlight: 'rgba(0, 212, 255, 0.2)',
-      interviewGradient: 'linear-gradient(135deg, #00ff87 0%, #60efff 100%)',
+      interviewGradient: 'linear-gradient(135deg, #00d371ff 0%, #74ecfaff 100%)',
       interviewGlow: 'rgba(0, 255, 135, 0.4)',
     };
   }

@@ -30,6 +30,8 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
       DB_NAME: ${DB_NAME:-interview_notes}
       PYTHONUNBUFFERED: 1
+    ports:
+      - "8888:8888"
     expose:
       - "8888"  # Делаем порт доступным только внутри сети
     depends_on:
@@ -46,6 +48,8 @@ services:
       context: .
       dockerfile: Dockerfile.frontend
     container_name: frontend
+    ports:
+      - "5173:5173"
     expose:
       - "5173"  # Делаем порт доступным только внутри сети
     networks:
@@ -54,7 +58,7 @@ services:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      - VITE_API_URL=/api/v1
+      - VITE_API_URL=http://localhost:8888/api/v1
     command: yarn dev --host 0.0.0.0
 
   migrations:

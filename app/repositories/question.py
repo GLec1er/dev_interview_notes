@@ -64,7 +64,8 @@ class QuestionRepository(
                 or_(
                     self.model.user_id == current_user_id,
                     self.model.user_id.is_(None),
-                )
+                ),
+                # self.model.company_id.is_(None)
             )
             
             # Применяем фильтры
@@ -86,7 +87,7 @@ class QuestionRepository(
             if pagination:
                 query = query.offset((pagination.page_number - 1) * pagination.limit).limit(pagination.limit)
             
-            result = await self.session.execute(query)
+            result = await self.session.execute(query.options(selectinload(Question.answers)))
             question_list = result.scalars().all()
             
         except SQLAlchemyError as e:

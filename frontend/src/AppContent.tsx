@@ -13,6 +13,10 @@ import { QuestionDetailPage } from './pages/QuestionDetailPage';
 import { AdminPage } from './pages/AdminPage';
 import { UserProfilePage } from './pages/UserProfilePage';
 import { FavoritesPage } from './pages/FavoritesPage';
+import { RoadmapsPage } from './pages/RoadmapsPage';
+import { CompaniesPage } from './pages/CompaniesPage';
+import { CompanyQuestionsPage } from './pages/CompanyQuestionsPage';
+import { InterviewModePage } from './pages/InterviewModePage';
 
 function AppContent() {
   const theme = useMuiTheme();
@@ -79,6 +83,30 @@ function AppContent() {
 
                 {/* Protected Routes */}
                 <Route
+                  path="/companies"
+                  element={
+                    <ProtectedRoute>
+                      <CompaniesPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/companies/:companyId/questions"
+                  element={
+                    <ProtectedRoute>
+                      <CompanyQuestionsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/companies/:companyId/interview/:questionIndex"
+                  element={
+                    <ProtectedRoute>
+                      <InterviewModePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/questions"
                   element={
                     <ProtectedRoute>
@@ -115,6 +143,14 @@ function AppContent() {
                   element={
                     <ProtectedRoute>
                       <FavoritesPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/roadmap"
+                  element={
+                    <ProtectedRoute>
+                      <RoadmapsPage />
                     </ProtectedRoute>
                   }
                 />

@@ -1,183 +1,106 @@
-# Interview Questions Frontend
+# Frontend Documentation
 
-Красивый и современный фронтенд для приложения "Interview Questions" на React + Material UI.
+The frontend is a responsive React application for browsing interview questions, following learning roadmaps, practicing company-specific interview sets, and managing personal study progress.
 
-## 🚀 Возможности
+## Stack
 
-- ✅ Аутентификация и авторизация (регистрация, вход, выход)
-- ✅ Просмотр списка вопросов с фильтрацией и пагинацией
-- ✅ Просмотр деталей вопроса с ответами в аккордионе
-- ✅ Подсветка синтаксиса кода (react-syntax-highlighter)
-- ✅ Админ панель для управления вопросами и категориями
-- ✅ Защищенные маршруты (ProtectedRoute)
-- ✅ Обработка ошибок и loading состояний
-- ✅ Адаптивный дизайн (мобильный, планшет, десктоп)
+- React 19 and TypeScript
+- Vite for development and production builds
+- Material UI and Emotion for the component system and theming
+- React Router for client-side routing
+- TanStack Query and Axios-based service modules for API communication
+- React Hook Form and Zod for form state and validation
+- React Syntax Highlighter for code content
 
-## 📋 Требования
-
-- Node.js 16+
-- npm или yarn
-
-## 🔧 Установка
-
-### 1. Установить зависимости
+## Setup
 
 ```bash
 cd frontend
-yarn install
-# или
-npm install
-```
-
-### 2. Создать .env файл
-
-```bash
 cp .env.example .env
+yarn install
+yarn dev
 ```
 
-Отредактируйте `.env` если нужно изменить URL API:
+The development server runs at <http://localhost:5173>.
+
+The API URL is configured with `VITE_API_URL`:
 
 ```env
 VITE_API_URL=http://localhost:8888/api/v1
 ```
 
-## 🏃 Запуск
+The API client sends requests with credentials enabled because authentication is implemented with HTTP-only cookies.
 
-### Режим разработки
-
-```bash
-yarn dev
-# или
-npm run dev
-```
-
-Приложение будет доступно по адресу: **http://localhost:5173**
-
-### Сборка для продакшена
+## Available scripts
 
 ```bash
-yarn build
-# или
-npm run build
+yarn dev       # Start Vite with hot module replacement
+yarn build     # Type-check and create a production build
+yarn lint      # Run ESLint
+yarn preview   # Preview the production build locally
 ```
 
-### Предпросмотр продакшена
+The project also contains `package-lock.json` and `yarn.lock`; use one package manager consistently for a given checkout. The Dockerfile uses Yarn.
 
-```bash
-yarn preview
-# или
-npm run preview
-```
+## Application routes
 
-## 📁 Структура проекта
+| Route | Access | Purpose |
+| --- | --- | --- |
+| `/` | Public | Landing page and product overview |
+| `/login` | Public | Sign in |
+| `/register` | Public | Create an account |
+| `/forgot-password` | Public | Request password recovery |
+| `/questions` | Authenticated | Browse and filter the question library |
+| `/questions/:questionId` | Authenticated | Read a question, answers, and study actions |
+| `/companies` | Authenticated | Browse company interview sets |
+| `/companies/:companyId/questions` | Authenticated | Review questions for a company |
+| `/companies/:companyId/interview/:questionIndex` | Authenticated | Practice interview mode |
+| `/roadmap` | Authenticated | Browse profession learning roadmaps |
+| `/favorites` | Authenticated | Review saved questions |
+| `/profile` | Authenticated | Manage the current profile |
+| `/admin` | Admin | Manage users and learning content |
 
-```
+Unknown routes redirect to `/`.
+
+## Frontend structure
+
+```text
 src/
-├── components/          # React компоненты
-│   ├── Admin/          # Админ компоненты
-│   ├── CodeBlock.tsx   # Компонент для отображения кода
-│   ├── ContentRenderer.tsx  # Рендеринг контента
-│   └── ProtectedRoute.tsx   # Защищенные маршруты
-├── context/            # React Context (AuthContext)
-├── hooks/              # Custom hooks
-├── pages/              # Страницы приложения
-│   ├── HomePage.tsx
-│   ├── LoginPage.tsx
-│   ├── RegisterPage.tsx
-│   ├── QuestionsPage.tsx
-│   ├── QuestionDetailPage.tsx
-│   └── AdminPage.tsx
-├── services/           # API сервисы
-│   ├── api.ts         # Axios instance с interceptors
-│   ├── authService.ts
-│   ├── questionService.ts
-│   ├── answerService.ts
-│   └── categoryService.ts
-├── types/              # TypeScript типы
-├── utils/              # Утилиты
-├── App.tsx            # Главный компонент
-└── main.tsx           # Точка входа
+├── components/       # Shared UI, navigation, content rendering, and admin components
+├── context/          # Authentication and theme providers
+├── pages/            # Route-level screens
+├── services/         # API clients grouped by resource
+├── types/            # Shared TypeScript types
+├── utils/             # UI and formatting helpers
+├── App.tsx
+├── AppContent.tsx    # Router and route protection
+└── main.tsx
 ```
 
-## 🔐 Аутентификация
+## Authentication flow
 
-Приложение использует JWT токены для аутентификации:
+1. The user registers or signs in through `authService`.
+2. The API sets access and refresh JWT cookies with the HTTP-only flag.
+3. `AuthContext` loads the current user and exposes authentication state to the UI.
+4. `ProtectedRoute` guards authenticated and admin-only routes.
+5. The Axios client attempts `/auth/refresh` when an access token expires.
 
-- **Access Token** - хранится в HTTP-only cookie, используется для запросов к API
-- **Refresh Token** - хранится в HTTP-only cookie, используется для обновления access token
+## Content rendering
 
-При истечении access token, приложение автоматически пытается обновить его используя refresh token.
+Question content is stored as structured blocks. The renderer supports headings, paragraphs, code, info/warning blocks, images, and syntax highlighting. This keeps content editable in the admin panel while allowing the reader UI to present a consistent design.
 
-## 🛣️ Маршруты
+## Troubleshooting
 
-### Публичные маршруты
-- `/` - Главная страница
-- `/login` - Страница входа
-- `/register` - Страница регистрации
+### The frontend cannot reach the API
 
-### Защищенные маршруты (требуется авторизация)
-- `/questions` - Список вопросов
-- `/questions/:questionId` - Детали вопроса с ответами
+- Confirm that the backend is running at `http://localhost:8888`.
+- Check `VITE_API_URL` in `frontend/.env`.
+- Confirm that the backend `CORS_ORIGINS` includes `http://localhost:5173`.
+- Check the browser network tab and API logs.
 
-### Админ маршруты (требуется роль admin)
-- `/admin` - Админ панель
+### The user appears logged out
 
-## 🎨 Дизайн
-
-Приложение использует Material Design через Material-UI (MUI):
-
-- **Цветовая схема**: Фиолетовый (#667eea) и розовый (#764ba2)
-- **Адаптивность**: Полная поддержка мобильных устройств
-- **Компоненты**: Карточки, таблицы, диалоги, аккордионы и т.д.
-
-## 📝 Примеры использования
-
-### Регистрация
-
-1. Перейти на страницу `/register`
-2. Заполнить форму с требуемыми данными
-3. Пароль должен содержать:
-   - Минимум 8 символов
-   - Заглавную букву
-   - Строчную букву
-   - Цифру
-   - Специальный символ
-
-### Просмотр вопросов
-
-1. Авторизоваться
-2. Перейти на `/questions`
-3. Использовать фильтры для поиска вопросов
-4. Кликнуть на вопрос для просмотра деталей и ответов
-
-### Админ панель
-
-1. Авторизоваться как администратор
-2. Перейти на `/admin`
-3. Управлять вопросами и категориями
-
-## 🐛 Решение проблем
-
-### Ошибка подключения к API
-
-Убедитесь, что:
-1. Бэкенд запущен на `http://localhost:8888`
-2. Переменная `VITE_API_URL` в `.env` указывает на правильный адрес
-3. CORS настроен правильно на бэкенде
-
-### Проблемы с авторизацией
-
-- Очистите cookies браузера
-- Проверьте, что токены сохраняются в HTTP-only cookies
-- Убедитесь, что бэкенд возвращает правильные токены
-
-## 📚 Дополнительные ресурсы
-
-- [React документация](https://react.dev)
-- [Material-UI документация](https://mui.com)
-- [React Router документация](https://reactrouter.com)
-- [Axios документация](https://axios-http.com)
-
-## 📄 Лицензия
-
-MIT
+- Confirm that the browser accepts cookies for the API host.
+- Do not switch between `localhost` and `127.0.0.1` during one session.
+- Check that the API response includes the authentication cookies.
+- Use the logout action and sign in again after changing the API URL.
